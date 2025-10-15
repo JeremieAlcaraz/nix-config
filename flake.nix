@@ -40,7 +40,7 @@
         modules = [
           # Module Disko fournissant les options `disko.*`
           disko.nixosModules.disko
-          ({ ... }: {
+          ({ lib, ... }: {
             # Service SSH : actif, accès uniquement par clé
             services.openssh = {
               enable = true;
@@ -84,7 +84,7 @@
             };
 
             # Chargeur de démarrage : systemd-boot (UEFI) pour OVMF
-            boot.loader.grub.enable = false;
+            boot.loader.grub.enable = lib.mkForce false;
             boot.loader.systemd-boot.enable = true;
             boot.loader.efi = {
               canTouchEfiVariables = true;
