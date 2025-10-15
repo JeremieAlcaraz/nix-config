@@ -1,109 +1,77 @@
-{
-  # Meta : description courte affichée via les commandes Nix
-  description = "Learnix: petit terrain d'apprentissage de Nix Flakes";
+{ config, pkgs, ... }:
 
-  # Dépendances du flake (sources externes récupérées via leurs URLs)
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-    flake-utils.url = "github:numtide/flake-utils";
-    # Disko : gestion déclarative des disques et filesystems
-    disko.url = "github:nix-community/disko";
+{
+  imports = [ ./hardware-configuration.nix ];
+
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  # Console série Proxmox
+  boot.kernelParams = [ "console=ttyS0" ];
+  console.earlySetup = true;
+
+  time.timeZone = "Europe/Paris";
+  system.stateVersion = "25.05";
+
+  # Réseau
+  networking.hostName = "nixos";
+  networking.useDHCP = false;
+  networking.interfaces.ens18.useDHCP = true;
+  networking.firewall.enable = false;
+
+  # SSH
+  services.openssh.enable = true;
+  services.openssh.settings = {
+    PasswordAuthentication = false;
+    KbdInteractiveAuthentication = false;
+    PubkeyAuthentication = true;
+    PermitRootLogin = "no";
   };
 
-  # Outputs : tout ce que le flake met à disposition
-  outputs = inputs@{ self, nixpkgs, flake-utils, disko, ... }:
-    # Parcourt automatiquement les systèmes supportés (x86_64-linux, aarch64-darwin, ...)
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        # pkgs = version de nixpkgs pour le système en cours
-        pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfree = false;
-        };
-      in {
-        # Paquet par défaut que fournit le flake : la démo "hello"
-        packages.default = pkgs.hello;
+  # 👉 Choisis UNE des 2 options ci-dessous (A ou B). Laisse l’autre commentée.
 
-        # Shell de développement minimal avec fmt et hello
-        devShells.default = pkgs.mkShell {
-          name = "learnix-shell";
-          buildInputs = [
-            pkgs.nixpkgs-fmt
-            pkgs.hello
-          ];
-        };
-      }
-    ) // {
-      # Configuration NixOS nommée "learnix"
-      nixosConfigurations.learnix = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [
-          # Module Disko fournissant les options `disko.*`
-          disko.nixosModules.disko
-          ({ lib, ... }: {
-            # Service SSH : actif, accès uniquement par clé
-            services.openssh = {
-              enable = true;
-              settings = {
-                PasswordAuthentication = false;
-                KbdInteractiveAuthentication = false;
-              };
-            };
+  ## === Option A: /etc/ssh/authorized_keys.d/jeremie (recommandée) ===
+  services.openssh.authorizedKeysFiles = [
+    "/etc/ssh/authorized_keys.d/%u"
+    "~/.ssh/authorized_keys"
+  ];
+  environment.etc."ssh/authorized_keys.d/jeremie" = {
+    text = ''
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac
+    '';
+    mode = "0644";
+  };
 
-            # Agencement disque/partitions géré par Disko
-            # ⚠️ Le disque cible est identifié via un chemin stable `by-id`
-            disko.enableConfig = true;
-            disko.devices = {
-              disk.main = {
-                type = "disk";
-                device = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_learnix-root";
-                content = {
-                  type = "gpt";
-                  partitions = {
-                    EFI = {
-                      size = "512M";
-                      type = "EF00";
-                      content = {
-                        type = "filesystem";
-                        format = "vfat";
-                        mountpoint = "/boot";
-                      };
-                    };
-                    root = {
-                      size = "100%";
-                      type = "8300";
-                      content = {
-                        type = "filesystem";
-                        format = "ext4";
-                        mountpoint = "/";
-                      };
-                    };
-                  };
-                };
-              };
-            };
+  ## === Option B: ~/.ssh/authorized_keys (alternative classique) ===
+  # users.users.jeremie = {
+  #   isNormalUser = true;
+  #   createHome = true;
+  #   home = "/home/jeremie";
+  #   extraGroups = [ "wheel" ];
+  #   password = null;
+  #   openssh.authorizedKeys.keys = [
+  #     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac"
+  #   ];
+  # };
 
-            # Chargeur de démarrage : systemd-boot (UEFI) pour OVMF
-            boot.loader.grub.enable = lib.mkForce false;
-            boot.loader.systemd-boot.enable = true;
-            boot.loader.efi = {
-              canTouchEfiVariables = true;
-              efiSysMountPoint = "/boot";
-            };
+  # Si tu utilises l’Option A, définis tout de même l’utilisateur :
+  users.users.jeremie = {
+    isNormalUser = true;
+    createHome = true;
+    home = "/home/jeremie";
+    extraGroups = [ "wheel" ];
+    password = null;
+  };
 
-            # Utilisateur jeremie autorisé via la clé publique fournie
-            users.users.jeremie = {
-              isNormalUser = true;
-              hashedPassword = null;
-              openssh.authorizedKeys.keys = [
-                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac"
-              ];
-            };
+  # Root sans mot de passe (SSH root déjà interdit)
+  users.users.root.password = null;
 
-            # État de référence de la machine (version de base NixOS)
-            system.stateVersion = "24.05";
-          })
-        ];
-      };
-    };
+  # Sudo
+  security.sudo.enable = true;
+
+  # QEMU Guest Agent
+  services.qemuGuest.enable = true;
+
+  # Paquets utiles
+  environment.systemPackages = with pkgs; [ vim git curl wget htop ];
 }
