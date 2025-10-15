@@ -33,4 +33,8 @@ Le fichier `flake.nix` à la racine définit :
 - Crée un dossier `modules/` pour tester la configuration de modules Nix.
 - Note tes découvertes dans `docs/notes.md` pour garder une trace.
 
+## 5. Bonnes pratiques Git
+- Utilise la convention **gitmoji** pour les messages de commit (ex. `:sparkles: Ajoute SSH avec clé publique`).
+- Grouper les changements cohérents avant de pousser sur la branche distante.
+
 Bon apprentissage !
