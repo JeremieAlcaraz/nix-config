@@ -6,10 +6,12 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
     flake-utils.url = "github:numtide/flake-utils";
+    # Disko : gestion déclarative des disques et filesystems
+    disko.url = "github:nix-community/disko";
   };
 
   # Outputs : tout ce que le flake met à disposition
-  outputs = inputs@{ self, nixpkgs, flake-utils, ... }:
+  outputs = inputs@{ self, nixpkgs, flake-utils, disko, ... }:
     # Parcourt automatiquement les systèmes supportés (x86_64-linux, aarch64-darwin, ...)
     flake-utils.lib.eachDefaultSystem (system:
       let
@@ -36,6 +38,8 @@
       nixosConfigurations.learnix = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
+          # Module Disko fournissant les options `disko.*`
+          disko.nixosModules.disko
           ({ ... }: {
             # Service SSH : actif, accès uniquement par clé
             services.openssh = {
@@ -46,6 +50,45 @@
               };
             };
 
+            # Agencement disque/partitions géré par Disko
+            # ⚠️ Adapter `disk.main.device` selon le disque cible (ex. /dev/nvme0n1, /dev/sda…)
+            disko.enableConfig = true;
+            disko.devices = {
+              disk.main = {
+                type = "disk";
+                device = "/dev/sda";
+                content = {
+                  type = "gpt";
+                  partitions = {
+                    EFI = {
+                      size = "512MiB";
+                      type = "EF00";
+                      content = {
+                        type = "filesystem";
+                        format = "vfat";
+                        mountpoint = "/boot";
+                      };
+                    };
+                    root = {
+                      size = "100%";
+                      type = "8300";
+                      content = {
+                        type = "filesystem";
+                        format = "ext4";
+                        mountpoint = "/";
+                      };
+                    };
+                  };
+                };
+              };
+            };
+
+            # Chargeur de démarrage (GRUB) : à ajuster si UEFI natif ou autre bootloader
+            boot.loader.grub = {
+              enable = true;
+              devices = [ "/dev/sda" ];
+            };
+
             # Utilisateur jeremie autorisé via la clé publique fournie
             users.users.jeremie = {
               isNormalUser = true;
@@ -54,6 +97,9 @@
                 "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac"
               ];
             };
+
+            # État de référence de la machine (version de base NixOS)
+            system.stateVersion = "24.05";
           })
         ];
       };
