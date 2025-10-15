@@ -83,11 +83,13 @@
               };
             };
 
-            # Chargeur de démarrage (GRUB) : pointe sur le même identifiant stable
+            # Chargeur de démarrage (GRUB) : mode UEFI (OVMF), pas d'écriture directe sur le disque
             boot.loader.grub = {
               enable = true;
-              devices = [ "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_learnix-root" ];
+              efiSupport = true;
+              device = "nodev";
             };
+            boot.loader.efi.canTouchEfiVariables = true;
 
             # Utilisateur jeremie autorisé via la clé publique fournie
             users.users.jeremie = {
