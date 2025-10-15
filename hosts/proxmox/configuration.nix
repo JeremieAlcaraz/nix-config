@@ -15,8 +15,7 @@
 
   # Réseau
   networking.hostName = "nixos";
-  networking.useDHCP = false;
-  networking.interfaces.ens18.useDHCP = true;
+  networking.useDHCP = true;
   networking.firewall.enable = false;
 
   # SSH
