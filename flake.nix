@@ -51,12 +51,12 @@
             };
 
             # Agencement disque/partitions géré par Disko
-            # ⚠️ Adapter `disk.main.device` selon le disque cible (ex. /dev/nvme0n1, /dev/sda…)
+            # ⚠️ Le disque cible est identifié via un chemin stable `by-id`
             disko.enableConfig = true;
             disko.devices = {
               disk.main = {
                 type = "disk";
-                device = "/dev/sda";
+                device = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_learnix-root";
                 content = {
                   type = "gpt";
                   partitions = {
@@ -83,10 +83,10 @@
               };
             };
 
-            # Chargeur de démarrage (GRUB) : à ajuster si UEFI natif ou autre bootloader
+            # Chargeur de démarrage (GRUB) : pointe sur le même identifiant stable
             boot.loader.grub = {
               enable = true;
-              devices = [ "/dev/sda" ];
+              devices = [ "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_learnix-root" ];
             };
 
             # Utilisateur jeremie autorisé via la clé publique fournie
