@@ -83,13 +83,13 @@
               };
             };
 
-            # Chargeur de démarrage (GRUB) : mode UEFI (OVMF), pas d'écriture directe sur le disque
-            boot.loader.grub = {
-              enable = true;
-              efiSupport = true;
-              device = "nodev";
+            # Chargeur de démarrage : systemd-boot (UEFI) pour OVMF
+            boot.loader.grub.enable = false;
+            boot.loader.systemd-boot.enable = true;
+            boot.loader.efi = {
+              canTouchEfiVariables = true;
+              efiSysMountPoint = "/boot";
             };
-            boot.loader.efi.canTouchEfiVariables = true;
 
             # Utilisateur jeremie autorisé via la clé publique fournie
             users.users.jeremie = {
