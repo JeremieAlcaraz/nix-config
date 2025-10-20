@@ -41,6 +41,8 @@
     mode = "0644";
   };
 
+  users.mutableUsers = false;
+
   ## === Option B: ~/.ssh/authorized_keys (alternative classique) ===
   # users.users.jeremie = {
   #   isNormalUser = true;
