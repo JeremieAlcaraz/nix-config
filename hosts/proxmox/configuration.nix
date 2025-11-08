@@ -41,6 +41,8 @@
     mode = "0644";
   };
 
+  users.mutableUsers = false;
+
   ## === Option B: ~/.ssh/authorized_keys (alternative classique) ===
   # users.users.jeremie = {
   #   isNormalUser = true;
@@ -59,7 +61,7 @@
     createHome = true;
     home = "/home/jeremie";
     extraGroups = [ "wheel" ];
-    password = null;
+    hashedPassword = "$6$vwZmaAkvi9Sjgv60$HVIr50fg9sFmFrgJ7CCtEhey0m7OBLepLDWAa1PcdZSX3WrK24DWs48IQpHi85u4yYwjG0xHwC4waXzb3IqLB1";
   };
 
   # Root sans mot de passe (SSH root déjà interdit)
@@ -73,4 +75,6 @@
 
   # Paquets utiles
   environment.systemPackages = with pkgs; [ vim git curl wget htop ];
+
+  programs.tmux.enable = true;
 }
