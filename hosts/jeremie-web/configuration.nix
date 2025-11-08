@@ -55,8 +55,9 @@
   # Root sans mot de passe (SSH root déjà interdit)
   users.users.root.password = null;
 
-  # Sudo
+  # Sudo sans mot de passe pour le groupe wheel (sécurisé car SSH par clé uniquement)
   security.sudo.enable = true;
+  security.sudo.wheelNeedsPassword = false;
 
   # QEMU Guest Agent pour Proxmox
   services.qemuGuest.enable = true;
