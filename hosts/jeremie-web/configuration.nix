@@ -91,10 +91,28 @@
    # cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
 #  };
 
+  # Configuration Git globale
+  programs.git = {
+    enable = true;
+    config = {
+      user = {
+        name = "JeremieAlcaraz";
+        email = "hello@jeremiealcaraz.com";
+      };
+    };
+  };
+
+  # Tailscale
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+    # Port pour SSH via Tailscale (par défaut Tailscale gère SSH)
+    openFirewall = true;
+  };
+
   # Paquets utiles
   environment.systemPackages = with pkgs; [
     vim
-    git
     curl
     wget
     htop
