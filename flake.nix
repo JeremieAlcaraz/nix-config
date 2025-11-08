@@ -7,9 +7,13 @@
       url = "github:JeremieAlcaraz/j12zdotcom";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, j12z-site, ... }:
+  outputs = { self, nixpkgs, j12z-site, sops-nix, ... }:
     let
       system = "x86_64-linux";
     in {
@@ -26,6 +30,7 @@
           modules = [
             ./hosts/jeremie-web/configuration.nix
             j12z-site.nixosModules.j12z-webserver
+            sops-nix.nixosModules.sops
           ];
         };
       };

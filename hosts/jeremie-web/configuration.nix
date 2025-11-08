@@ -61,15 +61,33 @@
   # QEMU Guest Agent pour Proxmox
   services.qemuGuest.enable = true;
 
+  # Configuration sops-nix pour la gestion des secrets
+  sops = {
+    defaultSopsFile = ../../secrets/jeremie-web.yaml;
+    age = {
+      # La clé sera générée automatiquement si elle n'existe pas
+      keyFile = "/var/lib/sops-nix/key.txt";
+      # Pour obtenir la clé publique : ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub
+      # ou directement depuis le host après le premier boot : cat /var/lib/sops-nix/key.pub
+    };
+    secrets = {
+      cloudflare-tunnel-token = {
+        owner = "cloudflared";
+        group = "cloudflared";
+        mode = "0400";
+      };
+    };
+  };
+
   # Configuration du site j12zdotcom
   # Le module sera importé via flake.nix
   services.j12z-webserver = {
     enable = true;
     domain = "jeremiealcaraz.com";
     email = "hello@jeremiealcaraz.com";
-    # Si vous utilisez Cloudflare Tunnel, décommentez :
-    # enableCloudflaredTunnel = true;
-    # cloudflaredTokenFile = "/run/secrets/cloudflare-tunnel-token";
+    # Cloudflare Tunnel activé avec sops
+    enableCloudflaredTunnel = true;
+    cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
   };
 
   # Paquets utiles
