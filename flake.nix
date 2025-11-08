@@ -2,7 +2,7 @@
   description = "Learnix NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     j12z-site = {
       url = "github:JeremieAlcaraz/j12zdotcom";
       inputs.nixpkgs.follows = "nixpkgs";
