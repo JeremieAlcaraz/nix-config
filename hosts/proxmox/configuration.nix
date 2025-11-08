@@ -65,8 +65,9 @@
   # Root sans mot de passe (SSH root déjà interdit)
   users.users.root.password = null;
 
-  # Sudo
+  # Sudo - Permet au groupe wheel d'exécuter toutes les commandes sans mot de passe
   security.sudo.enable = true;
+  security.sudo.wheelNeedsPassword = false;
 
   # QEMU Guest Agent
   services.qemuGuest.enable = true;
