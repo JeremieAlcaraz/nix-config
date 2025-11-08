@@ -1,0 +1,23 @@
+# Configuration sops pour learnix
+# Documentation: https://github.com/Mic92/sops-nix
+
+# Règles de création pour chaque fichier de secrets
+creation_rules:
+  # Secrets pour l'hôte jeremie-web
+  - path_regex: secrets/jeremie-web\.yaml$
+    key_groups:
+      - age:
+          # Clé age de l'hôte jeremie-web
+          # À remplacer par la vraie clé publique après le premier boot
+          # Obtenir la clé: ssh root@jeremie-web "cat /var/lib/sops-nix/key.pub"
+          # OU via ssh-to-age: ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub
+          - &jeremie-web age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        # Ajoutez ici votre clé age personnelle pour pouvoir éditer les secrets
+        # Générer une clé: nix-shell -p age --run "age-keygen"
+        # - &admin age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+
+  # Secrets pour d'autres hôtes (exemple)
+  # - path_regex: secrets/proxmox\.yaml$
+  #   key_groups:
+  #     - age:
+  #         - &proxmox age1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
