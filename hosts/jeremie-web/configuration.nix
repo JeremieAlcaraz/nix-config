@@ -49,7 +49,10 @@
     createHome = true;
     home = "/home/jeremie";
     extraGroups = [ "wheel" ];
-    password = null;
+    # Mot de passe initial pour le premier boot (permet de déployer la config)
+    # Utilisé uniquement à la création, jamais réécrit par la suite
+    # Après le premier déploiement, sudo ne demandera plus de mot de passe (wheelNeedsPassword = false)
+    initialPassword = "nixos";
   };
 
   # Root sans mot de passe (SSH root déjà interdit)
