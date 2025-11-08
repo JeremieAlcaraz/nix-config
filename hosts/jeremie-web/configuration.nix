@@ -66,33 +66,30 @@
   services.qemuGuest.enable = true;
 
   # Configuration sops-nix pour la gestion des secrets
-  sops = {
-    defaultSopsFile = ../../secrets/jeremie-web.yaml;
-    age = {
-      # La clé sera générée automatiquement si elle n'existe pas
-      keyFile = "/var/lib/sops-nix/key.txt";
-      # Pour obtenir la clé publique : ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub
-      # ou directement depuis le host après le premier boot : cat /var/lib/sops-nix/key.pub
-    };
-    secrets = {
-      cloudflare-tunnel-token = {
-        owner = "cloudflared";
-        group = "cloudflared";
-        mode = "0400";
-      };
-    };
-  };
+# sops = {
+  #   defaultSopsFile = ../../secrets/jeremie-web.yaml;
+  #   age = {
+  #     keyFile = "/var/lib/sops-nix/key.txt";
+  #   };
+  #   secrets = {
+  #     cloudflare-tunnel-token = {
+  #       owner = "cloudflared";
+  #       group = "cloudflared";
+  #       mode = "0400";
+  #     };
+  #   };
+  # };
 
   # Configuration du site j12zdotcom
   # Le module sera importé via flake.nix
-  services.j12z-webserver = {
-    enable = true;
-    domain = "jeremiealcaraz.com";
-    email = "hello@jeremiealcaraz.com";
+ # services.j12z-webserver = {
+  #  enable = true;
+   # domain = "jeremiealcaraz.com";
+   # email = "hello@jeremiealcaraz.com";
     # Cloudflare Tunnel activé avec sops
-    enableCloudflaredTunnel = true;
-    cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
-  };
+   # enableCloudflaredTunnel = false;
+   # cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
+#  };
 
   # Paquets utiles
   environment.systemPackages = with pkgs; [
