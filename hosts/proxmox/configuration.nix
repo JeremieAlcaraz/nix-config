@@ -14,7 +14,7 @@
   system.stateVersion = "25.05";
 
   # Réseau
-  networking.hostName = "nixos";
+  networking.hostName = "proxmox";
   networking.useDHCP = true;
   networking.firewall.enable = false;
 
