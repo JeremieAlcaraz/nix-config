@@ -92,12 +92,22 @@ if [[ -d /mnt/etc/nixos ]]; then
 fi
 git clone --branch "$BRANCH" "$REPO_URL" /mnt/etc/nixos
 
-# 6. Installation
+# 6. Copier la clé SOPS dans le système cible si elle existe
+if [[ -f /var/lib/sops-nix/key.txt ]]; then
+    info "Copie de la clé SOPS dans le système cible..."
+    mkdir -p /mnt/var/lib/sops-nix
+    cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
+    chmod 600 /mnt/var/lib/sops-nix/key.txt
+else
+    warning "Aucune clé SOPS trouvée dans /var/lib/sops-nix/key.txt. Les secrets chiffrés ne seront PAS déchiffrés pendant l'installation."
+fi
+
+# 7. Installation
 info "Étape 6/7: Installation de NixOS (cela peut prendre plusieurs minutes)..."
 cd /mnt/etc/nixos
 nixos-install --flake ".#${HOST}" --no-root-passwd
 
-# 7. Finalisation
+# 8. Finalisation
 info "Étape 7/7: Installation terminée!"
 info ""
 info "=========================================="
@@ -112,6 +122,11 @@ info ""
 info "Pour trouver l'IP après le boot:"
 info "  ip a"
 info ""
-info "Mot de passe initial de l'utilisateur 'jeremie': nixos"
-info "⚠️  Changez-le immédiatement avec: passwd"
+if [[ -f /mnt/var/lib/sops-nix/key.txt ]]; then
+    info "🔐 Les secrets SOPS ont été déchiffrés avec succès"
+    info "Le mot de passe de l'utilisateur 'jeremie' a été configuré via SOPS"
+else
+    warning "Mot de passe initial de l'utilisateur 'jeremie': nixos"
+    warning "⚠️  Changez-le immédiatement avec: passwd"
+fi
 info ""
