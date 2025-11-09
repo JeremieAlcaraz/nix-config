@@ -68,6 +68,10 @@ info "Étape 2/7: Formatage des partitions..."
 mkfs.vfat -F32 -n ESP "${DISK}1"
 mkfs.ext4 -L nixos-root "${DISK}2"
 
+# Attendre que udev reconnaisse les nouveaux labels
+udevadm settle
+sleep 2
+
 # 3. Montage
 info "Étape 3/7: Montage des partitions..."
 mount /dev/disk/by-label/nixos-root /mnt
