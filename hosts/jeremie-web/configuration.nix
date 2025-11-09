@@ -49,10 +49,9 @@
     createHome = true;
     home = "/home/jeremie";
     extraGroups = [ "wheel" ];
-    # Mot de passe initial pour le premier boot (permet de déployer la config)
-    # Utilisé uniquement à la création, jamais réécrit par la suite
-    # Après le premier déploiement, sudo ne demandera plus de mot de passe (wheelNeedsPassword = false)
-    initialPassword = "nixos";
+    # Hash du mot de passe stocké de manière sécurisée dans sops
+    # Le fichier de secrets est chiffré et ne peut être déchiffré que par l'hôte
+    hashedPasswordFile = config.sops.secrets.jeremie-password-hash.path;
   };
 
   # Root sans mot de passe (SSH root déjà interdit)
@@ -66,19 +65,24 @@
   services.qemuGuest.enable = true;
 
   # Configuration sops-nix pour la gestion des secrets
-# sops = {
-  #   defaultSopsFile = ../../secrets/jeremie-web.yaml;
-  #   age = {
-  #     keyFile = "/var/lib/sops-nix/key.txt";
-  #   };
-  #   secrets = {
-  #     cloudflare-tunnel-token = {
-  #       owner = "cloudflared";
-  #       group = "cloudflared";
-  #       mode = "0400";
-  #     };
-  #   };
-  # };
+  sops = {
+    defaultSopsFile = ../../secrets/jeremie-web.yaml;
+    age = {
+      keyFile = "/var/lib/sops-nix/key.txt";
+    };
+    secrets = {
+      # Hash du mot de passe de l'utilisateur jeremie
+      jeremie-password-hash = {
+        neededForUsers = true;
+      };
+      # Token Cloudflare Tunnel (optionnel, décommenter si utilisé)
+      # cloudflare-tunnel-token = {
+      #   owner = "cloudflared";
+      #   group = "cloudflared";
+      #   mode = "0400";
+      # };
+    };
+  };
 
   # Configuration du site j12zdotcom
   # Le module sera importé via flake.nix

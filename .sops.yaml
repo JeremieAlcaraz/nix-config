@@ -16,8 +16,11 @@ creation_rules:
         # Générer une clé: nix-shell -p age --run "age-keygen"
         # - &admin age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 
-  # Secrets pour d'autres hôtes (exemple)
-  # - path_regex: secrets/proxmox\.yaml$
-  #   key_groups:
-  #     - age:
-  #         - &proxmox age1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+  # Secrets pour l'hôte proxmox
+  - path_regex: secrets/proxmox\.yaml$
+    key_groups:
+      - age:
+          # Clé age de l'hôte proxmox
+          # À remplacer par la vraie clé publique après le premier boot
+          # Obtenir la clé: ssh root@proxmox "cat /var/lib/sops-nix/key.pub"
+          - &proxmox age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

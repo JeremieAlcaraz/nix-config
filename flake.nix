@@ -22,6 +22,7 @@
           inherit system;
           modules = [
             ./hosts/proxmox/configuration.nix
+            sops-nix.nixosModules.sops
           ];
         };
 
