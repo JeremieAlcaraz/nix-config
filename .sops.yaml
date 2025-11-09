@@ -1,5 +1,8 @@
 # Configuration sops pour learnix
 # Documentation: https://github.com/Mic92/sops-nix
+#
+# Configuration avec CLÉ PARTAGÉE (plus simple pour un homelab)
+# La même clé est utilisée pour tous les hosts
 
 # Règles de création pour chaque fichier de secrets
 creation_rules:
@@ -7,20 +10,14 @@ creation_rules:
   - path_regex: secrets/jeremie-web\.yaml$
     key_groups:
       - age:
-          # Clé age de l'hôte jeremie-web
-          # À remplacer par la vraie clé publique après le premier boot
-          # Obtenir la clé: ssh root@jeremie-web "cat /var/lib/sops-nix/key.pub"
-          # OU via ssh-to-age: ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub
-          - &jeremie-web age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        # Ajoutez ici votre clé age personnelle pour pouvoir éditer les secrets
-        # Générer une clé: nix-shell -p age --run "age-keygen"
-        # - &admin age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+          # Clé age partagée (générée sur le Mac, copiée sur les VMs)
+          # Localisation : ~/.config/sops/age/nixos-shared-key.txt (Mac)
+          #                /var/lib/sops-nix/key.txt (VMs)
+          - &shared age1nt3ly627s6eqcv97zyw3n489gh7nt2jlrq6mfhucct8wq4lgku6saynhhw
 
   # Secrets pour l'hôte proxmox
   - path_regex: secrets/proxmox\.yaml$
     key_groups:
       - age:
-          # Clé age de l'hôte proxmox
-          # À remplacer par la vraie clé publique après le premier boot
-          # Obtenir la clé: ssh root@proxmox "cat /var/lib/sops-nix/key.pub"
-          - &proxmox age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          # Même clé partagée que jeremie-web
+          - *shared
