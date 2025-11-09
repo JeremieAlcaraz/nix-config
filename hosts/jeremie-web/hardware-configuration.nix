@@ -12,12 +12,12 @@
 
   # Configuration de base pour une VM
   fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
+    device = "/dev/disk/by-label/nixos-root";
     fsType = "ext4";
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-label/boot";
+    device = "/dev/disk/by-label/ESP";
     fsType = "vfat";
   };
 
