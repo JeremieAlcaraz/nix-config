@@ -55,13 +55,15 @@
   #   ];
   # };
 
-  # Si tu utilises l’Option A, définis tout de même l’utilisateur :
+  # Si tu utilises l'Option A, définis tout de même l'utilisateur :
   users.users.jeremie = {
     isNormalUser = true;
     createHome = true;
     home = "/home/jeremie";
     extraGroups = [ "wheel" ];
-    hashedPassword = "$6$vwZmaAkvi9Sjgv60$HVIr50fg9sFmFrgJ7CCtEhey0m7OBLepLDWAa1PcdZSX3WrK24DWs48IQpHi85u4yYwjG0xHwC4waXzb3IqLB1";
+    # Hash du mot de passe stocké de manière sécurisée dans sops
+    # Le fichier de secrets est chiffré et ne peut être déchiffré que par l'hôte
+    hashedPasswordFile = config.sops.secrets.jeremie-password-hash.path;
   };
 
   # Root sans mot de passe (SSH root déjà interdit)
@@ -73,6 +75,20 @@
 
   # QEMU Guest Agent
   services.qemuGuest.enable = true;
+
+  # Configuration sops-nix pour la gestion des secrets
+  sops = {
+    defaultSopsFile = ../../secrets/proxmox.yaml;
+    age = {
+      keyFile = "/var/lib/sops-nix/key.txt";
+    };
+    secrets = {
+      # Hash du mot de passe de l'utilisateur jeremie
+      jeremie-password-hash = {
+        neededForUsers = true;
+      };
+    };
+  };
 
   # Paquets utiles
   environment.systemPackages = with pkgs; [ vim git curl wget htop ];
