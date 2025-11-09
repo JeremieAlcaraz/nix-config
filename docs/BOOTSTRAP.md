@@ -19,10 +19,10 @@ En NixOS, on utilise **`initialPassword`** plutôt que `password` pour les utili
 # Pas besoin de créer d'autres utilisateurs, la config NixOS s'en chargera
 ```
 
-### 2. Créer la configuration dans learnix
+### 2. Créer la configuration dans nix-config
 
 ```nix
-# hosts/mon-nouveau-host/configuration.nix
+# Dans nix-config/hosts/mon-nouveau-host/configuration.nix
 {
   # ... configuration de base ...
 
@@ -48,8 +48,8 @@ En NixOS, on utilise **`initialPassword`** plutôt que `password` pour les utili
 
 ```bash
 # Dans la console Proxmox, en tant que root
-git clone https://github.com/JeremieAlcaraz/learnix.git /root/learnix
-cd /root/learnix
+git clone https://github.com/JeremieAlcaraz/nix-config.git /root/nix-config
+cd /root/nix-config
 nixos-rebuild switch --flake .#mon-nouveau-host
 ```
 
@@ -61,8 +61,8 @@ ssh jeremie@IP_DE_LA_VM
 # Mot de passe: nixos
 
 cd ~
-git clone https://github.com/JeremieAlcaraz/learnix.git
-cd learnix
+git clone https://github.com/JeremieAlcaraz/nix-config.git
+cd nix-config
 sudo nixos-rebuild switch --flake .#mon-nouveau-host
 # Mot de passe sudo: nixos (une seule fois)
 ```
@@ -82,7 +82,7 @@ Après le premier déploiement :
 ```bash
 # Depuis ton Mac ou n'importe où
 ssh jeremie@IP_DE_LA_VM
-cd ~/learnix
+cd ~/nix-config
 git pull
 sudo nixos-rebuild switch --flake .#mon-nouveau-host
 # ✨ Pas de mot de passe demandé !
@@ -116,8 +116,8 @@ hostnamectl set-hostname nouveau-nom
 
 # 5. Cloner le repo et déployer la nouvelle config
 cd /root
-git clone https://github.com/JeremieAlcaraz/learnix.git
-cd learnix
+git clone https://github.com/JeremieAlcaraz/nix-config.git
+cd nix-config
 nixos-rebuild switch --flake .#nouveau-host
 
 # 6. Récupérer la nouvelle clé age pour sops
