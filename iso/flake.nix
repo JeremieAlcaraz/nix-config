@@ -14,7 +14,7 @@
         "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
 
         # Configuration personnalisée
-        ({ pkgs, ... }: {
+        ({ pkgs, lib, ... }: {
           # 🧠 Nom de l'hôte ISO
           networking.hostName = "nixos-iso-ttyS0";
 
@@ -132,9 +132,9 @@
 
           # 🎯 ISO metadata
           isoImage = {
-            isoName = "nixos-minimal-ttyS0.iso";
-            volumeID = "NIXOS_TTYS0";
-            appendToMenuLabel = " (avec support TTY série)";
+            isoName = lib.mkForce "nixos-minimal-ttyS0.iso";
+            volumeID = lib.mkForce "NIXOS_TTYS0";
+            appendToMenuLabel = lib.mkForce " (avec support TTY série)";
           };
         })
       ];
