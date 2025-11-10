@@ -76,24 +76,24 @@
         neededForUsers = true;
       };
       # Token Cloudflare Tunnel (optionnel, décommenter si utilisé)
-      # cloudflare-tunnel-token = {
-      #   owner = "cloudflared";
-      #   group = "cloudflared";
-      #   mode = "0400";
-      # };
+      cloudflare-tunnel-token = {
+        owner = "cloudflared";
+        group = "cloudflared";
+        mode = "0400";
+      };
     };
   };
 
   # Configuration du site j12zdotcom
   # Le module sera importé via flake.nix
- # services.j12z-webserver = {
-  #  enable = true;
-   # domain = "jeremiealcaraz.com";
-   # email = "hello@jeremiealcaraz.com";
+  services.j12z-webserver = {
+    enable = true;
+    domain = "jeremiealcaraz.com";
+    email = "hello@jeremiealcaraz.com";
     # Cloudflare Tunnel activé avec sops
-   # enableCloudflaredTunnel = false;
-   # cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
-#  };
+    enableCloudflaredTunnel = true;
+    cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
+  };
 
   # Configuration Git globale
   programs.git = {

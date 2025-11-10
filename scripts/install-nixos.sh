@@ -40,10 +40,15 @@ fi
 # Configuration
 DISK="/dev/sda"
 REPO_URL="https://github.com/JeremieAlcaraz/nix-config.git"
-BRANCH="main"
 
 info "Installation de NixOS pour l'host: $HOST"
 info "Disque cible: $DISK"
+
+# Demander la branche à utiliser
+echo ""
+read -p "Branche git à utiliser (main): " BRANCH
+BRANCH="${BRANCH:-main}"
+info "Branche sélectionnée: $BRANCH"
 
 # Vérifier que le disque existe
 [[ ! -b "$DISK" ]] && error "Le disque $DISK n'existe pas"

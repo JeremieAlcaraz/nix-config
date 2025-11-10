@@ -32,7 +32,7 @@
           inherit system;
           modules = [
             ./hosts/mimosa/configuration.nix
-           # j12z-site.nixosModules.j12z-webserver
+            j12z-site.nixosModules.j12z-webserver
             sops-nix.nixosModules.sops
           ];
         };
