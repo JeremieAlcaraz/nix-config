@@ -18,18 +18,20 @@
       system = "x86_64-linux";
     in {
       nixosConfigurations = {
-        proxmox = nixpkgs.lib.nixosSystem {
+        # Magnolia - Infrastructure Proxmox
+        magnolia = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            ./hosts/proxmox/configuration.nix
+            ./hosts/magnolia/configuration.nix
             sops-nix.nixosModules.sops
           ];
         };
 
-        jeremie-web = nixpkgs.lib.nixosSystem {
+        # Mimosa - Serveur web
+        mimosa = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            ./hosts/jeremie-web/configuration.nix
+            ./hosts/mimosa/configuration.nix
            # j12z-site.nixosModules.j12z-webserver
             sops-nix.nixosModules.sops
           ];

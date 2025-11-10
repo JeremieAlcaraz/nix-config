@@ -14,7 +14,7 @@
   system.stateVersion = "25.05";
 
   # Réseau
-  networking.hostName = "proxmox";
+  networking.hostName = "magnolia";  # Infrastructure Proxmox
   networking.useDHCP = true;
   networking.firewall.enable = false;
 
@@ -78,7 +78,7 @@
 
   # Configuration sops-nix pour la gestion des secrets
   sops = {
-    defaultSopsFile = ../../secrets/proxmox.yaml;
+    defaultSopsFile = ../../secrets/magnolia.yaml;
     age = {
       keyFile = "/var/lib/sops-nix/key.txt";
     };
@@ -117,7 +117,7 @@
   # Message de bienvenue personnalisé
   programs.zsh.interactiveShellInit = ''
     echo ""
-    echo "🖥️  Serveur proxmox"
+    echo "🌸 Magnolia - Infrastructure Proxmox"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
   '';

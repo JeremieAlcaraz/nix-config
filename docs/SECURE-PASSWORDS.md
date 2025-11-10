@@ -51,8 +51,8 @@ users.users.jeremie = {
 ## 📋 État Actuel
 
 ✅ **Configuration mise en place** :
-- sops-nix activé pour `proxmox` ET `jeremie-web`
-- Fichiers de secrets example créés (`secrets/proxmox.yaml.example`, `secrets/jeremie-web.yaml.example`)
+- sops-nix activé pour `magnolia` ET `mimosa`
+- Fichiers de secrets example créés (`secrets/magnolia.yaml.example`, `secrets/mimosa.yaml.example`)
 - `.sops.yaml` configuré pour les deux hosts
 - Les hosts utilisent maintenant `hashedPasswordFile` au lieu de `initialPassword` ou `hashedPassword`
 
@@ -72,7 +72,7 @@ Pour le **premier déploiement**, les secrets ne sont pas encore disponibles. Vo
 Modifier temporairement les fichiers de configuration pour utiliser `initialPassword` :
 
 ```nix
-# Dans hosts/jeremie-web/configuration.nix ou hosts/proxmox/configuration.nix
+# Dans hosts/mimosa/configuration.nix ou hosts/magnolia/configuration.nix
 users.users.jeremie = {
   isNormalUser = true;
   createHome = true;
@@ -120,12 +120,12 @@ users.users.jeremie = {
 Une fois les VMs déployées et démarrées, récupérez leurs clés publiques :
 
 ```bash
-# Pour jeremie-web
-ssh root@jeremie-web "cat /var/lib/sops-nix/key.pub"
+# Pour mimosa
+ssh root@mimosa "cat /var/lib/sops-nix/key.pub"
 # Exemple de sortie: age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-# Pour proxmox
-ssh root@proxmox "cat /var/lib/sops-nix/key.pub"
+# Pour magnolia
+ssh root@magnolia "cat /var/lib/sops-nix/key.pub"
 # Exemple de sortie: age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 ```
 
@@ -140,15 +140,15 @@ Remplacez les clés placeholder par les vraies clés :
 ```yaml
 # .sops.yaml
 creation_rules:
-  - path_regex: secrets/jeremie-web\.yaml$
+  - path_regex: secrets/mimosa\.yaml$
     key_groups:
       - age:
-          - &jeremie-web age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Remplacez par la vraie clé
+          - &mimosa age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Remplacez par la vraie clé
 
-  - path_regex: secrets/proxmox\.yaml$
+  - path_regex: secrets/magnolia\.yaml$
     key_groups:
       - age:
-          - &proxmox age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy  # Remplacez par la vraie clé
+          - &magnolia age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy  # Remplacez par la vraie clé
 ```
 
 **Optionnel mais recommandé** : Ajoutez votre propre clé age pour pouvoir éditer les secrets :
@@ -163,46 +163,46 @@ grep "public key:" ~/.config/sops/age/keys.txt
 Ajoutez votre clé dans `.sops.yaml` :
 ```yaml
 creation_rules:
-  - path_regex: secrets/jeremie-web\.yaml$
+  - path_regex: secrets/mimosa\.yaml$
     key_groups:
       - age:
-          - &jeremie-web age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          - &mimosa age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
           - &admin age1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz  # Votre clé
 ```
 
 ### Étape 4 : Créer et Chiffrer les Secrets
 
-#### Pour jeremie-web :
+#### Pour mimosa :
 
 ```bash
 # 1. Copier le fichier example
-cp secrets/jeremie-web.yaml.example secrets/jeremie-web.yaml
+cp secrets/mimosa.yaml.example secrets/mimosa.yaml
 
 # 2. (Optionnel) Générer un nouveau hash de mot de passe sécurisé
 python3 -c "import crypt; print(crypt.crypt('VotreMotDePasseSecurise', crypt.mksalt(crypt.METHOD_SHA512)))"
 
 # 3. Éditer et chiffrer avec sops
-nix-shell -p sops --run "sops secrets/jeremie-web.yaml"
+nix-shell -p sops --run "sops secrets/mimosa.yaml"
 # Remplacez le hash du mot de passe par votre nouveau hash (si généré à l'étape 2)
 # Remplacez aussi le token Cloudflare si vous en avez un
 # Sauvegardez et quittez (Ctrl+O, Enter, Ctrl+X dans nano)
 
 # 4. Vérifier que le fichier est bien chiffré
-cat secrets/jeremie-web.yaml | grep "sops:"
+cat secrets/mimosa.yaml | grep "sops:"
 # Si vous voyez "sops: ... mac: ..." alors c'est bon !
 ```
 
-#### Pour proxmox :
+#### Pour magnolia :
 
 ```bash
 # Même processus
-cp secrets/proxmox.yaml.example secrets/proxmox.yaml
-nix-shell -p sops --run "sops secrets/proxmox.yaml"
+cp secrets/magnolia.yaml.example secrets/magnolia.yaml
+nix-shell -p sops --run "sops secrets/magnolia.yaml"
 # Remplacez le hash du mot de passe si nécessaire
 # Sauvegardez et quittez
 
 # Vérifier le chiffrement
-cat secrets/proxmox.yaml | grep "sops:"
+cat secrets/magnolia.yaml | grep "sops:"
 ```
 
 ### Étape 5 : Activer la Configuration sops et Redéployer
@@ -210,11 +210,11 @@ cat secrets/proxmox.yaml | grep "sops:"
 Si vous aviez commenté la configuration sops pour le premier déploiement, décommentez-la maintenant :
 
 ```nix
-# Dans hosts/jeremie-web/configuration.nix et hosts/proxmox/configuration.nix
+# Dans hosts/mimosa/configuration.nix et hosts/magnolia/configuration.nix
 
 # Décommentez la section sops
 sops = {
-  defaultSopsFile = ../../secrets/jeremie-web.yaml;  # ou proxmox.yaml
+  defaultSopsFile = ../../secrets/mimosa.yaml;  # ou magnolia.yaml
   age = {
     keyFile = "/var/lib/sops-nix/key.txt";
   };
@@ -239,8 +239,8 @@ users.users.jeremie = {
 Committez et poussez :
 
 ```bash
-git add secrets/jeremie-web.yaml secrets/proxmox.yaml
-git add hosts/jeremie-web/configuration.nix hosts/proxmox/configuration.nix
+git add secrets/mimosa.yaml secrets/magnolia.yaml
+git add hosts/mimosa/configuration.nix hosts/magnolia/configuration.nix
 git commit -m "🔒 Activer sops-nix pour les mots de passe"
 git push
 ```
@@ -248,17 +248,17 @@ git push
 Redéployez sur vos VMs :
 
 ```bash
-# Pour jeremie-web
-ssh root@jeremie-web
+# Pour mimosa
+ssh root@mimosa
 cd /etc/nixos
 git pull
-nixos-rebuild switch --flake .#jeremie-web
+nixos-rebuild switch --flake .#mimosa
 
-# Pour proxmox
-ssh root@proxmox
+# Pour magnolia
+ssh root@magnolia
 cd /etc/nixos
 git pull
-nixos-rebuild switch --flake .#proxmox
+nixos-rebuild switch --flake .#magnolia
 ```
 
 ### Étape 6 : Committer les Secrets (Chiffrés)
@@ -267,7 +267,7 @@ Les fichiers de secrets chiffrés peuvent être committés en toute sécurité :
 
 ```bash
 # Ajouter avec -f car .gitignore bloque les .yaml par sécurité
-git add -f secrets/jeremie-web.yaml secrets/proxmox.yaml
+git add -f secrets/mimosa.yaml secrets/magnolia.yaml
 git commit -m "🔒 Add encrypted password hashes with sops"
 git push
 ```
@@ -278,21 +278,21 @@ Pour modifier un secret existant :
 
 ```bash
 # Éditer le secret (sops le déchiffre automatiquement pour l'édition)
-nix-shell -p sops --run "sops secrets/jeremie-web.yaml"
+nix-shell -p sops --run "sops secrets/mimosa.yaml"
 
 # Modifier les valeurs
 # Sauvegarder et quitter
 
 # Committer les changements
-git add secrets/jeremie-web.yaml
+git add secrets/mimosa.yaml
 git commit -m "🔒 Update secrets"
 git push
 
 # Redéployer sur la VM
-ssh root@jeremie-web
+ssh root@mimosa
 cd /etc/nixos
 git pull
-nixos-rebuild switch --flake .#jeremie-web
+nixos-rebuild switch --flake .#mimosa
 ```
 
 ## 🔑 Changer le Mot de Passe
@@ -304,16 +304,16 @@ Pour changer le mot de passe d'un utilisateur :
 python3 -c "import crypt; print(crypt.crypt('NouveauMotDePasse', crypt.mksalt(crypt.METHOD_SHA512)))"
 
 # 2. Éditer le secret
-nix-shell -p sops --run "sops secrets/jeremie-web.yaml"
+nix-shell -p sops --run "sops secrets/mimosa.yaml"
 # Remplacer la valeur de jeremie-password-hash
 
 # 3. Committer et redéployer
-git add secrets/jeremie-web.yaml
+git add secrets/mimosa.yaml
 git commit -m "🔒 Update password hash"
 git push
 
 # 4. Redéployer
-ssh root@jeremie-web "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#jeremie-web"
+ssh root@mimosa "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#mimosa"
 ```
 
 ## 📊 Comparaison des Approches
@@ -349,7 +349,7 @@ Si vous avez ajouté votre clé personnelle dans `.sops.yaml` mais sops ne la tr
 ```bash
 # Assurez-vous que votre clé est dans le bon répertoire
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
-nix-shell -p sops --run "sops secrets/jeremie-web.yaml"
+nix-shell -p sops --run "sops secrets/mimosa.yaml"
 ```
 
 ## 🎓 Ressources

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Script d'installation NixOS 100% reproductible
-# Usage: sudo ./install-nixos.sh [proxmox|jeremie-web]
+# Usage: sudo ./install-nixos.sh [magnolia|mimosa]
 
 # Couleurs pour les messages
 RED='\033[0;31m'
@@ -27,14 +27,14 @@ warning() {
 [[ $EUID -ne 0 ]] && error "Ce script doit être exécuté en tant que root (sudo)"
 [[ ! -d /sys/firmware/efi ]] && error "Ce script nécessite un système UEFI"
 
-# Récupérer le nom de l'host (proxmox ou jeremie-web)
+# Récupérer le nom de l'host (magnolia ou mimosa)
 HOST="${1:-}"
 if [[ -z "$HOST" ]]; then
-    error "Usage: sudo $0 [proxmox|jeremie-web]"
+    error "Usage: sudo $0 [magnolia|mimosa]"
 fi
 
-if [[ "$HOST" != "proxmox" && "$HOST" != "jeremie-web" ]]; then
-    error "Host invalide. Utilisez 'proxmox' ou 'jeremie-web'"
+if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" ]]; then
+    error "Host invalide. Utilisez 'magnolia' (infrastructure Proxmox) ou 'mimosa' (serveur web)"
 fi
 
 # Configuration

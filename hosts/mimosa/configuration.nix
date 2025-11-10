@@ -16,7 +16,7 @@
   system.stateVersion = "24.05";
 
   # Réseau
-  networking.hostName = "jeremie-web";
+  networking.hostName = "mimosa";  # Serveur web
   networking.useDHCP = true;
   # Le firewall sera configuré automatiquement par le module j12z-webserver (ports 80, 443)
   networking.firewall.enable = true;
@@ -66,7 +66,7 @@
 
   # Configuration sops-nix pour la gestion des secrets
   sops = {
-    defaultSopsFile = ../../secrets/jeremie-web.yaml;
+    defaultSopsFile = ../../secrets/mimosa.yaml;
     age = {
       keyFile = "/var/lib/sops-nix/key.txt";
     };
@@ -138,7 +138,7 @@
   # Message de bienvenue personnalisé
   programs.fish.interactiveShellInit = ''
     echo ""
-    echo "🌐 Serveur jeremie-web"
+    echo "🌼 Mimosa - Serveur web"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
   '';
