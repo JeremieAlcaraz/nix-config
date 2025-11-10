@@ -109,6 +109,9 @@
           networking.wireless.enable = false;  # Désactive wpa_supplicant (conflit avec NetworkManager)
           networking.networkmanager.enable = true;
 
+          # 🖥️ QEMU Guest Agent pour Proxmox (affiche l'IP dans l'interface)
+          services.qemuGuest.enable = true;
+
           # 🔧 SSH activé avec mot de passe temporaire (pratique pour debug)
           services.openssh = {
             enable = true;
