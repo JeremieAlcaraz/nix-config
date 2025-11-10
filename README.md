@@ -18,8 +18,8 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 
 ## 🖥️ Hôtes configurés
 
-### `proxmox`
-Hôte hyperviseur Proxmox avec configuration minimale.
+### `magnolia` 🌸
+Hôte hyperviseur Proxmox avec configuration minimale (anciennement `proxmox`).
 
 **Caractéristiques :**
 - Console série pour accès Proxmox
@@ -27,8 +27,8 @@ Hôte hyperviseur Proxmox avec configuration minimale.
 - SSH avec authentification par clés
 - Outils de base : vim, git, curl, wget, htop, tmux
 
-### `jeremie-web`
-Serveur web avec fonctionnalités avancées.
+### `mimosa` 🌼
+Serveur web avec fonctionnalités avancées (anciennement `jeremie-web`).
 
 **Caractéristiques :**
 - Tailscale VPN pour accès sécurisé
@@ -71,9 +71,9 @@ git clone https://github.com/JeremieAlcaraz/nix-config.git
 cd nix-config
 
 # Construire et activer la configuration pour un hôte
-sudo nixos-rebuild switch --flake .#proxmox
+sudo nixos-rebuild switch --flake .#magnolia  # Infrastructure Proxmox
 # ou
-sudo nixos-rebuild switch --flake .#jeremie-web
+sudo nixos-rebuild switch --flake .#mimosa    # Serveur web
 ```
 
 ## 📁 Structure du repository
@@ -83,10 +83,10 @@ nix-config/
 ├── flake.nix                    # Définition principale du flake
 ├── flake.lock                   # Versions verrouillées des dépendances
 ├── hosts/                       # Configurations par hôte
-│   ├── proxmox/
+│   ├── magnolia/                # Infrastructure Proxmox (ex-proxmox)
 │   │   ├── configuration.nix
 │   │   └── hardware-configuration.nix
-│   └── jeremie-web/
+│   └── mimosa/                  # Serveur web (ex-jeremie-web)
 │       ├── configuration.nix
 │       └── hardware-configuration.nix
 ├── iso/                         # Configuration ISO personnalisée

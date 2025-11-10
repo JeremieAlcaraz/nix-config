@@ -22,27 +22,27 @@ environment.systemPackages = with pkgs; [ sops age ssh-to-age ];
 
 ### 1. Déployer l'hôte une première fois
 
-Avant de configurer les secrets, déployez l'hôte jeremie-web pour générer ses clés SSH :
+Avant de configurer les secrets, déployez l'hôte mimosa pour générer ses clés SSH :
 
 ```bash
-sudo nixos-rebuild switch --flake .#jeremie-web
+sudo nixos-rebuild switch --flake .#mimosa
 ```
 
 À ce stade, le déploiement échouera probablement car le fichier de secrets n'existe pas encore. C'est normal.
 
 ### 2. Récupérer la clé publique age de l'hôte
 
-Depuis l'hôte jeremie-web, récupérez la clé publique age :
+Depuis l'hôte mimosa, récupérez la clé publique age :
 
 ```bash
 # Option 1: Via SSH depuis votre machine locale
-ssh root@jeremie-web "cat /var/lib/sops-nix/key.pub"
+ssh root@mimosa "cat /var/lib/sops-nix/key.pub"
 
 # Option 2: Convertir la clé SSH de l'hôte
-ssh root@jeremie-web "cat /etc/ssh/ssh_host_ed25519_key.pub" | ssh-to-age
+ssh root@mimosa "cat /etc/ssh/ssh_host_ed25519_key.pub" | ssh-to-age
 
 # Option 3: Directement sur l'hôte
-ssh root@jeremie-web
+ssh root@mimosa
 cat /var/lib/sops-nix/key.pub
 ```
 
@@ -54,10 +54,10 @@ La clé ressemble à : `age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ```yaml
 creation_rules:
-  - path_regex: secrets/jeremie-web\.yaml$
+  - path_regex: secrets/mimosa\.yaml$
     key_groups:
       - age:
-          - &jeremie-web age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          - &mimosa age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ### 4. Générer votre clé age personnelle (optionnel mais recommandé)
@@ -77,10 +77,10 @@ Ajoutez votre clé publique dans `.sops.yaml` :
 
 ```yaml
 creation_rules:
-  - path_regex: secrets/jeremie-web\.yaml$
+  - path_regex: secrets/mimosa\.yaml$
     key_groups:
       - age:
-          - &jeremie-web age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          - &mimosa age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
           - &admin age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy  # Votre clé
 ```
 
@@ -90,10 +90,10 @@ creation_rules:
 
 ```bash
 # Copier le template
-cp secrets/jeremie-web.yaml.example secrets/jeremie-web.yaml
+cp secrets/mimosa.yaml.example secrets/mimosa.yaml
 
 # Éditer avec sops (chiffre automatiquement)
-sops secrets/jeremie-web.yaml
+sops secrets/mimosa.yaml
 ```
 
 ### 2. Ajouter le token Cloudflare Tunnel
@@ -124,24 +124,24 @@ Sauvegardez dans sops (`:wq` dans vim). Le fichier est maintenant chiffré :
 
 ```bash
 # Vérifier que le fichier est chiffré
-cat secrets/jeremie-web.yaml
+cat secrets/mimosa.yaml
 # Devrait contenir "sops:" et des données chiffrées
 
 # Vérifier qu'on peut le déchiffrer
-sops -d secrets/jeremie-web.yaml
+sops -d secrets/mimosa.yaml
 ```
 
 ### 4. Committer le fichier chiffré
 
 ```bash
 # Ajouter explicitement le fichier chiffré
-git add -f secrets/jeremie-web.yaml
+git add -f secrets/mimosa.yaml
 
 # Vérifier qu'il est bien chiffré avant de committer !
-cat secrets/jeremie-web.yaml | grep "sops:"
+cat secrets/mimosa.yaml | grep "sops:"
 
 # Committer
-git commit -m "🔒 Add encrypted secrets for jeremie-web"
+git commit -m "🔒 Add encrypted secrets for mimosa"
 ```
 
 ## Déploiement
@@ -150,10 +150,10 @@ Une fois les secrets configurés, déployez normalement :
 
 ```bash
 # Sur la VM directement
-sudo nixos-rebuild switch --flake .#jeremie-web
+sudo nixos-rebuild switch --flake .#mimosa
 
 # Ou via déploiement distant
-sudo nixos-rebuild switch --flake .#jeremie-web --target-host root@jeremie-web
+sudo nixos-rebuild switch --flake .#mimosa --target-host root@mimosa
 ```
 
 sops-nix déchiffrera automatiquement les secrets au démarrage et les rendra disponibles dans `/run/secrets/`.
@@ -162,17 +162,17 @@ sops-nix déchiffrera automatiquement les secrets au démarrage et les rendra di
 
 ```bash
 # Éditer le fichier chiffré
-sops secrets/jeremie-web.yaml
+sops secrets/mimosa.yaml
 
 # Ajouter/modifier des secrets
 # Sauvegarder et committer
-git add secrets/jeremie-web.yaml
+git add secrets/mimosa.yaml
 git commit -m "🔒 Update secrets"
 ```
 
 ## Ajouter un nouveau secret
 
-1. Éditez `hosts/jeremie-web/configuration.nix` :
+1. Éditez `hosts/mimosa/configuration.nix` :
 
 ```nix
 sops.secrets = {
@@ -190,7 +190,7 @@ sops.secrets = {
 2. Ajoutez le secret dans le fichier chiffré :
 
 ```bash
-sops secrets/jeremie-web.yaml
+sops secrets/mimosa.yaml
 # Ajouter:
 # mon-api-key: ma-valeur-secrète
 ```
@@ -234,7 +234,7 @@ Si vous devez changer la clé d'un hôte (par exemple après une réinstallation
 3. Re-chiffrez les secrets :
 
 ```bash
-sops updatekeys secrets/jeremie-web.yaml
+sops updatekeys secrets/mimosa.yaml
 ```
 
 ## Debugging
@@ -246,7 +246,7 @@ sops updatekeys secrets/jeremie-web.yaml
 ls -la /run/secrets/
 
 # Vérifier les logs systemd
-journalctl -u sops-nix-jeremie-web.service
+journalctl -u sops-nix-mimosa.service
 
 # Vérifier la clé age
 cat /var/lib/sops-nix/key.pub
@@ -262,7 +262,7 @@ Vérifiez que :
 ### Re-chiffrer avec les nouvelles clés
 
 ```bash
-sops updatekeys secrets/jeremie-web.yaml
+sops updatekeys secrets/mimosa.yaml
 ```
 
 ## Sécurité

@@ -27,29 +27,29 @@ cd /path/to/nix-config
 # 2. Configurer sops pour utiliser ta clé
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
 
-# 3. Créer le secret pour jeremie-web
-cp secrets/jeremie-web.yaml.example secrets/jeremie-web.yaml
-sops secrets/jeremie-web.yaml
+# 3. Créer le secret pour mimosa (serveur web)
+cp secrets/mimosa.yaml.example secrets/mimosa.yaml
+sops secrets/mimosa.yaml
 # Un éditeur s'ouvre (nano ou vi)
 # Le fichier contient déjà un hash de mot de passe par défaut (mot de passe: "nixos")
 # Tu peux le garder ou le changer (voir section "Changer le mot de passe" ci-dessous)
 # Sauvegarde et quitte (Ctrl+X, puis Y, puis Enter dans nano)
 
-# 4. Créer le secret pour proxmox
-cp secrets/proxmox.yaml.example secrets/proxmox.yaml
-sops secrets/proxmox.yaml
+# 4. Créer le secret pour magnolia (infrastructure Proxmox)
+cp secrets/magnolia.yaml.example secrets/magnolia.yaml
+sops secrets/magnolia.yaml
 # Même chose, sauvegarde et quitte
 
 # 5. Vérifier que les fichiers sont bien chiffrés
-cat secrets/jeremie-web.yaml | grep "sops:"
+cat secrets/mimosa.yaml | grep "sops:"
 # Tu dois voir : sops: ... mac: ...
 # Si c'est le cas, c'est bon ! 🎉
 
-cat secrets/proxmox.yaml | grep "sops:"
+cat secrets/magnolia.yaml | grep "sops:"
 # Pareil ici
 
 # 6. Committer les secrets chiffrés
-git add -f secrets/jeremie-web.yaml secrets/proxmox.yaml
+git add -f secrets/mimosa.yaml secrets/magnolia.yaml
 git commit -m "🔒 Add encrypted secrets with shared age key"
 git push
 ```
@@ -85,7 +85,7 @@ Si tu veux installer d'abord puis copier la clé après :
 1. **Modifier temporairement les configs** pour utiliser `initialPassword` :
 
 ```nix
-# Dans hosts/jeremie-web/configuration.nix et hosts/proxmox/configuration.nix
+# Dans hosts/mimosa/configuration.nix et hosts/magnolia/configuration.nix
 
 # Commentez temporairement la section sops
 # sops = { ... };
@@ -106,13 +106,13 @@ users.users.jeremie = {
 3. **Copier la clé** sur chaque VM :
 
 ```bash
-# Pour jeremie-web
-cat ~/.config/sops/age/nixos-shared-key.txt | ssh root@jeremie-web "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
-ssh root@jeremie-web "chmod 600 /var/lib/sops-nix/key.txt"
+# Pour mimosa (serveur web)
+cat ~/.config/sops/age/nixos-shared-key.txt | ssh root@mimosa "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
+ssh root@mimosa "chmod 600 /var/lib/sops-nix/key.txt"
 
-# Pour proxmox
-cat ~/.config/sops/age/nixos-shared-key.txt | ssh root@proxmox "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
-ssh root@proxmox "chmod 600 /var/lib/sops-nix/key.txt"
+# Pour magnolia (infrastructure Proxmox)
+cat ~/.config/sops/age/nixos-shared-key.txt | ssh root@magnolia "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
+ssh root@magnolia "chmod 600 /var/lib/sops-nix/key.txt"
 ```
 
 4. **Réactiver la config sops** (décommenter les sections)
@@ -120,8 +120,8 @@ ssh root@proxmox "chmod 600 /var/lib/sops-nix/key.txt"
 5. **Redéployer** :
 
 ```bash
-ssh root@jeremie-web "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#jeremie-web"
-ssh root@proxmox "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#proxmox"
+ssh root@mimosa "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#mimosa"
+ssh root@magnolia "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#magnolia"
 ```
 
 ### Étape 3 : Déployer les VMs
@@ -130,9 +130,9 @@ Si tu as suivi l'Option A, ta clé est déjà en place. Déploie normalement :
 
 ```bash
 # Après avoir cloné le repo dans /etc/nixos sur la VM
-nixos-rebuild switch --flake .#jeremie-web
+nixos-rebuild switch --flake .#mimosa
 # ou
-nixos-rebuild switch --flake .#proxmox
+nixos-rebuild switch --flake .#magnolia
 ```
 
 ## 🔑 Changer le Mot de Passe
@@ -148,12 +148,12 @@ python3 -c "import crypt; print(crypt.crypt('TonNouveauMotDePasse', crypt.mksalt
 
 # 2. Éditer le secret
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
-sops secrets/jeremie-web.yaml
+sops secrets/mimosa.yaml
 # Remplace la valeur de jeremie-password-hash par ton nouveau hash
 # Sauvegarde et quitte
 
-# 3. Même chose pour proxmox si besoin
-sops secrets/proxmox.yaml
+# 3. Même chose pour magnolia si besoin
+sops secrets/magnolia.yaml
 
 # 4. Commit et push
 git add secrets/*.yaml
@@ -161,8 +161,8 @@ git commit -m "🔒 Update password hash"
 git push
 
 # 5. Redéployer sur les VMs
-ssh root@jeremie-web "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#jeremie-web"
-ssh root@proxmox "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#proxmox"
+ssh root@mimosa "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#mimosa"
+ssh root@magnolia "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#magnolia"
 ```
 
 ## 🔄 Workflow Quotidien
@@ -172,12 +172,12 @@ ssh root@proxmox "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#pr
 ```bash
 # Sur ton Mac
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
-sops secrets/jeremie-web.yaml
+sops secrets/mimosa.yaml
 # Ajoute ton nouveau secret (ex: api-key: ma-clé-secrète)
 # Sauvegarde et quitte
 
 # Commit et push
-git add secrets/jeremie-web.yaml
+git add secrets/mimosa.yaml
 git commit -m "🔒 Add new secret"
 git push
 
@@ -185,7 +185,7 @@ git push
 sops.secrets.api-key = {};
 
 # Redéploie
-ssh root@jeremie-web "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#jeremie-web"
+ssh root@mimosa "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#mimosa"
 ```
 
 ### Éditer un Secret Existant
@@ -193,16 +193,16 @@ ssh root@jeremie-web "cd /etc/nixos && git pull && nixos-rebuild switch --flake 
 ```bash
 # Sur ton Mac
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
-sops secrets/jeremie-web.yaml
+sops secrets/mimosa.yaml
 # Modifie le secret
 # Sauvegarde et quitte
 
-git add secrets/jeremie-web.yaml
+git add secrets/mimosa.yaml
 git commit -m "🔒 Update secret"
 git push
 
 # Redéploie
-ssh root@jeremie-web "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#jeremie-web"
+ssh root@mimosa "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#mimosa"
 ```
 
 ## 🆘 Dépannage
@@ -214,17 +214,17 @@ ssh root@jeremie-web "cd /etc/nixos && git pull && nixos-rebuild switch --flake 
 **Solution** :
 ```bash
 # Vérifie que la clé existe sur la VM
-ssh root@jeremie-web "ls -la /var/lib/sops-nix/key.txt"
+ssh root@mimosa "ls -la /var/lib/sops-nix/key.txt"
 
 # Si elle n'existe pas, copie-la depuis ton Mac
-cat ~/.config/sops/age/nixos-shared-key.txt | ssh root@jeremie-web "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
-ssh root@jeremie-web "chmod 600 /var/lib/sops-nix/key.txt"
+cat ~/.config/sops/age/nixos-shared-key.txt | ssh root@mimosa "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
+ssh root@mimosa "chmod 600 /var/lib/sops-nix/key.txt"
 
 # Redéploie
-ssh root@jeremie-web "nixos-rebuild switch --flake /etc/nixos#jeremie-web"
+ssh root@mimosa "nixos-rebuild switch --flake /etc/nixos#mimosa"
 ```
 
-### Erreur : "file 'secrets/jeremie-web.yaml' not found"
+### Erreur : "file 'secrets/mimosa.yaml' not found"
 
 **Cause** : Le fichier de secrets n'a pas été créé ou committé.
 
@@ -232,12 +232,12 @@ ssh root@jeremie-web "nixos-rebuild switch --flake /etc/nixos#jeremie-web"
 ```bash
 # Sur ton Mac
 cd /path/to/nix-config
-cp secrets/jeremie-web.yaml.example secrets/jeremie-web.yaml
+cp secrets/mimosa.yaml.example secrets/mimosa.yaml
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
-sops secrets/jeremie-web.yaml
+sops secrets/mimosa.yaml
 # Sauvegarde et quitte
 
-git add -f secrets/jeremie-web.yaml
+git add -f secrets/mimosa.yaml
 git commit -m "🔒 Add encrypted secrets"
 git push
 ```
@@ -263,13 +263,13 @@ Ajoute ces alias dans ton `~/.zshrc` ou `~/.bashrc` sur ton Mac :
 alias sops-edit='SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt sops'
 
 # Éditer les secrets rapidement
-alias sops-jw='sops-edit ~/path/to/nix-config/secrets/jeremie-web.yaml'
-alias sops-px='sops-edit ~/path/to/nix-config/secrets/proxmox.yaml'
+alias sops-mimosa='sops-edit ~/path/to/nix-config/secrets/mimosa.yaml'
+alias sops-magnolia='sops-edit ~/path/to/nix-config/secrets/magnolia.yaml'
 ```
 
 Utilisation :
 ```bash
-sops-jw  # Édite directement jeremie-web.yaml
+sops-mimosa  # Édite directement mimosa.yaml
 ```
 
 ### Sauvegarder la Clé Privée
@@ -293,7 +293,7 @@ Si tu perds cette clé, tu ne pourras plus déchiffrer tes secrets ! 🚨
 
 - [ ] Clé age générée sur le Mac (✅ déjà fait)
 - [ ] `.sops.yaml` configuré avec ta clé publique (✅ déjà fait)
-- [ ] Secrets créés et chiffrés (`secrets/jeremie-web.yaml`, `secrets/proxmox.yaml`)
+- [ ] Secrets créés et chiffrés (`secrets/mimosa.yaml`, `secrets/magnolia.yaml`)
 - [ ] Secrets committés et pushés
 - [ ] Clé privée copiée sur les VMs (`/var/lib/sops-nix/key.txt`)
 - [ ] VMs déployées avec `nixos-rebuild switch`

@@ -26,8 +26,8 @@ Ce repo utilise une approche **standardisée** pour toutes les VMs :
 curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
 chmod +x install.sh
 
-# 2. Lancer l'installation (remplacer HOST par proxmox ou jeremie-web)
-sudo ./install.sh proxmox
+# 2. Lancer l'installation (remplacer HOST par magnolia ou mimosa)
+sudo ./install.sh magnolia
 ```
 
 Le script va :
@@ -61,11 +61,11 @@ ssh jeremie@IP_DE_LA_VM
 
 ### Étape 1 : Cloner la VM dans Proxmox
 
-1. Dans Proxmox, faites un clic droit sur une VM existante (ex: `proxmox`)
+1. Dans Proxmox, faites un clic droit sur une VM existante (ex: `magnolia`)
 2. Cliquez sur **"Clone"**
 3. Choisissez :
    - **Mode** : Full Clone (clone complet)
-   - **Nom** : Le nouveau nom (ex: `jeremie-web`)
+   - **Nom** : Le nouveau nom (ex: `mimosa`)
    - **VM ID** : Un ID libre
 
 ### Étape 2 : Démarrer et reconfigurer
@@ -83,7 +83,7 @@ cd /etc/nixos
 git pull
 
 # 5. Appliquer la nouvelle configuration
-sudo nixos-rebuild switch --flake .#jeremie-web
+sudo nixos-rebuild switch --flake .#mimosa
 
 # 6. Redémarrer pour que le hostname soit appliqué
 sudo reboot
@@ -97,10 +97,10 @@ ssh jeremie@IP_NOUVELLE_VM
 
 # Vérifier le hostname
 hostnamectl
-# Devrait afficher : Static hostname: jeremie-web
+# Devrait afficher : Static hostname: mimosa
 
 # Vérifier la config
-cat /etc/nixos/hosts/jeremie-web/configuration.nix | grep hostName
+cat /etc/nixos/hosts/mimosa/configuration.nix | grep hostName
 ```
 
 **✅ C'est tout ! Votre VM est prête.**
@@ -116,11 +116,11 @@ Une fois la VM installée/clonée, voici comment déployer des modifications :
 ```bash
 # 1. Faire vos modifications dans le repo local
 cd ~/nix-config
-vim hosts/jeremie-web/configuration.nix
+vim hosts/mimosa/configuration.nix
 
 # 2. Commit et push
 git add .
-git commit -m "Update jeremie-web config"
+git commit -m "Update mimosa config"
 git push
 ```
 
@@ -135,10 +135,10 @@ cd /etc/nixos
 git pull
 
 # 3. Tester la config avant de l'appliquer (optionnel)
-sudo nixos-rebuild test --flake .#jeremie-web
+sudo nixos-rebuild test --flake .#mimosa
 
 # 4. Appliquer définitivement
-sudo nixos-rebuild switch --flake .#jeremie-web
+sudo nixos-rebuild switch --flake .#mimosa
 ```
 
 **Note** : La plupart des changements sont appliqués immédiatement. Seuls quelques paramètres (comme le hostname) nécessitent un redémarrage.
@@ -154,8 +154,8 @@ sudo nixos-rebuild switch --flake .#jeremie-web
 mkdir -p hosts/mon-nouveau-host
 
 # Copier les fichiers depuis un host existant
-cp hosts/jeremie-web/configuration.nix hosts/mon-nouveau-host/
-cp hosts/jeremie-web/hardware-configuration.nix hosts/mon-nouveau-host/
+cp hosts/mimosa/configuration.nix hosts/mon-nouveau-host/
+cp hosts/mimosa/hardware-configuration.nix hosts/mon-nouveau-host/
 ```
 
 ### 2. Modifier la configuration
@@ -214,8 +214,8 @@ Le **hostname de la VM** doit correspondre au **nom dans flake.nix** :
 
 | Hostname dans Proxmox | Commande nixos-rebuild | Fichier config |
 |----------------------|------------------------|----------------|
-| `proxmox` | `--flake .#proxmox` | `hosts/proxmox/` |
-| `jeremie-web` | `--flake .#jeremie-web` | `hosts/jeremie-web/` |
+| `magnolia` | `--flake .#magnolia` | `hosts/magnolia/` |
+| `mimosa` | `--flake .#mimosa` | `hosts/mimosa/` |
 
 ### Changement de hostname
 
@@ -274,7 +274,7 @@ grep hostName /etc/nixos/hosts/*/configuration.nix
 
 # Vérifier que vous avez bien utilisé le bon nom d'host
 # Mauvais : nixos-rebuild switch --flake .#
-# Bon : nixos-rebuild switch --flake .#jeremie-web
+# Bon : nixos-rebuild switch --flake .#mimosa
 
 # Redémarrer
 sudo reboot

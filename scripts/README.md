@@ -13,7 +13,7 @@ Script principal d'installation NixOS, à exécuter **depuis l'ISO d'installatio
 # Télécharger et lancer depuis l'ISO NixOS
 curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
 chmod +x install.sh
-sudo ./install.sh [proxmox|jeremie-web]
+sudo ./install.sh [magnolia|mimosa]  # magnolia = Proxmox, mimosa = serveur web
 ```
 
 **Fonctionnalités:**
@@ -53,7 +53,7 @@ Script compagnon à exécuter **sur l'hôte Proxmox** pour automatiser complète
    ```bash
    curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
    chmod +x install.sh
-   sudo ./install.sh proxmox
+   sudo ./install.sh magnolia  # Infrastructure Proxmox
    ```
 
 2. **La VM s'éteint automatiquement**
@@ -80,7 +80,7 @@ Script compagnon à exécuter **sur l'hôte Proxmox** pour automatiser complète
    ```bash
    curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
    chmod +x install.sh
-   sudo ./install.sh proxmox
+   sudo ./install.sh magnolia  # Infrastructure Proxmox
    ```
 
 3. Le script Proxmox attend, détache l'ISO et redémarre automatiquement
@@ -95,16 +95,16 @@ Script compagnon à exécuter **sur l'hôte Proxmox** pour automatiser complète
 Le script `install-nixos.sh` peut être relancé **sans redémarrer la VM** en cas d'échec :
 
 ```bash
-sudo ./install.sh proxmox
+sudo ./install.sh magnolia
 # Si échec...
-sudo ./install.sh proxmox  # Relancer directement
+sudo ./install.sh magnolia  # Relancer directement
 ```
 
 Le nettoyage automatique du disque évite les erreurs "partition in use".
 
 ## 📝 Notes
 
-- Les deux hosts disponibles: `proxmox` et `jeremie-web`
+- Les deux hosts disponibles: `magnolia` (infrastructure Proxmox) et `mimosa` (serveur web)
 - Le disque cible est toujours `/dev/sda`
 - Les secrets SOPS doivent être présents dans `/var/lib/sops-nix/key.txt` (optionnel)
 - L'arrêt automatique peut être annulé avec `Ctrl+C` pendant le countdown
