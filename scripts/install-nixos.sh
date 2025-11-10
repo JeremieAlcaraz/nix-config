@@ -148,14 +148,7 @@ info "=========================================="
 info "🎉 Installation réussie!"
 info "=========================================="
 info ""
-info "Prochaines étapes:"
-info "1. Retirer l'ISO d'installation dans Proxmox"
-info "2. Redémarrer la VM: reboot"
-info "3. Se connecter via SSH: ssh jeremie@<IP>"
-info ""
-info "Pour trouver l'IP après le boot:"
-info "  ip a"
-info ""
+
 if [[ -f /mnt/var/lib/sops-nix/key.txt ]]; then
     info "🔐 Les secrets SOPS ont été déchiffrés avec succès"
     info "Le mot de passe de l'utilisateur 'jeremie' a été configuré via SOPS"
@@ -164,3 +157,34 @@ else
     warning "⚠️  Changez-le immédiatement avec: passwd"
 fi
 info ""
+
+# 9. Arrêt automatique
+info "Étape 8/8: Préparation de l'arrêt..."
+info ""
+warning "⚠️  IMPORTANT: Avant de redémarrer la VM, détachez l'ISO d'installation!"
+info ""
+info "Depuis l'hôte Proxmox, exécutez (remplacez VMID par le numéro de votre VM):"
+info "  qm set VMID --ide2 none"
+info ""
+info "Ou via l'interface web Proxmox:"
+info "  Hardware > CD/DVD Drive > Remove"
+info ""
+info "Puis redémarrez la VM:"
+info "  qm start VMID"
+info ""
+info "Connexion SSH après le boot:"
+info "  ssh jeremie@<IP>"
+info ""
+
+# Countdown avant l'arrêt
+info "La VM va s'éteindre dans 10 secondes..."
+info "Appuyez sur Ctrl+C pour annuler."
+for i in {10..1}; do
+    echo -ne "${YELLOW}⏱️  Arrêt dans ${i}s...${NC}\r"
+    sleep 1
+done
+echo ""
+
+info "🔌 Arrêt de la VM..."
+sync
+poweroff
