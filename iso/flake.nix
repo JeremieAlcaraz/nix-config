@@ -106,6 +106,7 @@
           security.sudo.wheelNeedsPassword = false;
 
           # 🌐 Active NetworkManager (gère automatiquement le DHCP)
+          networking.wireless.enable = false;  # Désactive wpa_supplicant (conflit avec NetworkManager)
           networking.networkmanager.enable = true;
 
           # 🔧 SSH activé avec mot de passe temporaire (pratique pour debug)
