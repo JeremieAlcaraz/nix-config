@@ -154,9 +154,20 @@ nameserver 8.8.4.4
 EOF
 
 # Tester la résolution DNS
-if ! nslookup registry.npmjs.org > /dev/null 2>&1; then
-    warning "La résolution DNS ne fonctionne pas correctement"
-    warning "L'installation peut échouer si des téléchargements npm sont nécessaires"
+info "Test de résolution DNS..."
+if ! timeout 5 nslookup registry.npmjs.org > /dev/null 2>&1; then
+    warning "La résolution DNS ne fonctionne pas correctement!"
+    warning "L'installation risque d'échouer si des téléchargements npm sont nécessaires"
+    echo ""
+    warning "Pour diagnostiquer le problème réseau, exécutez:"
+    warning "  sudo ./diagnose-network.sh"
+    echo ""
+    read -p "Continuer quand même? (oui/non): " continue_anyway
+    if [[ "$continue_anyway" != "oui" ]]; then
+        error "Installation annulée. Résolvez les problèmes réseau d'abord."
+    fi
+else
+    success "Résolution DNS fonctionnelle"
 fi
 
 export NIX_CONFIG='experimental-features = nix-command flakes'
