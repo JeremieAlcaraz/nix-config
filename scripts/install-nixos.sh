@@ -50,6 +50,26 @@ read -p "Branche git à utiliser (main): " BRANCH
 BRANCH="${BRANCH:-main}"
 info "Branche sélectionnée: $BRANCH"
 
+# Demander le mode d'installation pour mimosa
+if [[ "$HOST" == "mimosa" ]]; then
+    echo ""
+    warning "Mode d'installation pour mimosa:"
+    echo "  1. Installation complète (avec le serveur web j12zdotcom)"
+    echo "  2. Installation minimale (sans le serveur web - recommandé si problèmes réseau)"
+    echo ""
+    read -p "Choisissez le mode (1/2, défaut: 1): " INSTALL_MODE
+    INSTALL_MODE="${INSTALL_MODE:-1}"
+
+    if [[ "$INSTALL_MODE" == "2" ]]; then
+        export NIXOS_MINIMAL_INSTALL="true"
+        info "Mode minimal sélectionné - le serveur web sera désactivé pendant l'installation"
+        info "Après l'installation, vous pourrez l'activer avec:"
+        info "  sudo nixos-rebuild switch"
+    else
+        info "Mode complet sélectionné - installation du serveur web j12zdotcom"
+    fi
+fi
+
 # Vérifier que le disque existe
 [[ ! -b "$DISK" ]] && error "Le disque $DISK n'existe pas"
 
@@ -120,8 +140,25 @@ mount /dev/disk/by-label/ESP /mnt/boot
 # Vérification
 lsblk -f
 
-# 4. Activer les flakes
-info "Étape 4/8: Configuration de Nix..."
+# 4. Activer les flakes et configurer DNS
+info "Étape 4/8: Configuration de Nix et DNS..."
+
+# Configurer des DNS publics fiables pour éviter les erreurs EAI_AGAIN
+info "Configuration des DNS publics (Cloudflare et Google)..."
+cat > /etc/resolv.conf << EOF
+# DNS publics temporaires pour l'installation
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+EOF
+
+# Tester la résolution DNS
+if ! nslookup registry.npmjs.org > /dev/null 2>&1; then
+    warning "La résolution DNS ne fonctionne pas correctement"
+    warning "L'installation peut échouer si des téléchargements npm sont nécessaires"
+fi
+
 export NIX_CONFIG='experimental-features = nix-command flakes'
 
 # 5. Cloner le repo
@@ -144,7 +181,14 @@ fi
 # 7. Installation
 info "Étape 6/8: Installation de NixOS (cela peut prendre plusieurs minutes)..."
 cd /mnt/etc/nixos
-nixos-install --flake ".#${HOST}" --no-root-passwd
+
+# Passer la variable d'environnement NIXOS_MINIMAL_INSTALL au build si définie
+if [[ "${NIXOS_MINIMAL_INSTALL:-}" == "true" ]]; then
+    info "Installation en mode minimal (sans serveur web)..."
+    NIXOS_MINIMAL_INSTALL=true nixos-install --flake ".#${HOST}" --no-root-passwd
+else
+    nixos-install --flake ".#${HOST}" --no-root-passwd
+fi
 
 # 8. Finalisation
 info "Étape 7/8: Installation terminée!"
@@ -162,6 +206,25 @@ else
     warning "⚠️  Changez-le immédiatement avec: passwd"
 fi
 info ""
+
+# Message spécifique pour l'installation minimale de mimosa
+if [[ "$HOST" == "mimosa" && "${NIXOS_MINIMAL_INSTALL:-}" == "true" ]]; then
+    info "=========================================="
+    info "📝 Installation minimale - Étapes suivantes"
+    info "=========================================="
+    info ""
+    info "Le serveur web j12zdotcom a été désactivé pendant l'installation."
+    info "Pour l'activer après le premier boot:"
+    info ""
+    info "1. Connectez-vous via SSH:"
+    info "   ssh jeremie@<IP>"
+    info ""
+    info "2. Activez le serveur web:"
+    info "   sudo nixos-rebuild switch"
+    info ""
+    info "Le système téléchargera et activera le serveur web."
+    info ""
+fi
 
 # 9. Arrêt automatique
 info "Étape 8/8: Préparation de l'arrêt..."
