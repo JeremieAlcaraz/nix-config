@@ -105,8 +105,7 @@
           # 🔓 Permet sudo sans mot de passe pour l'utilisateur nixos
           security.sudo.wheelNeedsPassword = false;
 
-          # 🌐 Active le réseau DHCP automatiquement
-          networking.useDHCP = true;
+          # 🌐 Active NetworkManager (gère automatiquement le DHCP)
           networking.networkmanager.enable = true;
 
           # 🔧 SSH activé avec mot de passe temporaire (pratique pour debug)
