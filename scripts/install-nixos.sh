@@ -53,6 +53,37 @@ warning "ATTENTION: Toutes les données sur $DISK seront EFFACÉES!"
 read -p "Êtes-vous sûr de vouloir continuer? (tapez 'oui' pour confirmer): " confirm
 [[ "$confirm" != "oui" ]] && error "Installation annulée"
 
+# 0. Nettoyage du disque (évite les erreurs "partition in use")
+info "Étape 0/8: Nettoyage du disque..."
+
+# Désactiver le swap s'il est actif sur ce disque
+if grep -q "$DISK" /proc/swaps 2>/dev/null; then
+    warning "Désactivation du swap sur $DISK..."
+    swapoff "${DISK}"* 2>/dev/null || true
+fi
+
+# Démonter toutes les partitions du disque cible
+for part in "${DISK}"*[0-9]; do
+    if mountpoint -q "$part" 2>/dev/null || grep -q "$part" /proc/mounts 2>/dev/null; then
+        warning "Démontage de $part..."
+        umount -f "$part" 2>/dev/null || true
+    fi
+done
+
+# Démonter /mnt et ses sous-montages si nécessaire
+if mountpoint -q /mnt 2>/dev/null; then
+    warning "Démontage de /mnt..."
+    umount -R /mnt 2>/dev/null || true
+fi
+
+# Effacer toutes les signatures de système de fichiers (empêche le kernel de les reconnaître)
+warning "Effacement des signatures de système de fichiers..."
+wipefs -af "$DISK" 2>/dev/null || true
+
+# S'assurer que le kernel oublie l'ancienne table de partitions
+partprobe "$DISK" 2>/dev/null || true
+sleep 1
+
 # 1. Partitionnement
 info "Étape 1/7: Partitionnement du disque..."
 parted "$DISK" -- mklabel gpt
@@ -60,11 +91,14 @@ parted "$DISK" -- mkpart ESP fat32 1MiB 513MiB
 parted "$DISK" -- set 1 esp on
 parted "$DISK" -- mkpart primary 513MiB 100%
 
+# Forcer le kernel à relire la nouvelle table de partitions
+partprobe "$DISK" 2>/dev/null || true
+
 # Attendre que les partitions soient reconnues
 sleep 2
 
 # 2. Formatage avec labels STANDARDISÉS
-info "Étape 2/7: Formatage des partitions..."
+info "Étape 2/8: Formatage des partitions..."
 mkfs.vfat -F32 -n ESP "${DISK}1"
 mkfs.ext4 -L nixos-root "${DISK}2"
 
@@ -73,7 +107,7 @@ udevadm settle
 sleep 2
 
 # 3. Montage
-info "Étape 3/7: Montage des partitions..."
+info "Étape 3/8: Montage des partitions..."
 mount /dev/disk/by-label/nixos-root /mnt
 mkdir -p /mnt/boot
 mount /dev/disk/by-label/ESP /mnt/boot
@@ -82,11 +116,11 @@ mount /dev/disk/by-label/ESP /mnt/boot
 lsblk -f
 
 # 4. Activer les flakes
-info "Étape 4/7: Configuration de Nix..."
+info "Étape 4/8: Configuration de Nix..."
 export NIX_CONFIG='experimental-features = nix-command flakes'
 
 # 5. Cloner le repo
-info "Étape 5/7: Clonage du dépôt..."
+info "Étape 5/8: Clonage du dépôt..."
 if [[ -d /mnt/etc/nixos ]]; then
     rm -rf /mnt/etc/nixos
 fi
@@ -103,12 +137,12 @@ else
 fi
 
 # 7. Installation
-info "Étape 6/7: Installation de NixOS (cela peut prendre plusieurs minutes)..."
+info "Étape 6/8: Installation de NixOS (cela peut prendre plusieurs minutes)..."
 cd /mnt/etc/nixos
 nixos-install --flake ".#${HOST}" --no-root-passwd
 
 # 8. Finalisation
-info "Étape 7/7: Installation terminée!"
+info "Étape 7/8: Installation terminée!"
 info ""
 info "=========================================="
 info "🎉 Installation réussie!"
