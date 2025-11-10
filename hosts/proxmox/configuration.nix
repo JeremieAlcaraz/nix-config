@@ -7,7 +7,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Console série Proxmox
-  boot.kernelParams = [ "console=ttyS0" ];
+  boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty1" ];
   console.earlySetup = true;
 
   time.timeZone = "Europe/Paris";
@@ -90,8 +90,43 @@
     };
   };
 
+  # Configuration ZSH shell
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+    autosuggestions.enable = true;
+    syntaxHighlighting.enable = true;
+  };
+
+  # Configuration Starship prompt
+  programs.starship = {
+    enable = true;
+    settings = {
+      add_newline = false;
+      character = {
+        success_symbol = "[➜](bold green)";
+        error_symbol = "[➜](bold red)";
+      };
+      directory = {
+        truncation_length = 3;
+        truncate_to_repo = true;
+      };
+    };
+  };
+
+  # Message de bienvenue personnalisé
+  programs.zsh.interactiveShellInit = ''
+    echo ""
+    echo "🖥️  Serveur proxmox"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+  '';
+
+  # Shell par défaut pour l'utilisateur jeremie
+  users.users.jeremie.shell = pkgs.zsh;
+
   # Paquets utiles
-  environment.systemPackages = with pkgs; [ vim git curl wget htop ];
+  environment.systemPackages = with pkgs; [ vim git curl wget htop tree ];
 
   programs.tmux.enable = true;
 }
