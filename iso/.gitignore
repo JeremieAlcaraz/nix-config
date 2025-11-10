@@ -1,0 +1,7 @@
+# Build results
+result
+result-*
+
+# Nix build artifacts
+*.iso
+*.qcow2
