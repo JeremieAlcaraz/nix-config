@@ -112,7 +112,6 @@
           services.openssh = {
             enable = true;
             settings = {
-              PermitRootLogin = "no";
               PasswordAuthentication = true;  # Activé pour l'ISO (désactiver en prod)
             };
           };
