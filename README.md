@@ -13,6 +13,7 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 - 🔑 **Authentification SSH par clés uniquement** (pas de mots de passe)
 - 📦 **Multi-hôtes** avec configuration centralisée
 - 🔄 **Infrastructure as Code** avec historique Git complet
+- 💿 **ISO minimale personnalisée** avec support console série pour Proxmox/NoVNC
 - 📚 **Documentation détaillée** en français
 
 ## 🖥️ Hôtes configurés
@@ -34,6 +35,25 @@ Serveur web avec fonctionnalités avancées.
 - Configuration Git globale
 - Sudo sans mot de passe
 - QEMU Guest Agent
+
+## 💿 ISO personnalisée
+
+Une ISO NixOS minimale optimisée pour Proxmox/NoVNC avec :
+
+- ✅ **Console série (ttyS0)** activée automatiquement
+- ✅ **Environnement X11 minimal** (xterm + twm)
+- ✅ **ZSH + Starship** pour un shell moderne
+- ✅ **Autologin** (utilisateur `nixos`)
+- ✅ **SSH et réseau DHCP** préconfigurés
+
+**Builder l'ISO :**
+```bash
+cd iso/
+nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage
+# L'ISO se trouve dans : result/iso/nixos-minimal-ttyS0.iso
+```
+
+📖 **Guide complet :** [docs/ISO-BUILDER.md](docs/ISO-BUILDER.md)
 
 ## 🚀 Démarrage rapide
 
@@ -69,23 +89,25 @@ nix-config/
 │   └── jeremie-web/
 │       ├── configuration.nix
 │       └── hardware-configuration.nix
+├── iso/                         # Configuration ISO personnalisée
+│   └── flake.nix                # Builder ISO minimale avec TTY série
 ├── secrets/                     # Gestion des secrets chiffrés
 │   ├── README.md
 │   ├── .sops.yaml
 │   └── *.yaml                   # Fichiers de secrets chiffrés
 └── docs/                        # Documentation complète
-    ├── README.md                # Introduction au projet
     ├── BOOTSTRAP.md             # Guide d'initialisation des VMs
-    └── SECRETS.md               # Gestion des secrets avec SOPS
+    ├── SECRETS.md               # Gestion des secrets avec SOPS
+    └── ISO-BUILDER.md           # Guide de construction d'ISO personnalisée
 ```
 
 ## 📖 Documentation
 
 Pour plus d'informations, consultez la documentation dans le dossier `docs/` :
 
-- **[docs/README.md](docs/README.md)** - Introduction détaillée au projet
 - **[docs/BOOTSTRAP.md](docs/BOOTSTRAP.md)** - Guide complet pour initialiser une nouvelle VM
 - **[docs/SECRETS.md](docs/SECRETS.md)** - Gestion et rotation des clés de chiffrement
+- **[docs/ISO-BUILDER.md](docs/ISO-BUILDER.md)** - Builder une ISO NixOS personnalisée pour Proxmox
 
 ## 🔐 Gestion des secrets
 
