@@ -75,26 +75,27 @@
       jeremie-password-hash = {
         neededForUsers = true;
       };
-      # Token Cloudflare Tunnel (optionnel, décommenter si utilisé)
-      cloudflare-tunnel-token = {
-        owner = "cloudflared";
-        group = "cloudflared";
-        mode = "0400";
-      };
+      # Token Cloudflare Tunnel (désactivé temporairement avec j12z-webserver)
+      # cloudflare-tunnel-token = {
+      #   owner = "cloudflared";
+      #   group = "cloudflared";
+      #   mode = "0400";
+      # };
     };
   };
 
   # Configuration du site j12zdotcom
-  # Le module sera importé via flake.nix
-  # Note: peut être désactivé pendant l'installation avec NIXOS_MINIMAL_INSTALL=true
-  services.j12z-webserver = {
-    enable = builtins.getEnv "NIXOS_MINIMAL_INSTALL" != "true";
-    domain = "jeremiealcaraz.com";
-    email = "hello@jeremiealcaraz.com";
-    # Cloudflare Tunnel activé avec sops
-    enableCloudflaredTunnel = true;
-    cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
-  };
+  # TEMPORAIREMENT DÉSACTIVÉ: Le module j12z-webserver est commenté dans flake.nix
+  # pour éviter les problèmes réseau pendant l'installation.
+  # Réactiver après l'installation une fois le réseau stable.
+  # services.j12z-webserver = {
+  #   enable = builtins.getEnv "NIXOS_MINIMAL_INSTALL" != "true";
+  #   domain = "jeremiealcaraz.com";
+  #   email = "hello@jeremiealcaraz.com";
+  #   # Cloudflare Tunnel activé avec sops
+  #   enableCloudflaredTunnel = true;
+  #   cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
+  # };
 
   # Configuration Git globale
   programs.git = {
