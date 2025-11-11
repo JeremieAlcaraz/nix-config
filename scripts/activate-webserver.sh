@@ -56,6 +56,70 @@ fi
 info "Connexion réseau : OK"
 echo ""
 
+# Configuration DNS robuste pour améliorer la résilience réseau
+info "Configuration DNS robuste pour le téléchargement des dépendances npm..."
+
+# Fonction pour configurer les DNS
+configure_dns() {
+    local resolv_conf="/etc/resolv.conf"
+
+    # Retirer la protection immutable du fichier si elle existe
+    chattr -i "$resolv_conf" 2>/dev/null || true
+
+    # Sauvegarder la configuration actuelle
+    cp "$resolv_conf" "${resolv_conf}.backup" 2>/dev/null || true
+
+    # Écrire la configuration DNS avec retry
+    cat > "$resolv_conf" << EOF
+# DNS publics temporaires pour le téléchargement npm
+# Cloudflare: 1.1.1.1, 1.0.0.1
+# Google: 8.8.8.8, 8.8.4.4
+options timeout:5 attempts:5 rotate
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+EOF
+}
+
+# Stopper resolvconf s'il tourne (pour éviter qu'il réécrive /etc/resolv.conf)
+if systemctl is-active resolvconf > /dev/null 2>&1; then
+    warning "Arrêt temporaire de resolvconf pour configurer les DNS publics..."
+    systemctl stop resolvconf 2>/dev/null || true
+fi
+
+# Configurer DNS
+configure_dns
+
+# Configuration Nix avec retry et timeouts augmentés
+export NIX_CONFIG='experimental-features = nix-command flakes
+connect-timeout = 30
+stalled-download-timeout = 300
+max-substitution-jobs = 4'
+
+# Variables d'environnement pour améliorer la résilience réseau de npm/pnpm
+export npm_config_fetch_retries=5
+export npm_config_fetch_retry_factor=3
+export npm_config_fetch_retry_mintimeout=10000
+export npm_config_fetch_retry_maxtimeout=120000
+export npm_config_fetch_timeout=120000
+
+# Configurer npm/pnpm pour plus de résilience aux erreurs réseau
+info "Configuration de npm/pnpm avec retry logic..."
+cat > /root/.npmrc << EOF
+# Configuration npm pour améliorer la résilience réseau
+fetch-retries=5
+fetch-retry-factor=3
+fetch-retry-mintimeout=10000
+fetch-retry-maxtimeout=120000
+fetch-timeout=120000
+maxsockets=5
+registry=https://registry.npmjs.org/
+EOF
+
+info "Configuration réseau robuste appliquée"
+echo ""
+
 # Demander confirmation
 warning "ATTENTION: Cette opération va télécharger ~200MB de dépendances npm"
 read -p "Voulez-vous continuer? (tapez 'oui' pour confirmer): " confirm
@@ -88,8 +152,49 @@ info "Reconstruction du système avec la configuration 'mimosa' (serveur web act
 info "Cette opération peut prendre 5-10 minutes..."
 echo ""
 
-# Utiliser nixos-rebuild avec la configuration mimosa
-if nixos-rebuild switch --flake ".#mimosa" 2>&1 | tee /tmp/nixos-rebuild.log; then
+# Fonction pour reconstruire avec retry en cas d'erreur réseau
+rebuild_with_retry() {
+    local max_attempts=3
+    local attempt=1
+    local wait_time=30
+
+    while [[ $attempt -le $max_attempts ]]; do
+        info "Tentative de reconstruction $attempt/$max_attempts..."
+
+        if npm_config_fetch_retries=5 \
+           npm_config_fetch_retry_factor=3 \
+           npm_config_fetch_retry_mintimeout=10000 \
+           npm_config_fetch_retry_maxtimeout=120000 \
+           npm_config_fetch_timeout=120000 \
+           nixos-rebuild switch --flake ".#mimosa" 2>&1 | tee /tmp/nixos-rebuild.log; then
+            return 0
+        fi
+
+        # Vérifier si l'erreur est liée au réseau
+        if grep -qE "EAI_AGAIN|ETIMEDOUT|ECONNRESET|getaddrinfo" /tmp/nixos-rebuild.log; then
+            if [[ $attempt -lt $max_attempts ]]; then
+                warning "Erreur réseau détectée (EAI_AGAIN/ETIMEDOUT). Nouvelle tentative dans ${wait_time}s..."
+                warning "Ces erreurs sont courantes lors du téléchargement des dépendances npm..."
+                sleep "$wait_time"
+                # Augmenter le temps d'attente pour la prochaine tentative (backoff exponentiel)
+                wait_time=$((wait_time * 2))
+                attempt=$((attempt + 1))
+            else
+                echo ""
+                error "Reconstruction échouée après $max_attempts tentatives à cause d'erreurs réseau. Consultez /tmp/nixos-rebuild.log pour plus de détails."
+            fi
+        else
+            # Erreur non-réseau, ne pas réessayer
+            echo ""
+            error "Reconstruction échouée pour une raison autre que le réseau. Consultez /tmp/nixos-rebuild.log pour plus de détails."
+        fi
+    done
+
+    return 1
+}
+
+# Lancer la reconstruction avec retry
+if rebuild_with_retry; then
     echo ""
     header "✨ Activation réussie!"
     echo ""
@@ -109,7 +214,4 @@ if nixos-rebuild switch --flake ".#mimosa" 2>&1 | tee /tmp/nixos-rebuild.log; th
     echo "  journalctl -u caddy -f"
     echo "  journalctl -u j12zdotcom -f"
     echo ""
-else
-    echo ""
-    error "La reconstruction a échoué. Consultez /tmp/nixos-rebuild.log pour plus de détails."
 fi
