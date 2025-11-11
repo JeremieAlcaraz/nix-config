@@ -172,7 +172,10 @@ info "DNS publics configurés (protégés contre modification)"
 
 # Tester la résolution DNS
 info "Test de résolution DNS..."
-if ! timeout 5 nslookup registry.npmjs.org > /dev/null 2>&1; then
+# Utiliser curl au lieu de nslookup car il est disponible dans l'ISO
+if timeout 5 curl -sS --head --max-time 5 https://registry.npmjs.org > /dev/null 2>&1; then
+    info "Résolution DNS fonctionnelle"
+else
     warning "La résolution DNS ne fonctionne pas correctement!"
     warning "L'installation risque d'échouer si des téléchargements npm sont nécessaires"
     echo ""
@@ -183,8 +186,6 @@ if ! timeout 5 nslookup registry.npmjs.org > /dev/null 2>&1; then
     if [[ "$continue_anyway" != "oui" ]]; then
         error "Installation annulée. Résolvez les problèmes réseau d'abord."
     fi
-else
-    success "Résolution DNS fonctionnelle"
 fi
 
 export NIX_CONFIG='experimental-features = nix-command flakes'
