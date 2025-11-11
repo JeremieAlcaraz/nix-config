@@ -1,84 +1,88 @@
-# 💿 ISO NixOS minimale pour Proxmox/NoVNC
+# ISO NixOS personnalisée
 
-Ce dossier contient la configuration pour générer une ISO NixOS personnalisée avec support de la console série (ttyS0), optimisée pour Proxmox et NoVNC.
+ISO d'installation NixOS optimisée pour ce projet, avec :
+- ✅ Flakes activés par défaut
+- ✅ DNS publics (1.1.1.1, 8.8.8.8) configurés automatiquement
+- ✅ Outils de diagnostic réseau inclus (bind, dnsutils, etc.)
+- ✅ Scripts d'installation pré-installés
 
-## 🎯 Pourquoi cette ISO ?
+## 🏗️ Builder l'ISO
 
-L'ISO standard NixOS ne configure pas la console série par défaut, ce qui rend l'utilisation dans Proxmox/NoVNC problématique. Cette ISO personnalisée résout ce problème en activant `ttyS0` dès le boot.
-
-## 🚀 Utilisation rapide
-
-### Builder l'ISO
+Depuis la racine du projet :
 
 ```bash
-# Depuis ce dossier
-nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage
+# Builder l'ISO (prend ~10-15 minutes)
+nix build .#nixosConfigurations.installer.config.system.build.isoImage
 
-# L'ISO sera disponible dans
-ls -lh result/iso/
+# L'ISO sera dans result/iso/
+ls -lh result/iso/*.iso
 ```
 
-### Caractéristiques de l'ISO
+## 📤 Uploader l'ISO sur Proxmox
 
-- ✅ Console série (ttyS0) active automatiquement
-- ✅ Autologin utilisateur `nixos`
-- ✅ ZSH + Starship comme shell
-- ✅ Environnement X11 minimal (xterm + twm)
-- ✅ SSH activé avec mot de passe (user: nixos, pass: nixos)
-- ✅ Réseau DHCP automatique
-- ✅ Outils de base : vim, git, curl, wget, htop, tree
+### Option 1 : Via SCP
 
-## 📖 Documentation complète
-
-Pour un guide détaillé avec instructions pas-à-pas depuis une VM, consultez :
-
-**[../docs/ISO-BUILDER.md](../docs/ISO-BUILDER.md)**
-
-## 🎨 Personnalisation
-
-Le fichier `flake.nix` est entièrement modulable. Vous pouvez :
-
-- Ajouter des packages dans `environment.systemPackages`
-- Changer le shell par défaut
-- Activer des services supplémentaires
-- Modifier le nom de l'ISO dans `isoImage`
-
-Après modification, rebuildez simplement avec la même commande.
-
-## 📦 Résultat
-
-L'ISO générée pèse environ **950 MB** et contient tout le nécessaire pour :
-
-- Installer NixOS sur une nouvelle machine
-- Tester une configuration
-- Faire du rescue/debugging
-- Utiliser comme live USB avec persistance
-
-## 🔬 Détails techniques
-
-### Paramètres de boot
-
-```nix
-boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty1" ];
+```bash
+# Depuis votre machine où vous avez buildé l'ISO
+scp result/iso/nixos-*.iso root@proxmox:/var/lib/vz/template/iso/
 ```
 
-- `console=ttyS0,115200n8` : Active le port série à 115200 bauds
-- `console=tty1` : Garde aussi la console VGA standard
+### Option 2 : Via l'interface web Proxmox
 
-### Architecture
+1. Aller dans **Datacenter** > **Storage** > **local (pve)** > **ISO Images**
+2. Cliquer sur **Upload**
+3. Sélectionner l'ISO buildée
 
+## 🚀 Utiliser l'ISO
+
+### 1. Créer ou configurer la VM dans Proxmox
+
+```bash
+# Attacher l'ISO à la VM
+qm set <VMID> --ide2 local:iso/nixos-nix-config-installer-*.iso,media=cdrom
+
+# Démarrer la VM
+qm start <VMID>
 ```
-ISO
-├── Kernel avec params série
-├── initrd
-├── NixOS base
-│   ├── Getty sur ttyS0 (autologin)
-│   ├── Getty sur tty1
-│   └── Getty sur tty2
-├── X11 (xterm + twm)
-└── Outils (vim, git, etc.)
+
+### 2. Une fois bootée dans l'ISO
+
+Les scripts sont déjà disponibles dans `/etc/installer/scripts/` !
+
+```bash
+# Diagnostic réseau
+sudo /etc/installer/scripts/diagnose-network.sh
+
+# Installation
+sudo /etc/installer/scripts/install-nixos.sh mimosa
 ```
 
-## 🤝 Contribution
+## ✨ Avantages de l'ISO personnalisée
 
-Des idées pour améliorer cette ISO ? Ouvre une issue ou une PR !
+| Problème | ISO vanilla | ISO personnalisée |
+|----------|-------------|-------------------|
+| Flakes | ❌ Désactivés par défaut | ✅ Activés |
+| DNS | ⚠️ Via DHCP (peut être absent) | ✅ DNS publics configurés |
+| Outils diagnostic | ❌ À installer | ✅ Pré-installés |
+| Scripts | ❌ À télécharger | ✅ Inclus dans l'ISO |
+| Message d'aide | ❌ Generic | ✅ Personnalisé |
+
+## 🔄 Mettre à jour l'ISO
+
+Quand vous modifiez les scripts d'installation :
+
+```bash
+# 1. Rebuild l'ISO avec les derniers scripts
+nix build .#nixosConfigurations.installer.config.system.build.isoImage
+
+# 2. Uploader la nouvelle version sur Proxmox
+scp result/iso/nixos-*.iso root@proxmox:/var/lib/vz/template/iso/
+
+# 3. Utiliser la nouvelle ISO pour les prochaines installations
+```
+
+## 📝 Notes
+
+- L'ISO fait environ 800MB-1GB (selon les packages inclus)
+- Le build nécessite ~2GB d'espace disque temporaire
+- Compatible x86_64 uniquement (modifiable dans flake.nix si besoin)

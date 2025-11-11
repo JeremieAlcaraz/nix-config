@@ -145,13 +145,27 @@ info "Étape 4/8: Configuration de Nix et DNS..."
 
 # Configurer des DNS publics fiables pour éviter les erreurs EAI_AGAIN
 info "Configuration des DNS publics (Cloudflare et Google)..."
+
+# Stopper resolvconf s'il tourne (pour éviter qu'il réécrive /etc/resolv.conf)
+if systemctl is-active resolvconf > /dev/null 2>&1; then
+    warning "Arrêt temporaire de resolvconf pour configurer les DNS publics..."
+    systemctl stop resolvconf 2>/dev/null || true
+fi
+
+# Écrire la configuration DNS
 cat > /etc/resolv.conf << EOF
-# DNS publics temporaires pour l'installation
+# DNS publics temporaires pour l'installation NixOS
+# resolvconf a été temporairement désactivé
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
+
+# Protéger le fichier contre l'écriture par resolvconf
+chattr +i /etc/resolv.conf 2>/dev/null || true
+
+info "DNS publics configurés (protégés contre modification)"
 
 # Tester la résolution DNS
 info "Test de résolution DNS..."
