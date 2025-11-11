@@ -146,6 +146,9 @@ info "Étape 4/8: Configuration de Nix et DNS..."
 # Configurer des DNS publics fiables pour éviter les erreurs EAI_AGAIN
 info "Configuration des DNS publics (Cloudflare et Google)..."
 
+# Retirer la protection immutable du fichier si elle existe
+chattr -i /etc/resolv.conf 2>/dev/null || true
+
 # Stopper resolvconf s'il tourne (pour éviter qu'il réécrive /etc/resolv.conf)
 if systemctl is-active resolvconf > /dev/null 2>&1; then
     warning "Arrêt temporaire de resolvconf pour configurer les DNS publics..."
