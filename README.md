@@ -30,11 +30,26 @@ Hôte hyperviseur Proxmox avec configuration minimale (anciennement `proxmox`).
 ### `mimosa` 🌼
 Serveur web avec fonctionnalités avancées (anciennement `jeremie-web`).
 
+**Deux configurations disponibles :**
+
+#### `mimosa-minimal` (Installation initiale)
+Configuration système de base sans le serveur web, utilisée pendant l'installation pour éviter les problèmes réseau liés aux téléchargements npm.
+
 **Caractéristiques :**
-- Tailscale VPN pour accès sécurisé
-- Configuration Git globale
+- Configuration système minimale
+- Tailscale VPN
+- Configuration Git
 - Sudo sans mot de passe
 - QEMU Guest Agent
+
+#### `mimosa` (Production)
+Configuration complète incluant le serveur web j12zdotcom.
+
+**Caractéristiques supplémentaires :**
+- Site web j12zdotcom (Astro + pnpm)
+- Caddy (reverse proxy)
+- Cloudflare Tunnel
+- Ports 80, 443 ouverts automatiquement
 
 ## 💿 ISO personnalisée
 
@@ -63,7 +78,30 @@ nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage
 - Clés SSH configurées
 - (Pour SOPS) Clés Age générées
 
-### Déploiement
+### Installation automatisée
+
+Le projet inclut un script d'installation automatisé pour faciliter le déploiement :
+
+```bash
+# Depuis l'ISO NixOS ou un environnement d'installation
+sudo ./scripts/install-nixos.sh [magnolia|mimosa]
+```
+
+**Pour mimosa**, deux modes d'installation sont disponibles :
+
+1. **Installation complète** (mode 1) - Télécharge et active immédiatement le serveur web
+2. **Installation minimale** (mode 2) - Installation système uniquement, serveur web activable après
+
+Pour activer le serveur web après une installation minimale :
+
+```bash
+# Après le premier boot
+ssh jeremie@<IP>
+cd /etc/nixos/scripts
+sudo ./activate-webserver.sh
+```
+
+### Déploiement manuel
 
 ```bash
 # Cloner le repository
@@ -71,9 +109,9 @@ git clone https://github.com/JeremieAlcaraz/nix-config.git
 cd nix-config
 
 # Construire et activer la configuration pour un hôte
-sudo nixos-rebuild switch --flake .#magnolia  # Infrastructure Proxmox
-# ou
-sudo nixos-rebuild switch --flake .#mimosa    # Serveur web
+sudo nixos-rebuild switch --flake .#magnolia        # Infrastructure Proxmox
+sudo nixos-rebuild switch --flake .#mimosa-minimal  # Serveur web (minimal)
+sudo nixos-rebuild switch --flake .#mimosa          # Serveur web (complet)
 ```
 
 ## 📁 Structure du repository
@@ -87,8 +125,12 @@ nix-config/
 │   │   ├── configuration.nix
 │   │   └── hardware-configuration.nix
 │   └── mimosa/                  # Serveur web (ex-jeremie-web)
-│       ├── configuration.nix
+│       ├── configuration.nix    # Configuration système de base
+│       ├── webserver.nix        # Configuration serveur web (mimosa uniquement)
 │       └── hardware-configuration.nix
+├── scripts/                     # Scripts d'installation et gestion
+│   ├── install-nixos.sh         # Installation automatisée
+│   └── activate-webserver.sh    # Activation du serveur web post-installation
 ├── iso/                         # Configuration ISO personnalisée
 │   └── flake.nix                # Builder ISO minimale avec TTY série
 ├── secrets/                     # Gestion des secrets chiffrés

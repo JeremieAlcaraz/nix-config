@@ -268,31 +268,24 @@ install_with_retry() {
     local max_attempts=3
     local attempt=1
     local wait_time=30
+    local flake_target="${HOST}"
+
+    # Si installation minimale de mimosa, utiliser la configuration mimosa-minimal
+    if [[ "$HOST" == "mimosa" && "${NIXOS_MINIMAL_INSTALL:-}" == "true" ]]; then
+        flake_target="mimosa-minimal"
+        info "Installation en mode minimal (sans serveur web) - configuration: mimosa-minimal"
+    fi
 
     while [[ $attempt -le $max_attempts ]]; do
         info "Tentative d'installation $attempt/$max_attempts..."
 
-        # Passer la variable d'environnement NIXOS_MINIMAL_INSTALL au build si définie
-        if [[ "${NIXOS_MINIMAL_INSTALL:-}" == "true" ]]; then
-            info "Installation en mode minimal (sans serveur web)..."
-            if NIXOS_MINIMAL_INSTALL=true \
-               npm_config_fetch_retries=5 \
-               npm_config_fetch_retry_factor=3 \
-               npm_config_fetch_retry_mintimeout=10000 \
-               npm_config_fetch_retry_maxtimeout=120000 \
-               npm_config_fetch_timeout=120000 \
-               nixos-install --flake ".#${HOST}" --no-root-passwd 2>&1 | tee /tmp/nixos-install.log; then
-                return 0
-            fi
-        else
-            if npm_config_fetch_retries=5 \
-               npm_config_fetch_retry_factor=3 \
-               npm_config_fetch_retry_mintimeout=10000 \
-               npm_config_fetch_retry_maxtimeout=120000 \
-               npm_config_fetch_timeout=120000 \
-               nixos-install --flake ".#${HOST}" --no-root-passwd 2>&1 | tee /tmp/nixos-install.log; then
-                return 0
-            fi
+        if npm_config_fetch_retries=5 \
+           npm_config_fetch_retry_factor=3 \
+           npm_config_fetch_retry_mintimeout=10000 \
+           npm_config_fetch_retry_maxtimeout=120000 \
+           npm_config_fetch_timeout=120000 \
+           nixos-install --flake ".#${flake_target}" --no-root-passwd 2>&1 | tee /tmp/nixos-install.log; then
+            return 0
         fi
 
         # Vérifier si l'erreur est liée au réseau
@@ -347,10 +340,18 @@ if [[ "$HOST" == "mimosa" && "${NIXOS_MINIMAL_INSTALL:-}" == "true" ]]; then
     info "1. Connectez-vous via SSH:"
     info "   ssh jeremie@<IP>"
     info ""
-    info "2. Activez le serveur web:"
-    info "   sudo nixos-rebuild switch"
+    info "2. Clonez le dépôt de configuration:"
+    info "   cd /etc/nixos"
+    info "   git pull  # Si nécessaire"
     info ""
-    info "Le système téléchargera et activera le serveur web."
+    info "3. Activez le serveur web avec le script dédié:"
+    info "   cd /etc/nixos/scripts"
+    info "   sudo ./activate-webserver.sh"
+    info ""
+    info "Ou manuellement:"
+    info "   sudo nixos-rebuild switch --flake /etc/nixos#mimosa"
+    info ""
+    info "Le système téléchargera et activera le serveur web (~5-10 min)."
     info ""
 fi
 

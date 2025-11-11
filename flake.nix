@@ -27,11 +27,24 @@
           ];
         };
 
-        # Mimosa - Serveur web
+        # Mimosa Minimal - Pour l'installation initiale (sans serveur web)
+        # Utilisé par le script d'installation pour éviter les problèmes réseau
+        mimosa-minimal = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ./hosts/mimosa/configuration.nix
+            sops-nix.nixosModules.sops
+            # Le module j12z-webserver n'est PAS importé ici
+            # pour éviter les téléchargements npm pendant l'installation
+          ];
+        };
+
+        # Mimosa - Serveur web complet (configuration de production)
         mimosa = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
             ./hosts/mimosa/configuration.nix
+            ./hosts/mimosa/webserver.nix  # Configuration du serveur web
             j12z-site.nixosModules.j12z-webserver
             sops-nix.nixosModules.sops
           ];
