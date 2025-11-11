@@ -55,7 +55,12 @@ if [[ "$HOST" == "mimosa" ]]; then
     echo ""
     warning "Mode d'installation pour mimosa:"
     echo "  1. Installation complète (avec le serveur web j12zdotcom)"
-    echo "  2. Installation minimale (sans le serveur web - recommandé si problèmes réseau)"
+    echo "     ➜ Retry automatique en cas d'erreurs réseau (max 3 tentatives)"
+    echo "     ➜ Configuration DNS optimisée pour les téléchargements npm"
+    echo ""
+    echo "  2. Installation minimale (sans le serveur web)"
+    echo "     ➜ Plus rapide, aucun téléchargement npm requis"
+    echo "     ➜ Le serveur web peut être activé après l'installation"
     echo ""
     read -p "Choisissez le mode (1/2, défaut: 1): " INSTALL_MODE
     INSTALL_MODE="${INSTALL_MODE:-1}"
@@ -67,6 +72,7 @@ if [[ "$HOST" == "mimosa" ]]; then
         info "  sudo nixos-rebuild switch"
     else
         info "Mode complet sélectionné - installation du serveur web j12zdotcom"
+        info "Le script réessayera automatiquement en cas d'erreurs réseau"
     fi
 fi
 
@@ -146,8 +152,32 @@ info "Étape 4/8: Configuration de Nix et DNS..."
 # Configurer des DNS publics fiables pour éviter les erreurs EAI_AGAIN
 info "Configuration des DNS publics (Cloudflare et Google)..."
 
-# Retirer la protection immutable du fichier si elle existe
-chattr -i /etc/resolv.conf 2>/dev/null || true
+# Fonction pour configurer les DNS sur un système
+configure_dns() {
+    local target_path="$1"
+    local resolv_conf="${target_path}/etc/resolv.conf"
+
+    # Retirer la protection immutable du fichier si elle existe
+    chattr -i "$resolv_conf" 2>/dev/null || true
+
+    # Créer le répertoire si nécessaire
+    mkdir -p "$(dirname "$resolv_conf")"
+
+    # Écrire la configuration DNS
+    cat > "$resolv_conf" << EOF
+# DNS publics temporaires pour l'installation NixOS
+# Cloudflare: 1.1.1.1, 1.0.0.1
+# Google: 8.8.8.8, 8.8.4.4
+options timeout:5 attempts:5 rotate
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+EOF
+
+    # Protéger le fichier contre l'écriture
+    chattr +i "$resolv_conf" 2>/dev/null || true
+}
 
 # Stopper resolvconf s'il tourne (pour éviter qu'il réécrive /etc/resolv.conf)
 if systemctl is-active resolvconf > /dev/null 2>&1; then
@@ -155,20 +185,13 @@ if systemctl is-active resolvconf > /dev/null 2>&1; then
     systemctl stop resolvconf 2>/dev/null || true
 fi
 
-# Écrire la configuration DNS
-cat > /etc/resolv.conf << EOF
-# DNS publics temporaires pour l'installation NixOS
-# resolvconf a été temporairement désactivé
-nameserver 1.1.1.1
-nameserver 1.0.0.1
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOF
+# Configurer DNS sur le système hôte (ISO)
+configure_dns ""
 
-# Protéger le fichier contre l'écriture par resolvconf
-chattr +i /etc/resolv.conf 2>/dev/null || true
+# Configurer DNS dans le système cible (/mnt)
+configure_dns "/mnt"
 
-info "DNS publics configurés (protégés contre modification)"
+info "DNS publics configurés sur l'hôte et le système cible (protégés contre modification)"
 
 # Tester la résolution DNS
 info "Test de résolution DNS..."
@@ -188,7 +211,20 @@ else
     fi
 fi
 
-export NIX_CONFIG='experimental-features = nix-command flakes'
+# Configuration Nix avec retry et timeouts augmentés
+export NIX_CONFIG='experimental-features = nix-command flakes
+connect-timeout = 30
+stalled-download-timeout = 300
+max-substitution-jobs = 4'
+
+# Variables d'environnement pour améliorer la résilience réseau de npm/pnpm
+export npm_config_fetch_retries=5
+export npm_config_fetch_retry_factor=3
+export npm_config_fetch_retry_mintimeout=10000
+export npm_config_fetch_retry_maxtimeout=120000
+export npm_config_fetch_timeout=120000
+
+info "Configuration Nix avec retry et timeouts augmentés"
 
 # 5. Cloner le repo
 info "Étape 5/8: Clonage du dépôt..."
@@ -196,6 +232,22 @@ if [[ -d /mnt/etc/nixos ]]; then
     rm -rf /mnt/etc/nixos
 fi
 git clone --branch "$BRANCH" "$REPO_URL" /mnt/etc/nixos
+
+# Configurer npm/pnpm pour plus de résilience aux erreurs réseau
+info "Configuration de npm/pnpm avec retry logic..."
+mkdir -p /mnt/root
+cat > /mnt/root/.npmrc << EOF
+# Configuration npm pour améliorer la résilience réseau
+fetch-retries=5
+fetch-retry-factor=3
+fetch-retry-mintimeout=10000
+fetch-retry-maxtimeout=120000
+fetch-timeout=120000
+maxsockets=5
+registry=https://registry.npmjs.org/
+EOF
+
+info "npm/pnpm configuré avec retry logic dans le système cible"
 
 # 6. Copier la clé SOPS dans le système cible si elle existe
 if [[ -f /var/lib/sops-nix/key.txt ]]; then
@@ -211,13 +263,60 @@ fi
 info "Étape 6/8: Installation de NixOS (cela peut prendre plusieurs minutes)..."
 cd /mnt/etc/nixos
 
-# Passer la variable d'environnement NIXOS_MINIMAL_INSTALL au build si définie
-if [[ "${NIXOS_MINIMAL_INSTALL:-}" == "true" ]]; then
-    info "Installation en mode minimal (sans serveur web)..."
-    NIXOS_MINIMAL_INSTALL=true nixos-install --flake ".#${HOST}" --no-root-passwd
-else
-    nixos-install --flake ".#${HOST}" --no-root-passwd
-fi
+# Fonction pour installer avec retry en cas d'erreur réseau
+install_with_retry() {
+    local max_attempts=3
+    local attempt=1
+    local wait_time=30
+
+    while [[ $attempt -le $max_attempts ]]; do
+        info "Tentative d'installation $attempt/$max_attempts..."
+
+        # Passer la variable d'environnement NIXOS_MINIMAL_INSTALL au build si définie
+        if [[ "${NIXOS_MINIMAL_INSTALL:-}" == "true" ]]; then
+            info "Installation en mode minimal (sans serveur web)..."
+            if NIXOS_MINIMAL_INSTALL=true \
+               npm_config_fetch_retries=5 \
+               npm_config_fetch_retry_factor=3 \
+               npm_config_fetch_retry_mintimeout=10000 \
+               npm_config_fetch_retry_maxtimeout=120000 \
+               npm_config_fetch_timeout=120000 \
+               nixos-install --flake ".#${HOST}" --no-root-passwd 2>&1 | tee /tmp/nixos-install.log; then
+                return 0
+            fi
+        else
+            if npm_config_fetch_retries=5 \
+               npm_config_fetch_retry_factor=3 \
+               npm_config_fetch_retry_mintimeout=10000 \
+               npm_config_fetch_retry_maxtimeout=120000 \
+               npm_config_fetch_timeout=120000 \
+               nixos-install --flake ".#${HOST}" --no-root-passwd 2>&1 | tee /tmp/nixos-install.log; then
+                return 0
+            fi
+        fi
+
+        # Vérifier si l'erreur est liée au réseau
+        if grep -qE "EAI_AGAIN|ETIMEDOUT|ECONNRESET|getaddrinfo" /tmp/nixos-install.log; then
+            if [[ $attempt -lt $max_attempts ]]; then
+                warning "Erreur réseau détectée. Nouvelle tentative dans ${wait_time}s..."
+                sleep "$wait_time"
+                # Augmenter le temps d'attente pour la prochaine tentative (backoff exponentiel)
+                wait_time=$((wait_time * 2))
+                attempt=$((attempt + 1))
+            else
+                error "Installation échouée après $max_attempts tentatives à cause d'erreurs réseau. Consultez /tmp/nixos-install.log pour plus de détails."
+            fi
+        else
+            # Erreur non-réseau, ne pas réessayer
+            error "Installation échouée pour une raison autre que le réseau. Consultez /tmp/nixos-install.log pour plus de détails."
+        fi
+    done
+
+    return 1
+}
+
+# Lancer l'installation avec retry
+install_with_retry
 
 # 8. Finalisation
 info "Étape 7/8: Installation terminée!"
