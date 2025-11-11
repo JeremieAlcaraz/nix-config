@@ -36,6 +36,15 @@
             sops-nix.nixosModules.sops
           ];
         };
+
+        # ISO d'installation personnalisée
+        # Build avec: nix build .#nixosConfigurations.installer.config.system.build.isoImage
+        installer = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ./iso/custom-installer.nix
+          ];
+        };
       };
     };
 }
