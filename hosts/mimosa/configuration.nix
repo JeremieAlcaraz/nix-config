@@ -75,27 +75,16 @@
       jeremie-password-hash = {
         neededForUsers = true;
       };
-      # Token Cloudflare Tunnel (désactivé temporairement avec j12z-webserver)
-      # cloudflare-tunnel-token = {
-      #   owner = "cloudflared";
-      #   group = "cloudflared";
-      #   mode = "0400";
-      # };
+      # Note: Le secret cloudflare-tunnel-token est défini dans webserver.nix
+      # qui est importé uniquement dans la configuration "mimosa" complète
     };
   };
 
   # Configuration du site j12zdotcom
-  # TEMPORAIREMENT DÉSACTIVÉ: Le module j12z-webserver est commenté dans flake.nix
-  # pour éviter les problèmes réseau pendant l'installation.
-  # Réactiver après l'installation une fois le réseau stable.
-  # services.j12z-webserver = {
-  #   enable = builtins.getEnv "NIXOS_MINIMAL_INSTALL" != "true";
-  #   domain = "jeremiealcaraz.com";
-  #   email = "hello@jeremiealcaraz.com";
-  #   # Cloudflare Tunnel activé avec sops
-  #   enableCloudflaredTunnel = true;
-  #   cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
-  # };
+  # La configuration du serveur web est dans ./webserver.nix
+  # Ce fichier est importé uniquement dans la configuration "mimosa" complète (via flake.nix)
+  # La configuration "mimosa-minimal" n'importe PAS ce fichier pour éviter
+  # les téléchargements npm pendant l'installation initiale
 
   # Configuration Git globale
   programs.git = {
