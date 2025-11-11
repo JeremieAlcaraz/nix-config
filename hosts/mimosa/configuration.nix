@@ -86,8 +86,9 @@
 
   # Configuration du site j12zdotcom
   # Le module sera importé via flake.nix
+  # Note: peut être désactivé pendant l'installation avec NIXOS_MINIMAL_INSTALL=true
   services.j12z-webserver = {
-    enable = true;
+    enable = builtins.getEnv "NIXOS_MINIMAL_INSTALL" != "true";
     domain = "jeremiealcaraz.com";
     email = "hello@jeremiealcaraz.com";
     # Cloudflare Tunnel activé avec sops
