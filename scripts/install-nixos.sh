@@ -416,6 +416,9 @@ if [[ "${SKIP_SECRET_GENERATION:-false}" != "true" ]]; then
     info "Vous allez définir le mot de passe SSH pour cet host"
     echo ""
 
+    # Définir le chemin du fichier de secrets (doit correspondre à celui dans generate_secrets)
+    SECRETS_FILE="/tmp/secrets-${HOST}.yaml"
+
     # Installer les outils nécessaires temporairement
     nix-shell -p sops age openssl mkpasswd jq --run "$(declare -f generate_secrets error info warning step prompt); generate_secrets ${HOST}"
 
