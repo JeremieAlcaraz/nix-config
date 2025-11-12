@@ -48,12 +48,53 @@ prompt() {
 [[ $EUID -ne 0 ]] && error "Ce script doit être exécuté en tant que root (sudo)"
 [[ ! -d /sys/firmware/efi ]] && error "Ce script nécessite un système UEFI"
 
-# Récupérer le nom de l'host
+# Récupérer le nom de l'host ou afficher le menu
 HOST="${1:-}"
+
 if [[ -z "$HOST" ]]; then
-    error "Usage: sudo $0 [magnolia|mimosa|whitelily]"
+    # Menu interactif
+    echo ""
+    echo -e "${CYAN}╔════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║     🌸 Installation NixOS - Sélection de l'host   ║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${BLUE}Hosts disponibles :${NC}"
+    echo ""
+    echo -e "${GREEN}1)${NC} ${YELLOW}magnolia${NC}"
+    echo -e "   🌸 Infrastructure Proxmox"
+    echo -e "   → VM de base pour l'infrastructure"
+    echo ""
+    echo -e "${GREEN}2)${NC} ${YELLOW}mimosa${NC}"
+    echo -e "   🌼 Serveur web (j12zdotcom)"
+    echo -e "   → Serveur web avec Cloudflare Tunnel"
+    echo ""
+    echo -e "${GREEN}3)${NC} ${YELLOW}whitelily${NC}"
+    echo -e "   🤍 n8n automation"
+    echo -e "   → Stack complète : n8n + PostgreSQL + Caddy + Cloudflare Tunnel"
+    echo ""
+    prompt "Choisissez un host (1-3) :"
+    read -r choice
+
+    case "$choice" in
+        1)
+            HOST="magnolia"
+            ;;
+        2)
+            HOST="mimosa"
+            ;;
+        3)
+            HOST="whitelily"
+            ;;
+        *)
+            error "Choix invalide. Utilisez 1, 2 ou 3"
+            ;;
+    esac
+
+    info "Host sélectionné : ${HOST}"
+    echo ""
 fi
 
+# Vérifier que l'host est valide
 if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" ]]; then
     error "Host invalide. Utilisez 'magnolia', 'mimosa' ou 'whitelily'"
 fi
