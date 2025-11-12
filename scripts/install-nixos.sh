@@ -8,9 +8,12 @@ set -euo pipefail
 # - Partitionnement et formatage
 # - Génération du hardware-configuration.nix
 # - Clone du repo de configuration
-# - Génération interactive des secrets si nécessaire
+# - Gestion flexible des secrets (création maintenant, utiliser existants, ou reporter)
 # - Installation de NixOS
 # - Arrêt automatique
+#
+# Pour créer/gérer les secrets après l'installation, utilisez :
+# sudo ./scripts/manage-secrets.sh [host]
 
 # Couleurs
 RED='\033[0;31m'
@@ -396,83 +399,133 @@ if [[ ! -f /var/lib/sops-nix/key.txt ]]; then
     fi
 fi
 
-# Toujours demander si on veut regénérer les secrets
+# Demander si on veut créer les secrets maintenant ou plus tard
 SECRETS_PATH="/mnt/etc/nixos/secrets/${HOST}.yaml"
 
 echo ""
-if [[ -f "$SECRETS_PATH" ]] && ! grep -q "REMPLACER_PAR" "$SECRETS_PATH" 2>/dev/null; then
-    info "Secrets existants trouvés pour ${HOST}"
-    prompt "Voulez-vous les regénérer ? (oui/non, défaut: non):"
-    read -r regenerate_secrets
+info "Gestion des secrets"
+echo ""
+echo -e "${BLUE}Options disponibles :${NC}"
+echo "1. Créer les secrets maintenant (génération interactive)"
+echo "2. Utiliser des secrets existants (fichier déjà présent dans le repo)"
+echo "3. Reporter la création des secrets après l'installation"
+echo ""
+prompt "Choisissez une option (1-3, défaut: 3):"
+read -r secret_choice
+secret_choice="${secret_choice:-3}"
 
-    if [[ "$regenerate_secrets" != "oui" ]]; then
-        info "Utilisation des secrets existants"
-        SKIP_SECRET_GENERATION=true
-    fi
-fi
+case "$secret_choice" in
+    1)
+        # Créer les secrets maintenant
+        warning "Génération interactive des secrets pour ${HOST}"
+        info "Vous allez définir le mot de passe SSH pour cet host"
+        echo ""
 
-if [[ "${SKIP_SECRET_GENERATION:-false}" != "true" ]]; then
-    warning "Génération interactive des secrets pour ${HOST}"
-    info "Vous allez définir le mot de passe SSH pour cet host"
-    echo ""
+        # Définir le chemin du fichier de secrets (doit correspondre à celui dans generate_secrets)
+        SECRETS_FILE="/tmp/secrets-${HOST}.yaml"
 
-    # Définir le chemin du fichier de secrets (doit correspondre à celui dans generate_secrets)
-    SECRETS_FILE="/tmp/secrets-${HOST}.yaml"
+        # Installer les outils nécessaires temporairement
+        nix-shell -p sops age openssl mkpasswd jq --run "$(declare -f generate_secrets error info warning step prompt); generate_secrets ${HOST}"
 
-    # Installer les outils nécessaires temporairement
-    nix-shell -p sops age openssl mkpasswd jq --run "$(declare -f generate_secrets error info warning step prompt); generate_secrets ${HOST}"
+        # Chiffrer les secrets avec sops
+        if [[ -f "$SECRETS_FILE" ]]; then
+            info "Chiffrement des secrets avec sops..."
 
-    # Chiffrer les secrets avec sops
-    if [[ -f "$SECRETS_FILE" ]]; then
-        info "Chiffrement des secrets avec sops..."
+            # Créer le répertoire secrets
+            mkdir -p /mnt/etc/nixos/secrets
 
-        # Créer le répertoire secrets
-        mkdir -p /mnt/etc/nixos/secrets
+            # Copier la clé age si elle existe
+            if [[ -f /var/lib/sops-nix/key.txt ]]; then
+                mkdir -p /mnt/var/lib/sops-nix
+                cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
+                chmod 600 /mnt/var/lib/sops-nix/key.txt
 
-        # Copier la clé age si elle existe
+                # Copier le fichier non chiffré vers son emplacement final
+                cp "$SECRETS_FILE" "$SECRETS_PATH"
+
+                # Chiffrer in-place depuis le répertoire du repo
+                # Cela permet à sops de trouver .sops.yaml et d'utiliser le chemin relatif
+                cd /mnt/etc/nixos
+                nix-shell -p sops age --run "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt sops -e -i 'secrets/${HOST}.yaml'"
+
+                # Vérifier que c'est bien chiffré
+                if grep -q "sops:" "$SECRETS_PATH"; then
+                    info "Secrets chiffrés avec succès"
+                else
+                    error "Échec du chiffrement des secrets"
+                fi
+            else
+                warning "Clé age non trouvée, copie du fichier non chiffré"
+                warning "ATTENTION : Les secrets ne sont PAS chiffrés !"
+                cp "$SECRETS_FILE" "$SECRETS_PATH"
+            fi
+
+            # Si whitelily, mettre à jour le domaine dans n8n.nix
+            if [[ "$HOST" == "whitelily" ]] && [[ -f /tmp/whitelily-domain.txt ]]; then
+                DOMAIN=$(cat /tmp/whitelily-domain.txt)
+                sed -i "s|domain = \".*\";|domain = \"${DOMAIN}\";|" "/mnt/etc/nixos/hosts/whitelily/n8n.nix"
+                info "Domaine mis à jour dans n8n.nix : ${DOMAIN}"
+            fi
+        fi
+        ;;
+
+    2)
+        # Utiliser les secrets existants
+        if [[ -f "$SECRETS_PATH" ]]; then
+            info "Utilisation des secrets existants pour ${HOST}"
+
+            # Copier la clé age si elle existe
+            if [[ -f /var/lib/sops-nix/key.txt ]]; then
+                mkdir -p /mnt/var/lib/sops-nix
+                cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
+                chmod 600 /mnt/var/lib/sops-nix/key.txt
+                info "Clé sops copiée"
+            fi
+        else
+            warning "Aucun fichier de secrets trouvé : $SECRETS_PATH"
+            warning "L'installation va continuer mais les secrets ne seront pas disponibles"
+            echo ""
+            prompt "Continuer quand même ? (oui/non):"
+            read -r continue_without_secrets
+            if [[ "$continue_without_secrets" != "oui" ]]; then
+                error "Installation annulée"
+            fi
+        fi
+        ;;
+
+    3)
+        # Reporter la création des secrets
+        info "Création des secrets reportée"
+        warning "⚠️  Les secrets ne sont PAS encore configurés"
+        echo ""
+        echo -e "${YELLOW}Après l'installation, utilisez le script manage-secrets.sh :${NC}"
+        echo ""
+        echo "  cd /etc/nixos"
+        echo "  sudo ./scripts/manage-secrets.sh ${HOST}"
+        echo ""
+        echo -e "${YELLOW}Puis déployez la configuration :${NC}"
+        echo "  sudo nixos-rebuild switch --flake .#${HOST}"
+        echo ""
+
+        # Copier la clé age si elle existe pour une utilisation future
         if [[ -f /var/lib/sops-nix/key.txt ]]; then
             mkdir -p /mnt/var/lib/sops-nix
             cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
             chmod 600 /mnt/var/lib/sops-nix/key.txt
-
-            # Copier le fichier non chiffré vers son emplacement final
-            cp "$SECRETS_FILE" "$SECRETS_PATH"
-
-            # Chiffrer in-place depuis le répertoire du repo
-            # Cela permet à sops de trouver .sops.yaml et d'utiliser le chemin relatif
-            cd /mnt/etc/nixos
-            nix-shell -p sops age --run "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt sops -e -i 'secrets/${HOST}.yaml'"
-
-            # Vérifier que c'est bien chiffré
-            if grep -q "sops:" "$SECRETS_PATH"; then
-                info "Secrets chiffrés avec succès"
-            else
-                error "Échec du chiffrement des secrets"
-            fi
-        else
-            warning "Clé age non trouvée, copie du fichier non chiffré"
-            warning "ATTENTION : Les secrets ne sont PAS chiffrés !"
-            cp "$SECRETS_FILE" "$SECRETS_PATH"
+            info "Clé sops copiée (prête pour utilisation future)"
         fi
 
-        # Si whitelily, mettre à jour le domaine dans n8n.nix
-        if [[ "$HOST" == "whitelily" ]] && [[ -f /tmp/whitelily-domain.txt ]]; then
-            DOMAIN=$(cat /tmp/whitelily-domain.txt)
-            sed -i "s|domain = \".*\";|domain = \"${DOMAIN}\";|" "/mnt/etc/nixos/hosts/whitelily/n8n.nix"
-            info "Domaine mis à jour dans n8n.nix : ${DOMAIN}"
+        # Si pas de secrets existants, utiliser les fichiers d'exemple
+        if [[ ! -f "$SECRETS_PATH" ]] && [[ -f "/mnt/etc/nixos/secrets/${HOST}.yaml.example" ]]; then
+            warning "Copie du fichier d'exemple (placeholders uniquement)"
+            cp "/mnt/etc/nixos/secrets/${HOST}.yaml.example" "$SECRETS_PATH"
         fi
-    fi
-else
-    info "Secrets existants trouvés pour ${HOST}"
+        ;;
 
-    # Copier la clé age si elle existe
-    if [[ -f /var/lib/sops-nix/key.txt ]]; then
-        mkdir -p /mnt/var/lib/sops-nix
-        cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
-        chmod 600 /mnt/var/lib/sops-nix/key.txt
-        info "Clé sops copiée"
-    fi
-fi
+    *)
+        error "Choix invalide"
+        ;;
+esac
 
 # ========================================
 # Étape 7 : Installation de NixOS

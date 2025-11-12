@@ -8,32 +8,62 @@ Ce répertoire contient les secrets chiffrés avec sops pour les différents hô
 - Seuls les fichiers **chiffrés** avec sops peuvent être committés
 - Les fichiers `.example` sont des templates et ne contiennent pas de vraies valeurs
 
-## Quick Start
+## Quick Start - Méthode Recommandée (manage-secrets.sh)
 
-1. **Lire la documentation complète** : [`docs/SECRETS.md`](../docs/SECRETS.md)
+**NOUVEAU** : Utilisez le script `manage-secrets.sh` pour gérer vos secrets facilement !
 
-2. **Installer les outils** :
+```bash
+# Créer ou régénérer les secrets pour un host
+cd /path/to/nix-config
+sudo ./scripts/manage-secrets.sh [magnolia|mimosa|whitelily]
+
+# Le script va :
+# 1. Vérifier que vous avez les outils nécessaires (sops, age, openssl, mkpasswd)
+# 2. Vérifier que la clé age est configurée
+# 3. Générer les secrets de manière interactive
+# 4. Chiffrer automatiquement avec sops
+# 5. Sauvegarder les anciens secrets si existants
+```
+
+### Avantages de manage-secrets.sh
+
+- ✅ **Séparé de l'installation** : Gérez les secrets indépendamment du build/install
+- ✅ **Rotation facile** : Régénérez n'importe quel secret à tout moment
+- ✅ **Interactif et guidé** : Le script vous guide étape par étape
+- ✅ **Backup automatique** : Les anciens secrets sont sauvegardés avant régénération
+- ✅ **Chiffrement automatique** : Les secrets sont chiffrés avec sops immédiatement
+
+### Après génération des secrets
+
+```bash
+# Vérifier que les secrets sont bien chiffrés
+cat secrets/mimosa.yaml | grep "sops:"
+
+# Committer les secrets
+git add secrets/mimosa.yaml
+git commit -m "🔒 Update secrets for mimosa"
+
+# Déployer sur l'host
+sudo nixos-rebuild switch --flake .#mimosa
+```
+
+## Méthode Alternative - Manuelle
+
+Si vous préférez créer les secrets manuellement :
+
+1. **Installer les outils** :
    ```bash
    nix-shell -p sops age ssh-to-age
    ```
 
-3. **Récupérer la clé publique de l'hôte** :
-   ```bash
-   ssh root@mimosa "cat /var/lib/sops-nix/key.pub"  # Serveur web
-   # ou
-   ssh root@magnolia "cat /var/lib/sops-nix/key.pub"  # Infrastructure Proxmox
-   ```
-
-4. **Mettre à jour `.sops.yaml`** avec la vraie clé
-
-5. **Créer et chiffrer les secrets** :
+2. **Créer et chiffrer les secrets** :
    ```bash
    cp mimosa.yaml.example mimosa.yaml  # Pour le serveur web
    sops mimosa.yaml
    # Éditer, sauvegarder
    ```
 
-6. **Vérifier et committer** :
+3. **Vérifier et committer** :
    ```bash
    cat mimosa.yaml | grep "sops:"  # Doit afficher du contenu chiffré
    git add -f mimosa.yaml
