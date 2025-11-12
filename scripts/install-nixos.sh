@@ -426,14 +426,22 @@ if [[ "${SKIP_SECRET_GENERATION:-false}" != "true" ]]; then
     if [[ -f "$SECRETS_FILE" ]]; then
         info "Chiffrement des secrets avec sops..."
 
+        # Créer le répertoire secrets
+        mkdir -p /mnt/etc/nixos/secrets
+
         # Copier la clé age si elle existe
         if [[ -f /var/lib/sops-nix/key.txt ]]; then
             mkdir -p /mnt/var/lib/sops-nix
             cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
             chmod 600 /mnt/var/lib/sops-nix/key.txt
 
-            # Utiliser nix-shell pour avoir accès à sops
-            nix-shell -p sops age --run "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt sops encrypt '$SECRETS_FILE' > '$SECRETS_PATH'"
+            # Copier le fichier non chiffré vers son emplacement final
+            cp "$SECRETS_FILE" "$SECRETS_PATH"
+
+            # Chiffrer in-place depuis le répertoire du repo
+            # Cela permet à sops de trouver .sops.yaml et d'utiliser le chemin relatif
+            cd /mnt/etc/nixos
+            nix-shell -p sops age --run "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt sops -e -i 'secrets/${HOST}.yaml'"
 
             # Vérifier que c'est bien chiffré
             if grep -q "sops:" "$SECRETS_PATH"; then
