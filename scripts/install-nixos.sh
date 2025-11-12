@@ -4,16 +4,13 @@ set -euo pipefail
 # Script d'installation NixOS all-in-one
 # Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily]
 #
-# Ce script installe NixOS :
+# Ce script fait TOUT :
 # - Partitionnement et formatage
 # - Génération du hardware-configuration.nix
 # - Clone du repo de configuration
+# - Génération interactive des secrets si nécessaire
 # - Installation de NixOS
 # - Arrêt automatique
-#
-# ⚠️  Les secrets ne sont PAS créés pendant l'installation
-# Après l'installation, créez les secrets avec :
-# sudo ./scripts/manage-secrets.sh [host]
 
 # Couleurs
 RED='\033[0;31m'
@@ -129,6 +126,136 @@ echo ""
 warning "ATTENTION: Toutes les données sur $DISK seront EFFACÉES!"
 read -p "Continuer? (tapez 'oui'): " confirm
 [[ "$confirm" != "oui" ]] && error "Installation annulée"
+
+# ========================================
+# Fonction de génération des secrets
+# ========================================
+generate_secrets() {
+    local host="$1"
+    local secrets_file="/tmp/secrets-${host}.yaml"
+
+    step "Configuration des secrets pour ${host}"
+
+    info "Génération des secrets..."
+
+    # Secret commun à tous les hosts : mot de passe jeremie
+    prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
+    JEREMIE_HASH=$(mkpasswd -m sha-512)
+
+    case "$host" in
+        magnolia)
+            # Magnolia : juste le mot de passe jeremie
+            cat > "$secrets_file" <<EOF
+# Secrets pour magnolia (infrastructure Proxmox)
+# Généré automatiquement par install-nixos.sh
+
+jeremie-password-hash: ${JEREMIE_HASH}
+EOF
+            ;;
+
+        mimosa)
+            # Mimosa : mot de passe + token cloudflare
+            echo ""
+            info "Configuration Cloudflare Tunnel pour mimosa"
+            echo "1. Allez sur https://one.dash.cloudflare.com/"
+            echo "2. Zero Trust → Access → Tunnels"
+            echo "3. Créez un tunnel (ou utilisez un existant)"
+            echo "4. Copiez le TOKEN (la longue chaîne après --token)"
+            echo ""
+            prompt "Collez le token Cloudflare Tunnel :"
+            read -r CF_TOKEN
+
+            cat > "$secrets_file" <<EOF
+# Secrets pour mimosa (serveur web)
+# Généré automatiquement par install-nixos.sh
+
+jeremie-password-hash: ${JEREMIE_HASH}
+
+cloudflare-tunnel-token: "${CF_TOKEN}"
+EOF
+            ;;
+
+        whitelily)
+            # Whitelily : mot de passe + secrets n8n + cloudflare credentials JSON
+            echo ""
+            info "Configuration n8n pour whitelily"
+
+            # Génération automatique des secrets n8n
+            N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
+            N8N_BASIC_PASS=$(openssl rand -base64 24)
+            DB_PASSWORD=$(openssl rand -base64 32)
+
+            warning "⚠️  IMPORTANT : Clé de chiffrement n8n"
+            echo "Cette clé chiffre TOUTES vos credentials n8n."
+            echo -e "${YELLOW}N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}${NC}"
+            echo "Sauvegardez-la dans un gestionnaire de mots de passe !"
+            echo ""
+            read -p "Appuyez sur Entrée une fois sauvegardée..."
+
+            echo ""
+            prompt "Nom d'utilisateur pour n8n (défaut: admin):"
+            read -r N8N_USER
+            N8N_USER="${N8N_USER:-admin}"
+
+            echo ""
+            prompt "Domaine complet pour n8n (ex: n8n.votredomaine.com):"
+            read -r DOMAIN
+            [[ -z "$DOMAIN" ]] && error "Le domaine ne peut pas être vide"
+
+            echo ""
+            info "Configuration Cloudflare Tunnel"
+            echo "1. Allez sur https://one.dash.cloudflare.com/"
+            echo "2. Zero Trust → Access → Tunnels"
+            echo "3. Créez un tunnel (ou utilisez un existant)"
+            echo "4. Configurez la route publique :"
+            echo "   - Public Hostname: ${DOMAIN}"
+            echo "   - Service: http://localhost:80"
+            echo "5. Copiez le TOKEN du tunnel (la longue chaîne qui commence par 'eyJ...')"
+            echo ""
+            prompt "Collez le token Cloudflare Tunnel :"
+            read -r CLOUDFLARED_TOKEN
+
+            # Valider que le token n'est pas vide
+            if [[ -z "$CLOUDFLARED_TOKEN" ]]; then
+                error "Le token Cloudflare ne peut pas être vide"
+            fi
+
+            cat > "$secrets_file" <<EOF
+# Secrets pour whitelily (VM n8n automation)
+# Généré automatiquement par install-nixos.sh
+
+jeremie-password-hash: ${JEREMIE_HASH}
+
+n8n:
+  encryption_key: "${N8N_ENCRYPTION_KEY}"
+  basic_user: "${N8N_USER}"
+  basic_pass: "${N8N_BASIC_PASS}"
+  db_password: "${DB_PASSWORD}"
+
+cloudflared:
+  token: "${CLOUDFLARED_TOKEN}"
+EOF
+
+            # Sauvegarder le domaine pour la configuration
+            echo "$DOMAIN" > /tmp/whitelily-domain.txt
+
+            info "Résumé de la configuration n8n :"
+            echo "  • Domaine          : ${DOMAIN}"
+            echo "  • Utilisateur      : ${N8N_USER}"
+            echo "  • Mot de passe     : ${N8N_BASIC_PASS}"
+            echo "  • Clé chiffrement  : ${N8N_ENCRYPTION_KEY}"
+            echo ""
+            warning "Sauvegardez ces informations !"
+            echo ""
+            read -p "Appuyez sur Entrée pour continuer..."
+            ;;
+    esac
+
+    info "Fichier de secrets créé : $secrets_file"
+
+    # Copier vers le système cible plus tard
+    export SECRETS_FILE="$secrets_file"
+}
 
 # ========================================
 # Étape 1 : Nettoyage du disque
@@ -269,44 +396,81 @@ if [[ ! -f /var/lib/sops-nix/key.txt ]]; then
     fi
 fi
 
-# ========================================
-# Gestion des secrets (toujours reportée)
-# ========================================
-step "Gestion des secrets"
+# Toujours demander si on veut regénérer les secrets
+SECRETS_PATH="/mnt/etc/nixos/secrets/${HOST}.yaml"
 
-info "Les secrets ne sont PAS créés pendant l'installation"
-warning "⚠️  Séparation des responsabilités : build/install ≠ gestion des secrets"
 echo ""
-echo -e "${YELLOW}Après l'installation, vous devrez créer les secrets avec :${NC}"
-echo ""
-echo "  ${CYAN}cd /etc/nixos${NC}"
-echo "  ${CYAN}sudo ./scripts/manage-secrets.sh ${HOST}${NC}"
-echo ""
-echo -e "${YELLOW}Puis déployer la configuration :${NC}"
-echo "  ${CYAN}sudo nixos-rebuild switch --flake .#${HOST}${NC}"
-echo ""
+if [[ -f "$SECRETS_PATH" ]] && ! grep -q "REMPLACER_PAR" "$SECRETS_PATH" 2>/dev/null; then
+    info "Secrets existants trouvés pour ${HOST}"
+    prompt "Voulez-vous les regénérer ? (oui/non, défaut: non):"
+    read -r regenerate_secrets
 
-# Copier la clé age si elle existe pour une utilisation future
-if [[ -f /var/lib/sops-nix/key.txt ]]; then
-    mkdir -p /mnt/var/lib/sops-nix
-    cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
-    chmod 600 /mnt/var/lib/sops-nix/key.txt
-    info "Clé age copiée (prête pour manage-secrets.sh)"
+    if [[ "$regenerate_secrets" != "oui" ]]; then
+        info "Utilisation des secrets existants"
+        SKIP_SECRET_GENERATION=true
+    fi
 fi
 
-# Si des secrets existent déjà dans le repo, les utiliser
-SECRETS_PATH="/mnt/etc/nixos/secrets/${HOST}.yaml"
-if [[ -f "$SECRETS_PATH" ]] && grep -q "sops:" "$SECRETS_PATH" 2>/dev/null; then
-    info "Secrets existants trouvés dans le repo (chiffrés)"
-    info "Vous pourrez les mettre à jour plus tard avec manage-secrets.sh"
+if [[ "${SKIP_SECRET_GENERATION:-false}" != "true" ]]; then
+    warning "Génération interactive des secrets pour ${HOST}"
+    info "Vous allez définir le mot de passe SSH pour cet host"
+    echo ""
+
+    # Définir le chemin du fichier de secrets (doit correspondre à celui dans generate_secrets)
+    SECRETS_FILE="/tmp/secrets-${HOST}.yaml"
+
+    # Installer les outils nécessaires temporairement
+    nix-shell -p sops age openssl mkpasswd jq --run "$(declare -f generate_secrets error info warning step prompt); generate_secrets ${HOST}"
+
+    # Chiffrer les secrets avec sops
+    if [[ -f "$SECRETS_FILE" ]]; then
+        info "Chiffrement des secrets avec sops..."
+
+        # Créer le répertoire secrets
+        mkdir -p /mnt/etc/nixos/secrets
+
+        # Copier la clé age si elle existe
+        if [[ -f /var/lib/sops-nix/key.txt ]]; then
+            mkdir -p /mnt/var/lib/sops-nix
+            cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
+            chmod 600 /mnt/var/lib/sops-nix/key.txt
+
+            # Copier le fichier non chiffré vers son emplacement final
+            cp "$SECRETS_FILE" "$SECRETS_PATH"
+
+            # Chiffrer in-place depuis le répertoire du repo
+            # Cela permet à sops de trouver .sops.yaml et d'utiliser le chemin relatif
+            cd /mnt/etc/nixos
+            nix-shell -p sops age --run "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt sops -e -i 'secrets/${HOST}.yaml'"
+
+            # Vérifier que c'est bien chiffré
+            if grep -q "sops:" "$SECRETS_PATH"; then
+                info "Secrets chiffrés avec succès"
+            else
+                error "Échec du chiffrement des secrets"
+            fi
+        else
+            warning "Clé age non trouvée, copie du fichier non chiffré"
+            warning "ATTENTION : Les secrets ne sont PAS chiffrés !"
+            cp "$SECRETS_FILE" "$SECRETS_PATH"
+        fi
+
+        # Si whitelily, mettre à jour le domaine dans n8n.nix
+        if [[ "$HOST" == "whitelily" ]] && [[ -f /tmp/whitelily-domain.txt ]]; then
+            DOMAIN=$(cat /tmp/whitelily-domain.txt)
+            sed -i "s|domain = \".*\";|domain = \"${DOMAIN}\";|" "/mnt/etc/nixos/hosts/whitelily/n8n.nix"
+            info "Domaine mis à jour dans n8n.nix : ${DOMAIN}"
+        fi
+    fi
 else
-    # Sinon, copier le fichier d'exemple comme placeholder
-    if [[ -f "/mnt/etc/nixos/secrets/${HOST}.yaml.example" ]]; then
-        cp "/mnt/etc/nixos/secrets/${HOST}.yaml.example" "$SECRETS_PATH"
-        info "Fichier d'exemple copié (contient des placeholders)"
-    else
-        warning "Aucun fichier de secrets trouvé pour ${HOST}"
-        warning "L'installation va continuer mais les secrets devront être créés après"
+    info "Secrets existants trouvés pour ${HOST}"
+
+    # Copier la clé age si elle existe
+    if [[ -f /var/lib/sops-nix/key.txt ]]; then
+        mkdir -p /mnt/var/lib/sops-nix
+        cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
+        chmod 600 /mnt/var/lib/sops-nix/key.txt
+        info "Clé sops copiée"
     fi
 fi
 
@@ -332,30 +496,23 @@ echo ""
 info "Host installé : ${HOST}"
 
 if [[ -f /mnt/var/lib/sops-nix/key.txt ]]; then
-    info "🔐 Clé age copiée (prête pour la gestion des secrets)"
+    info "🔐 Les secrets SOPS ont été déchiffrés"
 else
-    warning "Clé age non trouvée"
+    warning "Clé sops non trouvée"
 fi
 
 echo ""
-warning "⚠️  IMPORTANT : Les secrets ne sont PAS encore configurés"
-echo ""
 info "Prochaines étapes :"
+echo "1. Détacher l'ISO : qm set <VMID> --ide2 none"
+echo "2. Redémarrer la VM : qm start <VMID>"
+echo "3. Se connecter : ssh jeremie@<IP>"
 echo ""
-echo -e "${CYAN}1.${NC} Détacher l'ISO : ${YELLOW}qm set <VMID> --ide2 none${NC}"
-echo -e "${CYAN}2.${NC} Redémarrer la VM : ${YELLOW}qm start <VMID>${NC}"
-echo -e "${CYAN}3.${NC} Se connecter en root : ${YELLOW}ssh root@<IP>${NC}"
-echo ""
-echo -e "${CYAN}4.${NC} Créer les secrets :"
-echo "   ${YELLOW}cd /etc/nixos${NC}"
-echo "   ${YELLOW}./scripts/manage-secrets.sh ${HOST}${NC}"
-echo ""
-echo -e "${CYAN}5.${NC} Déployer la configuration :"
-echo "   ${YELLOW}nixos-rebuild switch --flake .#${HOST}${NC}"
-echo ""
-echo -e "${CYAN}6.${NC} Se reconnecter avec l'utilisateur normal :"
-echo "   ${YELLOW}ssh jeremie@<IP>${NC}"
-echo ""
+
+if [[ "$HOST" == "whitelily" ]]; then
+    echo -e "${YELLOW}📝 Pour whitelily (n8n) :${NC}"
+    echo "   Accédez à https://$(cat /tmp/whitelily-domain.txt 2>/dev/null || echo 'votre-domaine.com')"
+    echo ""
+fi
 
 # Arrêt automatique
 info "La VM va s'éteindre dans 10 secondes..."
