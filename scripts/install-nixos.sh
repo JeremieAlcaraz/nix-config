@@ -206,22 +206,18 @@ EOF
             info "Configuration Cloudflare Tunnel"
             echo "1. Allez sur https://one.dash.cloudflare.com/"
             echo "2. Zero Trust → Access → Tunnels"
-            echo "3. Créez un tunnel nommé : n8n-whitelily"
+            echo "3. Créez un tunnel (ou utilisez un existant)"
             echo "4. Configurez la route publique :"
-            echo "   - Hostname: ${DOMAIN}"
+            echo "   - Public Hostname: ${DOMAIN}"
             echo "   - Service: http://localhost:80"
-            echo "5. Copiez le JSON complet des credentials"
+            echo "5. Copiez le TOKEN du tunnel (la longue chaîne qui commence par 'eyJ...')"
             echo ""
-            prompt "Collez le JSON des credentials Cloudflare (puis ligne vide pour terminer) :"
-            CLOUDFLARED_CREDS=""
-            while IFS= read -r line; do
-                [[ -z "$line" ]] && break
-                CLOUDFLARED_CREDS+="$line"$'\n'
-            done
+            prompt "Collez le token Cloudflare Tunnel :"
+            read -r CLOUDFLARED_TOKEN
 
-            # Valider le JSON
-            if ! echo "$CLOUDFLARED_CREDS" | jq . &>/dev/null; then
-                error "Le JSON des credentials Cloudflare est invalide"
+            # Valider que le token n'est pas vide
+            if [[ -z "$CLOUDFLARED_TOKEN" ]]; then
+                error "Le token Cloudflare ne peut pas être vide"
             fi
 
             cat > "$secrets_file" <<EOF
@@ -237,8 +233,7 @@ n8n:
   db_password: "${DB_PASSWORD}"
 
 cloudflared:
-  credentials: |
-    ${CLOUDFLARED_CREDS}
+  token: "${CLOUDFLARED_TOKEN}"
 EOF
 
             # Sauvegarder le domaine pour la configuration

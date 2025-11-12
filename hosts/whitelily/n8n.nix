@@ -156,6 +156,8 @@ EOF
   # Répertoire de données n8n
   systemd.tmpfiles.rules = [
     "d /var/lib/n8n 0750 root root -"
+    "d /var/log/caddy 0750 caddy caddy -"
+    "d /var/lib/cloudflared 0750 cloudflared cloudflared -"
   ];
 
   ########################################
@@ -232,30 +234,40 @@ EOF
     };
   };
 
-  # Créer le répertoire de logs Caddy
-  systemd.tmpfiles.rules = [
-    "d /var/log/caddy 0750 caddy caddy -"
-  ];
-
   ########################################
   # 5) Cloudflare Tunnel
   ########################################
-  services.cloudflared = {
-    enable = true;
-    tunnels = {
-      # Nom du tunnel (à créer côté Cloudflare)
-      "n8n-whitelily" = {
-        credentialsFile = config.sops.secrets."cloudflared/credentials".path;
-        default = "http_status:404";
-
-        ingress = {
-          "${domain}" = {
-            service = "http://127.0.0.1:80";
-          };
-        };
-      };
+  # Configuration simplifiée avec token
+  # Plus besoin de JSON credentials compliqué !
+  systemd.services.cloudflared-tunnel = {
+    description = "Cloudflare Tunnel for n8n";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network-online.target" "caddy.service" ];
+    wants = [ "network-online.target" ];
+    serviceConfig = {
+      Type = "simple";
+      User = "cloudflared";
+      Group = "cloudflared";
+      Restart = "on-failure";
+      RestartSec = "5s";
+      ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel run --token $(cat ${config.sops.secrets."cloudflared/token".path})";
+      # Sécurité
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      ReadWritePaths = [ "/var/lib/cloudflared" ];
     };
   };
+
+  # Créer l'utilisateur cloudflared
+  users.users.cloudflared = {
+    isSystemUser = true;
+    group = "cloudflared";
+    home = "/var/lib/cloudflared";
+    createHome = true;
+  };
+  users.groups.cloudflared = {};
 
   ########################################
   # 6) Backups automatiques

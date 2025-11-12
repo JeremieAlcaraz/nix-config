@@ -88,7 +88,8 @@
       "n8n/basic_user" = { owner = "root"; group = "root"; mode = "0400"; };
       "n8n/basic_pass" = { owner = "root"; group = "root"; mode = "0400"; };
       "n8n/db_password" = { owner = "postgres"; group = "postgres"; mode = "0400"; };
-      "cloudflared/credentials" = { owner = "cloudflared"; group = "cloudflared"; mode = "0400"; };
+      # Cloudflare Tunnel token (simplifié)
+      "cloudflared/token" = { owner = "cloudflared"; group = "cloudflared"; mode = "0400"; };
     };
   };
 
