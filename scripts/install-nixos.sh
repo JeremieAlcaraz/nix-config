@@ -316,6 +316,50 @@ mkdir -p "/mnt/etc/nixos/hosts/${HOST}"
 cp /tmp/hardware-configuration.nix "/mnt/etc/nixos/hosts/${HOST}/hardware-configuration.nix"
 info "Hardware configuration placée dans hosts/${HOST}/"
 
+# Vérifier et configurer la clé age pour sops
+if [[ ! -f /var/lib/sops-nix/key.txt ]]; then
+    echo ""
+    warning "Clé age sops non trouvée"
+    info "Pour chiffrer les secrets, vous pouvez fournir votre clé age maintenant"
+    echo ""
+    prompt "Voulez-vous fournir la clé age ? (oui/non, défaut: non):"
+    read -r provide_age_key
+
+    if [[ "$provide_age_key" == "oui" ]]; then
+        echo ""
+        info "Collez votre clé age (format: AGE-SECRET-KEY-1...)"
+        info "La clé ne sera PAS affichée pour des raisons de sécurité"
+        echo ""
+        prompt "Clé age :"
+        read -rs AGE_KEY  # -s pour masquer la saisie
+        echo ""  # Nouvelle ligne après la saisie masquée
+
+        if [[ -n "$AGE_KEY" ]]; then
+            # Créer le répertoire et le fichier
+            mkdir -p /var/lib/sops-nix
+            echo "$AGE_KEY" > /var/lib/sops-nix/key.txt
+            chmod 600 /var/lib/sops-nix/key.txt
+
+            # Vérifier que la clé a le bon format
+            if grep -q "AGE-SECRET-KEY-1" /var/lib/sops-nix/key.txt; then
+                info "Clé age configurée avec succès"
+
+                # Copier aussi dans le système cible
+                mkdir -p /mnt/var/lib/sops-nix
+                cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
+                chmod 600 /mnt/var/lib/sops-nix/key.txt
+            else
+                warning "Format de clé invalide, la clé ne sera pas utilisée"
+                rm -f /var/lib/sops-nix/key.txt
+            fi
+        else
+            info "Aucune clé fournie, les secrets ne seront pas chiffrés"
+        fi
+    else
+        info "Installation sans chiffrement sops"
+    fi
+fi
+
 # Vérifier si les secrets existent
 SECRETS_PATH="/mnt/etc/nixos/secrets/${HOST}.yaml"
 if [[ ! -f "$SECRETS_PATH" ]] || grep -q "REMPLACER_PAR" "$SECRETS_PATH" 2>/dev/null; then
