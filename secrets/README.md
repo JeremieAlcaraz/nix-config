@@ -8,67 +8,48 @@ Ce répertoire contient les secrets chiffrés avec sops pour les différents hô
 - Seuls les fichiers **chiffrés** avec sops peuvent être committés
 - Les fichiers `.example` sont des templates et ne contiennent pas de vraies valeurs
 
-## Quick Start - Méthode Recommandée (manage-secrets.sh)
+## Quick Start - Utilisez manage-secrets.sh
 
-**NOUVEAU** : Utilisez le script `manage-secrets.sh` pour gérer vos secrets facilement !
+**Le seul script dont vous avez besoin pour gérer vos secrets !**
+
+### 🚀 Usage
 
 ```bash
 # Créer ou régénérer les secrets pour un host
-cd /path/to/nix-config
+cd /etc/nixos
 sudo ./scripts/manage-secrets.sh [magnolia|mimosa|whitelily]
-
-# Le script va :
-# 1. Vérifier que vous avez les outils nécessaires (sops, age, openssl, mkpasswd)
-# 2. Vérifier que la clé age est configurée
-# 3. Générer les secrets de manière interactive
-# 4. Chiffrer automatiquement avec sops
-# 5. Sauvegarder les anciens secrets si existants
 ```
 
-### Avantages de manage-secrets.sh
+### ✨ Le script fait tout automatiquement
 
-- ✅ **Séparé de l'installation** : Gérez les secrets indépendamment du build/install
-- ✅ **Rotation facile** : Régénérez n'importe quel secret à tout moment
-- ✅ **Interactif et guidé** : Le script vous guide étape par étape
-- ✅ **Backup automatique** : Les anciens secrets sont sauvegardés avant régénération
-- ✅ **Chiffrement automatique** : Les secrets sont chiffrés avec sops immédiatement
+1. ✅ Vérifie les outils nécessaires (sops, age, openssl, mkpasswd)
+2. ✅ Vérifie/configure la clé age
+3. ✅ Génère les secrets de manière interactive
+4. ✅ Sauvegarde les anciens secrets avant modification
+5. ✅ Chiffre automatiquement avec sops
 
-### Après génération des secrets
+### 📦 Après génération
 
 ```bash
 # Vérifier que les secrets sont bien chiffrés
 cat secrets/mimosa.yaml | grep "sops:"
 
-# Committer les secrets
-git add secrets/mimosa.yaml
-git commit -m "🔒 Update secrets for mimosa"
-
 # Déployer sur l'host
 sudo nixos-rebuild switch --flake .#mimosa
+
+# Si vous êtes sur une autre machine, committer et pusher
+git add secrets/mimosa.yaml
+git commit -m "🔒 Update secrets for mimosa"
+git push
 ```
 
-## Méthode Alternative - Manuelle
+### 💡 Pourquoi manage-secrets.sh ?
 
-Si vous préférez créer les secrets manuellement :
-
-1. **Installer les outils** :
-   ```bash
-   nix-shell -p sops age ssh-to-age
-   ```
-
-2. **Créer et chiffrer les secrets** :
-   ```bash
-   cp mimosa.yaml.example mimosa.yaml  # Pour le serveur web
-   sops mimosa.yaml
-   # Éditer, sauvegarder
-   ```
-
-3. **Vérifier et committer** :
-   ```bash
-   cat mimosa.yaml | grep "sops:"  # Doit afficher du contenu chiffré
-   git add -f mimosa.yaml
-   git commit -m "🔒 Add encrypted secrets"
-   ```
+- 🔒 **Sécurité** : Les secrets ne sont jamais créés au build time
+- 🔄 **Rotation facile** : Régénérez n'importe quel secret à tout moment
+- 🎯 **Interactif** : Le script vous guide étape par étape
+- 💾 **Backup** : Les anciens secrets sont automatiquement sauvegardés
+- ⚡ **Chiffrement** : Automatique et transparent avec sops
 
 ## Fichiers
 
