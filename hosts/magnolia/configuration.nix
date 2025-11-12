@@ -13,10 +13,15 @@
   time.timeZone = "Europe/Paris";
   system.stateVersion = "25.05";
 
+  # Activer les flakes et nix-command
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   # Réseau
   networking.hostName = "magnolia";  # Infrastructure Proxmox
   networking.useDHCP = true;
   networking.firewall.enable = false;
+  # Désactiver resolvconf (DHCP gère déjà le DNS)
+  networking.resolvconf.enable = false;
 
   # SSH
   services.openssh.enable = true;
@@ -90,43 +95,16 @@
     };
   };
 
-  # Configuration ZSH shell
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-  };
+  # ZSH activé au niveau système (requis pour users.users.jeremie.shell)
+  # La configuration ZSH détaillée est gérée par Home Manager
+  programs.zsh.enable = true;
 
-  # Configuration Starship prompt
-  programs.starship = {
-    enable = true;
-    settings = {
-      add_newline = false;
-      character = {
-        success_symbol = "[➜](bold green)";
-        error_symbol = "[➜](bold red)";
-      };
-      directory = {
-        truncation_length = 3;
-        truncate_to_repo = true;
-      };
-    };
-  };
-
-  # Message de bienvenue personnalisé
-  programs.zsh.interactiveShellInit = ''
-    echo ""
-    echo "🌸 Magnolia - Infrastructure Proxmox"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-  '';
+  # Tmux au niveau système
+  programs.tmux.enable = true;
 
   # Shell par défaut pour l'utilisateur jeremie
   users.users.jeremie.shell = pkgs.zsh;
 
-  # Paquets utiles
-  environment.systemPackages = with pkgs; [ vim git curl wget htop tree ];
-
-  programs.tmux.enable = true;
+  # Paquets système essentiels
+  environment.systemPackages = with pkgs; [ git curl wget ];
 }

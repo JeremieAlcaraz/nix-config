@@ -15,6 +15,9 @@
   time.timeZone = "Europe/Paris";
   system.stateVersion = "24.05";
 
+  # Activer les flakes et nix-command
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   # Réseau
   networking.hostName = "mimosa";  # Serveur web
   networking.useDHCP = true;
@@ -86,17 +89,6 @@
   # La configuration "mimosa-minimal" n'importe PAS ce fichier pour éviter
   # les téléchargements npm pendant l'installation initiale
 
-  # Configuration Git globale
-  programs.git = {
-    enable = true;
-    config = {
-      user = {
-        name = "JeremieAlcaraz";
-        email = "hello@jeremiealcaraz.com";
-      };
-    };
-  };
-
   # Tailscale
   services.tailscale = {
     enable = true;
@@ -105,45 +97,17 @@
     openFirewall = true;
   };
 
-  # Configuration Fish shell
-  programs.fish = {
-    enable = true;
-  };
-
-  # Configuration Starship prompt
-  programs.starship = {
-    enable = true;
-    settings = {
-      add_newline = false;
-      character = {
-        success_symbol = "[➜](bold green)";
-        error_symbol = "[➜](bold red)";
-      };
-      directory = {
-        truncation_length = 3;
-        truncate_to_repo = true;
-      };
-    };
-  };
-
-  # Message de bienvenue personnalisé
-  programs.fish.interactiveShellInit = ''
-    echo ""
-    echo "🌼 Mimosa - Serveur web"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-  '';
+  # Fish activé au niveau système (requis pour users.users.jeremie.shell)
+  # La configuration Fish détaillée est gérée par Home Manager
+  programs.fish.enable = true;
 
   # Shell par défaut pour l'utilisateur jeremie
   users.users.jeremie.shell = pkgs.fish;
 
-  # Paquets utiles
+  # Paquets système essentiels
   environment.systemPackages = with pkgs; [
-    vim
     git
     curl
     wget
-    htop
-    tree
   ];
 }
