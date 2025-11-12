@@ -122,11 +122,11 @@ sudo ./install.sh whitelily
 # 2. Confirmation de l'effacement du disque
 # 3. Mot de passe SSH pour jeremie
 # 4. Nom d'utilisateur n8n (défaut: admin)
-# 5. Domaine complet (ex: n8n.jeremiealcaraz.com)
+# 5. Domaine complet (ex: n8nv2.jeremiealcaraz.com)
 # 6. Credentials JSON Cloudflare Tunnel
 
 # Le script affiche ensuite :
-# ✅ Domaine          : n8n.jeremiealcaraz.com
+# ✅ Domaine          : n8nv2.jeremiealcaraz.com
 # ✅ Utilisateur      : admin
 # ✅ Mot de passe     : Abc123XYZ789...
 # ✅ Clé chiffrement  : 64 caractères hex
