@@ -11,9 +11,13 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    home-manager = {
+      url = "github:nix-community/home-manager/release-24.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, j12z-site, sops-nix, ... }:
+  outputs = { self, nixpkgs, j12z-site, sops-nix, home-manager, ... }:
     let
       system = "x86_64-linux";
     in {
@@ -24,6 +28,12 @@
           modules = [
             ./hosts/magnolia/configuration.nix
             sops-nix.nixosModules.sops
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremie = import ./home/jeremie.nix;
+            }
           ];
         };
 
@@ -34,6 +44,12 @@
           modules = [
             ./hosts/mimosa/configuration.nix
             sops-nix.nixosModules.sops
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremie = import ./home/jeremie.nix;
+            }
             # Le module j12z-webserver n'est PAS importé ici
             # pour éviter les téléchargements npm pendant l'installation
           ];
@@ -47,6 +63,12 @@
             ./hosts/mimosa/webserver.nix  # Configuration du serveur web
             j12z-site.nixosModules.j12z-webserver
             sops-nix.nixosModules.sops
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremie = import ./home/jeremie.nix;
+            }
           ];
         };
 

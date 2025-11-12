@@ -90,43 +90,9 @@
     };
   };
 
-  # Configuration ZSH shell
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-  };
-
-  # Configuration Starship prompt
-  programs.starship = {
-    enable = true;
-    settings = {
-      add_newline = false;
-      character = {
-        success_symbol = "[➜](bold green)";
-        error_symbol = "[➜](bold red)";
-      };
-      directory = {
-        truncation_length = 3;
-        truncate_to_repo = true;
-      };
-    };
-  };
-
-  # Message de bienvenue personnalisé
-  programs.zsh.interactiveShellInit = ''
-    echo ""
-    echo "🌸 Magnolia - Infrastructure Proxmox"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-  '';
-
   # Shell par défaut pour l'utilisateur jeremie
   users.users.jeremie.shell = pkgs.zsh;
 
-  # Paquets utiles
-  environment.systemPackages = with pkgs; [ vim git curl wget htop tree ];
-
-  programs.tmux.enable = true;
+  # Paquets système essentiels
+  environment.systemPackages = with pkgs; [ git curl wget ];
 }
