@@ -432,7 +432,8 @@ if [[ "${SKIP_SECRET_GENERATION:-false}" != "true" ]]; then
             cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
             chmod 600 /mnt/var/lib/sops-nix/key.txt
 
-            SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt sops encrypt "$SECRETS_FILE" > "$SECRETS_PATH"
+            # Utiliser nix-shell pour avoir accès à sops
+            nix-shell -p sops age --run "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt sops encrypt '$SECRETS_FILE' > '$SECRETS_PATH'"
 
             # Vérifier que c'est bien chiffré
             if grep -q "sops:" "$SECRETS_PATH"; then
