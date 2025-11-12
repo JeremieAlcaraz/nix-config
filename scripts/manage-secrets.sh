@@ -65,6 +65,21 @@ generate_password_hash() {
     fi
 }
 
+# Fonction sed compatible multi-OS
+sed_inplace() {
+    local pattern="$1"
+    local file="$2"
+    local os=$(detect_os)
+
+    if [[ "$os" == "macos" ]]; then
+        # Sur macOS (BSD sed), -i nécessite un argument
+        sed -i '' "$pattern" "$file"
+    else
+        # Sur Linux (GNU sed)
+        sed -i "$pattern" "$file"
+    fi
+}
+
 # Vérifications initiales
 check_requirements() {
     local missing=()
@@ -306,7 +321,7 @@ EOF
         update_domain="${update_domain:-oui}"
 
         if [[ "$update_domain" == "oui" ]]; then
-            sed -i "s|domain = \".*\";|domain = \"${DOMAIN}\";|" "hosts/whitelily/n8n.nix"
+            sed_inplace "s|domain = \".*\";|domain = \"${DOMAIN}\";|" "hosts/whitelily/n8n.nix"
             info "Domaine mis à jour dans n8n.nix : ${DOMAIN}"
         fi
     fi
