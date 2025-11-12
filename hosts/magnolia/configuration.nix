@@ -20,6 +20,8 @@
   networking.hostName = "magnolia";  # Infrastructure Proxmox
   networking.useDHCP = true;
   networking.firewall.enable = false;
+  # Désactiver resolvconf (DHCP gère déjà le DNS)
+  networking.resolvconf.enable = false;
 
   # SSH
   services.openssh.enable = true;
@@ -96,6 +98,9 @@
   # ZSH activé au niveau système (requis pour users.users.jeremie.shell)
   # La configuration ZSH détaillée est gérée par Home Manager
   programs.zsh.enable = true;
+
+  # Tmux au niveau système
+  programs.tmux.enable = true;
 
   # Shell par défaut pour l'utilisateur jeremie
   users.users.jeremie.shell = pkgs.zsh;

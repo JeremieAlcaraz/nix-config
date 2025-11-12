@@ -4,6 +4,9 @@
   # Version de Home Manager (doit correspondre à la version NixOS)
   home.stateVersion = "24.11";
 
+  # Activer la commande home-manager
+  programs.home-manager.enable = true;
+
   # Programmes communs aux deux hosts
   home.packages = with pkgs; [
     htop
@@ -62,10 +65,5 @@
     enable = osConfig.networking.hostName == "mimosa";
     userName = "JeremieAlcaraz";
     userEmail = "hello@jeremiealcaraz.com";
-  };
-
-  # Tmux - Multiplexeur de terminal pour magnolia
-  programs.tmux = {
-    enable = osConfig.networking.hostName == "magnolia";
   };
 }
