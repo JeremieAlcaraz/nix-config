@@ -1,0 +1,876 @@
+# 🤍 Guide complet d'installation - Whitelily (n8n)
+
+Ce guide détaillé vous accompagne dans l'installation et la configuration complète de **whitelily**, une VM NixOS dédiée à n8n avec une architecture production-ready.
+
+## 📋 Table des matières
+
+1. [Architecture et fonctionnalités](#architecture-et-fonctionnalités)
+2. [Prérequis](#prérequis)
+3. [Étape 1 : Créer la VM Proxmox](#étape-1--créer-la-vm-proxmox)
+4. [Étape 2 : Installation de NixOS](#étape-2--installation-de-nixos)
+5. [Étape 3 : Configuration initiale](#étape-3--configuration-initiale)
+6. [Étape 4 : Configuration Cloudflare Tunnel](#étape-4--configuration-cloudflare-tunnel)
+7. [Étape 5 : Génération et configuration des secrets](#étape-5--génération-et-configuration-des-secrets)
+8. [Étape 6 : Déploiement final](#étape-6--déploiement-final)
+9. [Étape 7 : Vérifications et tests](#étape-7--vérifications-et-tests)
+10. [Maintenance et opérations](#maintenance-et-opérations)
+11. [Troubleshooting](#troubleshooting)
+12. [Backup et restauration](#backup-et-restauration)
+
+---
+
+## Architecture et fonctionnalités
+
+### 🏗️ Stack technique
+
+- **OS** : NixOS 24.11 (configuration 100% déclarative)
+- **Container** : Podman (OCI containers)
+- **Application** : n8n (version épinglée pour stabilité)
+- **Base de données** : PostgreSQL 16 (robuste, backups faciles)
+- **Reverse proxy** : Caddy (moderne, HTTP/2, compression automatique)
+- **Exposition** : Cloudflare Tunnel (zero trust, aucun port public ouvert)
+- **Secrets** : sops-nix avec clé age partagée
+- **Backups** : Automatiques quotidiens (DB + données)
+
+### ✨ Fonctionnalités
+
+- ✅ Zéro port public ouvert (firewall actif)
+- ✅ TLS automatique via Cloudflare
+- ✅ Authentification basique n8n
+- ✅ Chiffrement des credentials n8n
+- ✅ PostgreSQL avec optimisations
+- ✅ Backups automatiques quotidiens
+- ✅ Healthchecks toutes les 5 minutes
+- ✅ Logs rotatifs automatiques
+- ✅ Configuration reproductible à 100%
+
+---
+
+## Prérequis
+
+### 🖥️ Infrastructure
+
+- [ ] Accès à un serveur Proxmox
+- [ ] ISO NixOS 24.11 téléchargé et disponible sur Proxmox
+- [ ] Réseau DHCP configuré
+- [ ] Accès SSH depuis ton Mac
+
+### 🌐 Cloudflare
+
+- [ ] Compte Cloudflare avec domaine configuré
+- [ ] Accès à Zero Trust (Cloudflare Tunnel)
+- [ ] Domaine ou sous-domaine dédié (ex: `n8n.jeremiealcaraz.com`)
+
+### 💻 Outils locaux (Mac)
+
+```bash
+# Vérifier que tu as bien :
+which sops age ssh
+```
+
+Si manquant, installer :
+```bash
+brew install sops age
+```
+
+### 🔑 Clé age partagée
+
+Tu dois avoir ta clé age partagée disponible :
+- **Mac** : `~/.config/sops/age/nixos-shared-key.txt`
+- Cette clé sera copiée sur la VM whitelily
+
+---
+
+## Étape 1 : Créer la VM Proxmox
+
+### 1.1 Configuration VM recommandée
+
+```
+Nom           : whitelily
+OS            : NixOS 24.11
+CPU           : 2 cores
+RAM           : 4 GB
+Disque        : 32 GB (thin provisioning)
+Réseau        : Bridge (DHCP)
+BIOS          : OVMF (UEFI)
+Boot          : ISO NixOS 24.11
+```
+
+### 1.2 Création via l'interface Proxmox
+
+1. Cliquer sur **Create VM**
+2. Remplir les paramètres ci-dessus
+3. Monter l'ISO NixOS
+4. Activer **QEMU Guest Agent** dans Options
+5. Démarrer la VM
+
+### 1.3 Console série (optionnel mais recommandé)
+
+Activer la console série pour un accès facile :
+```bash
+# Dans Proxmox shell
+qm set <VMID> -serial0 socket
+```
+
+---
+
+## Étape 2 : Installation de NixOS
+
+### 2.1 Boot sur l'ISO
+
+La VM démarre automatiquement sur l'ISO NixOS. Tu arrives sur un shell root.
+
+### 2.2 Partitionnement du disque
+
+**Important** : Ajuste `/dev/sda` selon ton setup (peut être `/dev/vda` sur certains systèmes).
+
+```bash
+# Identifier le disque
+lsblk
+
+# Partitionner (UEFI/GPT)
+parted /dev/sda -- mklabel gpt
+
+# Partition boot (512 MB)
+parted /dev/sda -- mkpart ESP fat32 1MiB 512MiB
+parted /dev/sda -- set 1 esp on
+
+# Partition root (reste de l'espace)
+parted /dev/sda -- mkpart primary 512MiB 100%
+
+# Formater
+mkfs.fat -F 32 -n boot /dev/sda1
+mkfs.ext4 -L nixos /dev/sda2
+
+# Monter
+mount /dev/disk/by-label/nixos /mnt
+mkdir -p /mnt/boot
+mount /dev/disk/by-label/boot /mnt/boot
+```
+
+### 2.3 Génération de la configuration
+
+```bash
+# Générer la config hardware
+nixos-generate-config --root /mnt
+
+# Vérifier
+ls -la /mnt/etc/nixos/
+# Tu devrais voir : configuration.nix et hardware-configuration.nix
+```
+
+### 2.4 Installation minimale temporaire
+
+On va d'abord installer un NixOS minimal pour pouvoir SSH et finaliser la config.
+
+```bash
+# Éditer la configuration temporaire
+nano /mnt/etc/nixos/configuration.nix
+```
+
+Configuration minimale :
+
+```nix
+{ config, pkgs, ... }:
+{
+  imports = [ ./hardware-configuration.nix ];
+
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  networking.hostName = "whitelily";
+  networking.useDHCP = true;
+
+  services.openssh = {
+    enable = true;
+    settings.PermitRootLogin = "yes";  # Temporaire !
+  };
+
+  users.users.root.password = "nixos";  # Temporaire !
+
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+  environment.systemPackages = with pkgs; [ git vim curl wget ];
+
+  system.stateVersion = "24.11";
+}
+```
+
+### 2.5 Installation
+
+```bash
+nixos-install
+
+# Attendre que l'installation se termine...
+# Puis redémarrer
+
+reboot
+```
+
+### 2.6 Premier démarrage
+
+1. Retirer l'ISO dans Proxmox (Unmount CD)
+2. La VM redémarre sur le disque
+3. Trouver l'IP de la VM :
+
+```bash
+# Depuis Proxmox shell
+qm guest cmd <VMID> network-get-interfaces
+```
+
+Ou depuis la console VM :
+```bash
+ip addr show
+```
+
+### 2.7 Première connexion SSH
+
+```bash
+# Depuis ton Mac
+ssh root@<IP_VM>
+# Password: nixos
+```
+
+---
+
+## Étape 3 : Configuration initiale
+
+### 3.1 Cloner ton repo de configuration
+
+```bash
+# Sur la VM whitelily (connecté en root)
+cd /root
+git clone https://github.com/JeremieAlcaraz/nix-config.git
+cd nix-config
+
+# Vérifier que la branche est bonne
+git status
+git pull origin claude/nixos-n8n-whitelily-setup-011CV3zqGdzZrKV6bxkVZx1v
+```
+
+### 3.2 Copier le hardware-configuration.nix
+
+```bash
+# Copier la config hardware générée vers le repo
+cp /etc/nixos/hardware-configuration.nix \
+   /root/nix-config/hosts/whitelily/hardware-configuration.nix
+
+# Vérifier
+cat /root/nix-config/hosts/whitelily/hardware-configuration.nix
+```
+
+### 3.3 Installer la clé age sops
+
+```bash
+# Créer le répertoire
+mkdir -p /var/lib/sops-nix
+
+# Depuis TON MAC, copier la clé :
+scp ~/.config/sops/age/nixos-shared-key.txt \
+    root@<IP_VM>:/var/lib/sops-nix/key.txt
+
+# De retour sur la VM, vérifier les permissions
+chmod 600 /var/lib/sops-nix/key.txt
+chown root:root /var/lib/sops-nix/key.txt
+```
+
+---
+
+## Étape 4 : Configuration Cloudflare Tunnel
+
+### 4.1 Créer le tunnel dans Cloudflare
+
+1. Aller sur https://one.dash.cloudflare.com/
+2. Navigation : **Zero Trust** → **Access** → **Tunnels**
+3. Cliquer sur **Create a tunnel**
+4. Choisir **Cloudflared**
+5. Nom du tunnel : `n8n-whitelily`
+6. Cliquer sur **Save tunnel**
+
+### 4.2 Configurer la route publique
+
+1. Dans l'onglet **Public Hostname**, cliquer sur **Add a public hostname**
+2. Configuration :
+   - **Subdomain** : `n8n` (ou ce que tu veux)
+   - **Domain** : `jeremiealcaraz.com` (ton domaine)
+   - **Path** : (laisser vide)
+   - **Type** : `HTTP`
+   - **URL** : `localhost:80`
+3. Cliquer sur **Save hostname**
+
+### 4.3 Récupérer les credentials du tunnel
+
+1. Dans l'onglet **Configure** du tunnel
+2. Copier le **JSON complet** des credentials
+
+Format attendu :
+```json
+{
+  "AccountTag": "abc123...",
+  "TunnelSecret": "xyz789...",
+  "TunnelID": "uuid-here..."
+}
+```
+
+**Important** : Garde ce JSON sous la main, tu en auras besoin à l'étape suivante.
+
+### 4.4 Vérifier le domaine dans n8n.nix
+
+```bash
+# Sur la VM whitelily
+nano /root/nix-config/hosts/whitelily/n8n.nix
+
+# Ligne 5, vérifier que le domaine est correct :
+# domain = "n8n.jeremiealcaraz.com";  # ← Ton sous-domaine configuré
+```
+
+Ajuster si nécessaire pour correspondre à ce que tu as configuré dans Cloudflare.
+
+---
+
+## Étape 5 : Génération et configuration des secrets
+
+### 5.1 Générer les secrets requis
+
+**Sur ton Mac** (pas sur la VM) :
+
+```bash
+cd ~/path/to/nix-config
+
+# 1. Clé de chiffrement n8n (CRITIQUE - À sauvegarder dans 1Password/Bitwarden !)
+echo "N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)"
+
+# 2. Mot de passe basic auth n8n
+echo "N8N_BASIC_PASS=$(openssl rand -base64 24)"
+
+# 3. Mot de passe DB PostgreSQL
+echo "DB_PASSWORD=$(openssl rand -base64 32)"
+
+# 4. Hash du mot de passe utilisateur jeremie
+mkpasswd -m sha-512
+# Entrer le mot de passe que tu veux utiliser pour te connecter
+```
+
+**⚠️ CRITIQUE** : Sauvegarde la `N8N_ENCRYPTION_KEY` dans un gestionnaire de mots de passe ! Si tu la perds, tu perds TOUTES tes credentials n8n.
+
+### 5.2 Créer le fichier de secrets
+
+```bash
+# Sur ton Mac
+cd ~/path/to/nix-config
+cp secrets/whitelily.yaml.example secrets/whitelily.yaml
+
+# Éditer avec sops (chiffrement automatique)
+sops secrets/whitelily.yaml
+```
+
+Remplir tous les champs :
+
+```yaml
+jeremie-password-hash: $6$...hash généré avec mkpasswd...
+
+n8n:
+  encryption_key: "clé générée avec openssl rand -hex 32"
+  basic_user: "admin"  # ou ce que tu veux
+  basic_pass: "mot de passe généré avec openssl rand -base64 24"
+  db_password: "mot de passe généré avec openssl rand -base64 32"
+
+cloudflared:
+  credentials: |
+    {
+      "AccountTag": "ton-account-tag-cloudflare",
+      "TunnelSecret": "ton-tunnel-secret",
+      "TunnelID": "ton-tunnel-id"
+    }
+```
+
+Sauvegarder et quitter (`:wq` dans vim).
+
+### 5.3 Vérifier que c'est bien chiffré
+
+```bash
+# Sur ton Mac
+cat secrets/whitelily.yaml | grep "sops:"
+
+# Si tu vois du contenu chiffré avec "sops:", c'est bon !
+# Tu devrais voir quelque chose comme :
+# sops:
+#   kms: []
+#   gcp_kms: []
+#   ...
+```
+
+### 5.4 Committer les secrets chiffrés
+
+```bash
+# Sur ton Mac
+git add -f secrets/whitelily.yaml
+git commit -m "🔒 Add encrypted secrets for whitelily"
+git push origin claude/nixos-n8n-whitelily-setup-011CV3zqGdzZrKV6bxkVZx1v
+```
+
+---
+
+## Étape 6 : Déploiement final
+
+### 6.1 Pull des derniers changements sur la VM
+
+```bash
+# Sur la VM whitelily (connecté en root)
+cd /root/nix-config
+git pull origin claude/nixos-n8n-whitelily-setup-011CV3zqGdzZrKV6bxkVZx1v
+```
+
+### 6.2 Build et activation de la configuration
+
+```bash
+# Sur la VM whitelily
+cd /root/nix-config
+
+# Build de la configuration whitelily
+nixos-rebuild switch --flake .#whitelily
+
+# Cette commande va :
+# - Télécharger tous les packages nécessaires
+# - Configurer PostgreSQL
+# - Télécharger l'image Docker n8n
+# - Configurer Caddy
+# - Configurer Cloudflare Tunnel
+# - Activer tous les services
+#
+# Cela peut prendre 5-10 minutes la première fois
+```
+
+### 6.3 Redémarrage (optionnel mais recommandé)
+
+```bash
+reboot
+```
+
+Attendre que la VM redémarre, puis reconnecter en SSH :
+
+```bash
+# Depuis ton Mac
+ssh jeremie@<IP_VM>
+# Utiliser le mot de passe que tu as configuré dans les secrets
+```
+
+**Note** : Tu ne peux plus te connecter en root ! Utilise l'utilisateur `jeremie` avec sudo.
+
+---
+
+## Étape 7 : Vérifications et tests
+
+### 7.1 Vérifier les services
+
+```bash
+# Sur la VM whitelily (connecté en jeremie)
+
+# 1. PostgreSQL
+sudo systemctl status postgresql
+sudo -u postgres psql -c "\l" | grep n8n
+
+# 2. Container n8n
+sudo podman ps
+# Tu devrais voir un container "n8n" avec status "Up" et "healthy"
+
+# 3. Caddy
+sudo systemctl status caddy
+curl -I http://127.0.0.1:80
+# Tu devrais recevoir une réponse de Caddy
+
+# 4. Cloudflare Tunnel
+sudo systemctl status cloudflared-tunnel-n8n-whitelily
+journalctl -u cloudflared-tunnel-n8n-whitelily -f
+# Tu devrais voir : "Connection ... registered"
+```
+
+### 7.2 Test de healthcheck n8n
+
+```bash
+# Sur la VM
+curl http://127.0.0.1:5678/healthz
+
+# Réponse attendue :
+# {"status":"ok"}
+```
+
+### 7.3 Vérifier les backups
+
+```bash
+# Sur la VM
+ls -lah /var/backup/postgresql/
+ls -lah /var/backup/n8n/
+
+# Pour forcer un backup manuel :
+sudo systemctl start postgresqlBackup
+sudo systemctl start backup-n8n-data
+
+# Vérifier que les backups sont créés
+ls -lah /var/backup/postgresql/
+ls -lah /var/backup/n8n/
+```
+
+### 7.4 Test de l'accès externe (via Cloudflare)
+
+**Depuis ton navigateur** (sur ton Mac ou autre) :
+
+1. Ouvrir https://n8n.jeremiealcaraz.com (ton domaine configuré)
+2. Tu devrais voir une page de login avec authentification basique :
+   - **Username** : ce que tu as mis dans `n8n/basic_user`
+   - **Password** : ce que tu as mis dans `n8n/basic_pass`
+3. Après authentification, tu arrives sur l'interface n8n
+
+**Si ça ne marche pas**, voir la section Troubleshooting ci-dessous.
+
+### 7.5 Vérifier les logs
+
+```bash
+# Logs n8n (container)
+sudo podman logs n8n --tail 50
+
+# Logs Caddy
+sudo journalctl -u caddy -n 50
+
+# Logs Cloudflare Tunnel
+sudo journalctl -u cloudflared-tunnel-n8n-whitelily -n 50
+
+# Logs PostgreSQL
+sudo journalctl -u postgresql -n 50
+```
+
+---
+
+## Maintenance et opérations
+
+### 🔄 Mise à jour de n8n
+
+Pour mettre à jour n8n vers une nouvelle version :
+
+```bash
+# 1. Sur ton Mac, éditer le fichier n8n.nix
+nano hosts/whitelily/n8n.nix
+
+# 2. Ligne 88, changer la version :
+# image = "docker.io/n8nio/n8n:1.75.0";  # Nouvelle version
+
+# 3. Committer et pousser
+git add hosts/whitelily/n8n.nix
+git commit -m "⬆️ Update n8n to 1.75.0"
+git push
+
+# 4. Sur la VM whitelily
+cd /root/nix-config
+git pull
+sudo nixos-rebuild switch --flake .#whitelily
+
+# Le nouveau container sera téléchargé et redémarré automatiquement
+```
+
+### 🔍 Monitoring quotidien
+
+Services à surveiller :
+
+```bash
+# Quick check de tous les services
+sudo systemctl status postgresql caddy cloudflared-tunnel-n8n-whitelily
+sudo podman ps
+
+# Vérifier l'espace disque
+df -h
+
+# Vérifier les backups récents
+ls -lth /var/backup/postgresql/ | head
+ls -lth /var/backup/n8n/ | head
+```
+
+### 📊 Vérifier l'utilisation des ressources
+
+```bash
+# CPU et RAM
+htop
+
+# Utilisation PostgreSQL
+sudo -u postgres psql n8n -c "SELECT pg_size_pretty(pg_database_size('n8n'));"
+
+# Utilisation container n8n
+sudo podman stats n8n --no-stream
+```
+
+### 🧹 Nettoyage
+
+```bash
+# Nettoyer les anciennes générations NixOS (garder les 5 dernières)
+sudo nix-collect-garbage --delete-older-than 30d
+
+# Nettoyer les anciennes images Podman
+sudo podman image prune -a
+
+# Optimiser le store Nix
+sudo nix-store --optimise
+```
+
+### 🔐 Rotation des secrets
+
+Pour changer un secret (exemple : mot de passe n8n) :
+
+```bash
+# 1. Sur ton Mac
+cd ~/path/to/nix-config
+sops secrets/whitelily.yaml
+# Éditer la valeur, sauvegarder
+
+# 2. Committer et pousser
+git add secrets/whitelily.yaml
+git commit -m "🔐 Rotate n8n password"
+git push
+
+# 3. Sur la VM
+cd /root/nix-config
+git pull
+sudo nixos-rebuild switch --flake .#whitelily
+
+# Les services sont automatiquement redémarrés avec les nouveaux secrets
+```
+
+---
+
+## Troubleshooting
+
+### ❌ Problème : n8n ne démarre pas
+
+**Diagnostic** :
+
+```bash
+sudo podman ps -a
+sudo podman logs n8n --tail 100
+```
+
+**Solutions possibles** :
+
+1. **Secret `N8N_ENCRYPTION_KEY` manquant ou invalide** :
+   ```bash
+   cat /run/secrets/n8n.env
+   # Vérifier que N8N_ENCRYPTION_KEY est présent
+   ```
+
+2. **Problème de connexion PostgreSQL** :
+   ```bash
+   sudo systemctl status postgresql
+   sudo -u postgres psql -c "\du" | grep n8n
+   ```
+
+3. **Regénérer le fichier d'environnement** :
+   ```bash
+   sudo systemctl restart n8n-envfile
+   sudo systemctl restart podman-n8n
+   ```
+
+### ❌ Problème : Cloudflare Tunnel ne se connecte pas
+
+**Diagnostic** :
+
+```bash
+sudo journalctl -u cloudflared-tunnel-n8n-whitelily -n 100
+```
+
+**Solutions possibles** :
+
+1. **Credentials invalides** :
+   ```bash
+   # Vérifier que le secret est bien déchiffré
+   sudo cat /run/secrets/agenix/cloudflared-credentials
+   ```
+
+2. **Relancer le tunnel** :
+   ```bash
+   sudo systemctl restart cloudflared-tunnel-n8n-whitelily
+   ```
+
+3. **Vérifier la configuration Cloudflare** :
+   - Aller sur https://one.dash.cloudflare.com/
+   - Access → Tunnels → n8n-whitelily
+   - Vérifier que le status est "Healthy"
+
+### ❌ Problème : Erreur 502 Bad Gateway
+
+**Diagnostic** :
+
+```bash
+# Vérifier que n8n répond en local
+curl http://127.0.0.1:5678/healthz
+
+# Vérifier Caddy
+sudo journalctl -u caddy -n 50
+```
+
+**Solutions** :
+
+1. **n8n n'est pas démarré** :
+   ```bash
+   sudo podman start n8n
+   ```
+
+2. **Caddy ne peut pas joindre n8n** :
+   ```bash
+   # Vérifier la config Caddy
+   sudo caddy fmt --overwrite /etc/caddy/Caddyfile
+   sudo systemctl reload caddy
+   ```
+
+### ❌ Problème : Webhooks ne fonctionnent pas
+
+**Diagnostic** :
+
+Vérifier que `WEBHOOK_URL` est correctement configuré :
+
+```bash
+sudo podman exec n8n env | grep WEBHOOK
+```
+
+Devrait afficher :
+```
+WEBHOOK_URL=https://n8n.jeremiealcaraz.com/
+```
+
+**Solution** :
+
+Si incorrect, vérifier `hosts/whitelily/n8n.nix` ligne 5 (variable `domain`).
+
+### ❌ Problème : PostgreSQL n'accepte pas les connexions
+
+**Diagnostic** :
+
+```bash
+sudo -u postgres psql -c "SHOW listen_addresses;"
+```
+
+**Solution** :
+
+```bash
+# Vérifier que PostgreSQL écoute sur localhost
+sudo systemctl restart postgresql
+```
+
+### 🔍 Logs généraux pour debug
+
+```bash
+# Voir tous les logs système récents
+sudo journalctl -xe
+
+# Logs d'un service spécifique
+sudo journalctl -u <service-name> -f
+
+# Logs depuis boot
+sudo journalctl -b
+```
+
+---
+
+## Backup et restauration
+
+### 💾 Backups automatiques
+
+Les backups sont automatiquement créés tous les jours :
+
+- **PostgreSQL** : `/var/backup/postgresql/n8n.sql.gz`
+- **Données n8n** : `/var/backup/n8n/n8n-YYYY-MM-DD_HH-MM-SS.tar.gz`
+
+Rétention : 7 jours
+
+### 📤 Exporter les backups vers un stockage externe
+
+**Exemple avec Restic** (vers Backblaze B2) :
+
+```bash
+# 1. Installer restic (déjà installé sur whitelily)
+# 2. Configurer le repo
+export RESTIC_REPOSITORY="b2:bucket-name:/whitelily-backups"
+export RESTIC_PASSWORD="ton-mot-de-passe-restic"
+export B2_ACCOUNT_ID="ton-account-id"
+export B2_ACCOUNT_KEY="ton-account-key"
+
+# Initialiser le repo (une seule fois)
+restic init
+
+# Backup manuel
+restic backup /var/backup/
+
+# Lister les backups
+restic snapshots
+
+# Automatiser avec un timer systemd (à ajouter dans n8n.nix si besoin)
+```
+
+### 🔄 Restauration complète
+
+**1. Restaurer PostgreSQL** :
+
+```bash
+# Arrêter n8n
+sudo systemctl stop podman-n8n
+
+# Restaurer la DB
+sudo -u postgres psql -d n8n -f /var/backup/postgresql/n8n.sql
+
+# Ou depuis un backup gzippé
+gunzip -c /var/backup/postgresql/n8n.sql.gz | sudo -u postgres psql -d n8n
+
+# Redémarrer n8n
+sudo systemctl start podman-n8n
+```
+
+**2. Restaurer les données n8n** :
+
+```bash
+# Arrêter n8n
+sudo systemctl stop podman-n8n
+
+# Sauvegarder l'existant (par précaution)
+sudo mv /var/lib/n8n /var/lib/n8n.old
+
+# Restaurer
+sudo tar -xzf /var/backup/n8n/n8n-2024-01-15_03-00-00.tar.gz -C /var/lib/
+
+# Redémarrer
+sudo systemctl start podman-n8n
+```
+
+### 🚨 Plan de disaster recovery
+
+En cas de perte complète de la VM :
+
+1. **Créer une nouvelle VM whitelily** (suivre Étapes 1-3)
+2. **Restaurer les secrets** :
+   ```bash
+   # Copier la clé age depuis ton Mac
+   scp ~/.config/sops/age/nixos-shared-key.txt root@<IP>:/var/lib/sops-nix/key.txt
+   ```
+3. **Déployer la configuration** (Étape 6)
+4. **Restaurer les backups** (ci-dessus)
+5. **Vérifier** (Étape 7)
+
+**Temps estimé** : 30-45 minutes
+
+---
+
+## 🎉 Félicitations !
+
+Tu as maintenant une instance n8n production-ready, sécurisée et 100% déclarative sur NixOS !
+
+### 📚 Ressources supplémentaires
+
+- [Documentation n8n](https://docs.n8n.io/)
+- [NixOS Manual](https://nixos.org/manual/nixos/stable/)
+- [sops-nix Documentation](https://github.com/Mic92/sops-nix)
+- [Cloudflare Tunnel Docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
+
+### 🤝 Support
+
+En cas de problème, vérifier :
+1. Les logs (voir section Troubleshooting)
+2. La configuration dans le repo
+3. Les secrets (bien déchiffrés)
+4. Le status Cloudflare Tunnel
+
+**Bon automatisme avec n8n ! 🚀**

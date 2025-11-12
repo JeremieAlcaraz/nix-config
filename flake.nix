@@ -72,6 +72,21 @@
           ];
         };
 
+        # Whitelily - VM n8n automation
+        whitelily = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ./hosts/whitelily/configuration.nix
+            sops-nix.nixosModules.sops
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremie = import ./home/jeremie.nix;
+            }
+          ];
+        };
+
         # ISO d'installation personnalisée
         # Build avec: nix build .#nixosConfigurations.installer.config.system.build.isoImage
         installer = nixpkgs.lib.nixosSystem {

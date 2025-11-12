@@ -21,3 +21,10 @@ creation_rules:
       - age:
           # Même clé partagée que mimosa
           - *shared
+
+  # Secrets pour l'hôte whitelily (VM n8n automation)
+  - path_regex: secrets/whitelily\.yaml$
+    key_groups:
+      - age:
+          # Même clé partagée
+          - *shared

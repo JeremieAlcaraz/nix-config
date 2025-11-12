@@ -35,15 +35,19 @@
     };
   };
 
-  # ZSH - Shell pour magnolia
+  # ZSH - Shell pour magnolia et whitelily
   programs.zsh = {
-    enable = osConfig.networking.hostName == "magnolia";
+    enable = (osConfig.networking.hostName == "magnolia" || osConfig.networking.hostName == "whitelily");
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     initExtra = ''
       echo ""
-      echo "🌸 Magnolia - Infrastructure Proxmox"
+      ${if osConfig.networking.hostName == "magnolia" then ''
+        echo "🌸 Magnolia - Infrastructure Proxmox"
+      '' else if osConfig.networking.hostName == "whitelily" then ''
+        echo "🤍 Whitelily - n8n Automation"
+      '' else ""}
       echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       echo ""
     '';
