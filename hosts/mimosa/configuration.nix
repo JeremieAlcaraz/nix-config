@@ -97,6 +97,10 @@
     openFirewall = true;
   };
 
+  # Fish activé au niveau système (requis pour users.users.jeremie.shell)
+  # La configuration Fish détaillée est gérée par Home Manager
+  programs.fish.enable = true;
+
   # Shell par défaut pour l'utilisateur jeremie
   users.users.jeremie.shell = pkgs.fish;
 

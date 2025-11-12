@@ -93,6 +93,10 @@
     };
   };
 
+  # ZSH activé au niveau système (requis pour users.users.jeremie.shell)
+  # La configuration ZSH détaillée est gérée par Home Manager
+  programs.zsh.enable = true;
+
   # Shell par défaut pour l'utilisateur jeremie
   users.users.jeremie.shell = pkgs.zsh;
 
