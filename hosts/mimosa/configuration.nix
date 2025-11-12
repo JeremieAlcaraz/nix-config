@@ -15,6 +15,9 @@
   time.timeZone = "Europe/Paris";
   system.stateVersion = "24.05";
 
+  # Activer les flakes et nix-command
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   # Réseau
   networking.hostName = "mimosa";  # Serveur web
   networking.useDHCP = true;

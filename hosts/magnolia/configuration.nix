@@ -13,6 +13,9 @@
   time.timeZone = "Europe/Paris";
   system.stateVersion = "25.05";
 
+  # Activer les flakes et nix-command
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   # Réseau
   networking.hostName = "magnolia";  # Infrastructure Proxmox
   networking.useDHCP = true;
