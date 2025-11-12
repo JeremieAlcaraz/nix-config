@@ -153,11 +153,16 @@ EOF
     };
   };
 
-  # Répertoire de données n8n
+  # Répertoires de données et de backup
   systemd.tmpfiles.rules = [
+    # Données n8n, Caddy et Cloudflared
     "d /var/lib/n8n 0750 root root -"
     "d /var/log/caddy 0750 caddy caddy -"
     "d /var/lib/cloudflared 0750 cloudflared cloudflared -"
+    # Backups
+    "d /var/backup 0750 root root -"
+    "d /var/backup/postgresql 0750 postgres postgres -"
+    "d /var/backup/n8n 0750 root root -"
   ];
 
   ########################################
@@ -319,13 +324,6 @@ EOF
       RandomizedDelaySec = "1h";
     };
   };
-
-  # Répertoires de backup
-  systemd.tmpfiles.rules = [
-    "d /var/backup 0750 root root -"
-    "d /var/backup/postgresql 0750 postgres postgres -"
-    "d /var/backup/n8n 0750 root root -"
-  ];
 
   ########################################
   # 7) Monitoring et maintenance
