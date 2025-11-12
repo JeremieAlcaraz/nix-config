@@ -29,10 +29,13 @@ Script **indépendant** pour gérer les secrets, à utiliser **après l'installa
 
 ```bash
 # Depuis la racine du repo nix-config
-sudo ./scripts/manage-secrets.sh [magnolia|mimosa|whitelily]
+./scripts/manage-secrets.sh [magnolia|mimosa|whitelily]
 
 # Ou sans argument pour un menu interactif
-sudo ./scripts/manage-secrets.sh
+./scripts/manage-secrets.sh
+
+# Note: Sur NixOS, utilisez sudo si nécessaire
+# Sur macOS, pas besoin de sudo
 ```
 
 ### ✨ Ce qu'il fait
@@ -120,45 +123,74 @@ hosts/
 
 **Aucune manipulation manuelle nécessaire !**
 
-### 📝 Workflow complet
+### 📝 Workflow recommandé : Secrets depuis votre Mac ⭐
+
+**Le meilleur workflow** : créez les secrets depuis votre machine de dev, puis installez !
 
 ```bash
 # ========================================
-# Partie 1 : Installation (install-nixos.sh)
+# Partie 1 : Création des secrets (depuis votre Mac)
+# ========================================
+
+# Sur votre Mac
+cd ~/nix-config
+./scripts/manage-secrets.sh whitelily
+
+# Commit et push
+git add secrets/whitelily.yaml
+git commit -m "🔒 Add secrets for whitelily"
+git push
+
+# ========================================
+# Partie 2 : Installation (dans la VM)
 # ========================================
 
 # 1. Créer une VM dans Proxmox
 #    - Boot sur ISO NixOS 24.11
 #    - 2 CPU, 4GB RAM, 32GB disque (whitelily)
-#    - 2 CPU, 2GB RAM, 20GB disque (magnolia/mimosa)
 
 # 2. Dans la console VM
 curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
 chmod +x install.sh
-sudo ./install.sh whitelily  # Ou magnolia/mimosa
+sudo ./install.sh whitelily
 
-# 3. Attendre la fin de l'installation (5-10 min)
-#    Le script s'arrête automatiquement
+# → Le script détecte les secrets dans le repo
+# → Installation complète avec les secrets
 
-# 4. Sur Proxmox : détacher l'ISO et redémarrer
+# 3. Détacher l'ISO et redémarrer
 qm set <VMID> --ide2 none
 qm start <VMID>
 
-# ========================================
-# Partie 2 : Création des secrets (manage-secrets.sh)
-# ========================================
+# 4. Se connecter
+ssh jeremie@<IP>
+```
 
-# 5. Se connecter en root
+**Temps total : ~10-15 minutes** ⏱️
+
+**Avantages** :
+- ✅ Plus rapide (pas de création de secrets après l'installation)
+- ✅ Plus sûr (secrets commités avant, versionnés dans git)
+- ✅ Environnement familier (votre Mac)
+- ✅ Réutilisable (secrets déjà là pour réinstaller)
+
+### 📝 Workflow alternatif : Secrets après installation
+
+Si vous préférez créer les secrets après l'installation :
+
+```bash
+# 1-3. Installation (comme ci-dessus)
+
+# 4. Se connecter en root
 ssh root@<IP>
 
-# 6. Créer les secrets
+# 5. Créer les secrets
 cd /etc/nixos
 ./scripts/manage-secrets.sh whitelily
 
-# 7. Déployer la configuration avec les secrets
+# 6. Déployer la configuration avec les secrets
 nixos-rebuild switch --flake .#whitelily
 
-# 8. Se reconnecter avec l'utilisateur normal
+# 7. Se reconnecter avec l'utilisateur normal
 exit
 ssh jeremie@<IP>
 ```

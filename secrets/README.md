@@ -14,19 +14,28 @@ Ce répertoire contient les secrets chiffrés avec sops pour les différents hô
 
 ### 🚀 Usage
 
+**Sur macOS (recommandé)** :
 ```bash
-# Créer ou régénérer les secrets pour un host
+# Depuis votre repo local
+cd ~/nix-config
+./scripts/manage-secrets.sh [magnolia|mimosa|whitelily]
+```
+
+**Sur NixOS (après installation)** :
+```bash
+# Depuis le système installé
 cd /etc/nixos
 sudo ./scripts/manage-secrets.sh [magnolia|mimosa|whitelily]
 ```
 
 ### ✨ Le script fait tout automatiquement
 
-1. ✅ Vérifie les outils nécessaires (sops, age, openssl, mkpasswd)
-2. ✅ Vérifie/configure la clé age
-3. ✅ Génère les secrets de manière interactive
-4. ✅ Sauvegarde les anciens secrets avant modification
-5. ✅ Chiffre automatiquement avec sops
+1. ✅ Détecte votre OS (macOS ou Linux) et s'adapte
+2. ✅ Vérifie les outils nécessaires (sops, age, openssl)
+3. ✅ Vérifie/configure la clé age
+4. ✅ Génère les secrets de manière interactive
+5. ✅ Sauvegarde les anciens secrets avant modification
+6. ✅ Chiffre automatiquement avec sops
 
 ### 📦 Après génération
 
@@ -50,6 +59,17 @@ git push
 - 🎯 **Interactif** : Le script vous guide étape par étape
 - 💾 **Backup** : Les anciens secrets sont automatiquement sauvegardés
 - ⚡ **Chiffrement** : Automatique et transparent avec sops
+- 🍎 **Compatible macOS** : Fonctionne sur votre Mac sans modification
+
+### 🛠️ Installation des outils (macOS)
+
+Si vous n'avez pas encore sops et age sur votre Mac :
+
+```bash
+brew install sops age
+```
+
+C'est tout ! Le script utilisera `openssl` (déjà installé sur macOS) pour les hash de mots de passe.
 
 ## Fichiers
 
