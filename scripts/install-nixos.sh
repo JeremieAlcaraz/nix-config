@@ -401,11 +401,25 @@ if [[ ! -f /var/lib/sops-nix/key.txt ]]; then
     fi
 fi
 
-# Vérifier si les secrets existent
+# Toujours demander si on veut regénérer les secrets
 SECRETS_PATH="/mnt/etc/nixos/secrets/${HOST}.yaml"
-if [[ ! -f "$SECRETS_PATH" ]] || grep -q "REMPLACER_PAR" "$SECRETS_PATH" 2>/dev/null; then
-    warning "Secrets non trouvés ou incomplets pour ${HOST}"
-    info "Génération interactive des secrets..."
+
+echo ""
+if [[ -f "$SECRETS_PATH" ]] && ! grep -q "REMPLACER_PAR" "$SECRETS_PATH" 2>/dev/null; then
+    info "Secrets existants trouvés pour ${HOST}"
+    prompt "Voulez-vous les regénérer ? (oui/non, défaut: non):"
+    read -r regenerate_secrets
+
+    if [[ "$regenerate_secrets" != "oui" ]]; then
+        info "Utilisation des secrets existants"
+        SKIP_SECRET_GENERATION=true
+    fi
+fi
+
+if [[ "${SKIP_SECRET_GENERATION:-false}" != "true" ]]; then
+    warning "Génération interactive des secrets pour ${HOST}"
+    info "Vous allez définir le mot de passe SSH pour cet host"
+    echo ""
 
     # Installer les outils nécessaires temporairement
     nix-shell -p sops age openssl mkpasswd jq --run "$(declare -f generate_secrets error info warning step prompt); generate_secrets ${HOST}"
