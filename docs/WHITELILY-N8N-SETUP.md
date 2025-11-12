@@ -72,7 +72,7 @@ Le script va te demander :
 - Mot de passe SSH pour `jeremie`
 - Nom d'utilisateur n8n (défaut: `admin`)
 - Domaine (ex: `n8nv2.jeremiealcaraz.com`)
-- Credentials JSON Cloudflare Tunnel
+- Token Cloudflare Tunnel (la chaîne qui commence par "eyJ...")
 
 Le script fait ensuite **TOUT automatiquement** :
 - ✅ Partitionne et formate le disque
@@ -363,21 +363,17 @@ chown root:root /var/lib/sops-nix/key.txt
    - **URL** : `localhost:80`
 3. Cliquer sur **Save hostname**
 
-### 4.3 Récupérer les credentials du tunnel
+### 4.3 Récupérer le token du tunnel
 
-1. Dans l'onglet **Configure** du tunnel
-2. Copier le **JSON complet** des credentials
+1. Dans l'interface du tunnel Cloudflare
+2. Copier le **TOKEN** (la longue chaîne qui commence par "eyJ...")
 
 Format attendu :
-```json
-{
-  "AccountTag": "abc123...",
-  "TunnelSecret": "xyz789...",
-  "TunnelID": "uuid-here..."
-}
+```
+eyJhIjoiOWRmZTI4NzQ1N2ZiYjhhNTQ3NmViYjQwMjUyMzlmOGEiLCJ0IjoiMDRlZTgyMDAtZjAwNC00YWVkLTk0NWEtMzE0ZWY0NzUyNmJlIiwicyI6IlpXWmpPVEkwWm1VdE5XTXhZUzAwWlRjM0xXRTROemN0WlRNellXTXdNbUUxT1RBMCJ9
 ```
 
-**Important** : Garde ce JSON sous la main, tu en auras besoin à l'étape suivante.
+**Important** : Garde ce token sous la main, tu en auras besoin à l'étape suivante.
 
 ### 4.4 Vérifier le domaine dans n8n.nix
 
@@ -441,12 +437,7 @@ n8n:
   db_password: "mot de passe généré avec openssl rand -base64 32"
 
 cloudflared:
-  credentials: |
-    {
-      "AccountTag": "ton-account-tag-cloudflare",
-      "TunnelSecret": "ton-tunnel-secret",
-      "TunnelID": "ton-tunnel-id"
-    }
+  token: "ton-token-cloudflare-qui-commence-par-eyJ..."
 ```
 
 Sauvegarder et quitter (`:wq` dans vim).
@@ -545,8 +536,8 @@ curl -I http://127.0.0.1:80
 # Tu devrais recevoir une réponse de Caddy
 
 # 4. Cloudflare Tunnel
-sudo systemctl status cloudflared-tunnel-n8n-whitelily
-journalctl -u cloudflared-tunnel-n8n-whitelily -f
+sudo systemctl status cloudflared-tunnel
+journalctl -u cloudflared-tunnel -f
 # Tu devrais voir : "Connection ... registered"
 ```
 
@@ -598,7 +589,7 @@ sudo podman logs n8n --tail 50
 sudo journalctl -u caddy -n 50
 
 # Logs Cloudflare Tunnel
-sudo journalctl -u cloudflared-tunnel-n8n-whitelily -n 50
+sudo journalctl -u cloudflared-tunnel -n 50
 
 # Logs PostgreSQL
 sudo journalctl -u postgresql -n 50
@@ -638,7 +629,7 @@ Services à surveiller :
 
 ```bash
 # Quick check de tous les services
-sudo systemctl status postgresql caddy cloudflared-tunnel-n8n-whitelily
+sudo systemctl status postgresql caddy cloudflared-tunnel
 sudo podman ps
 
 # Vérifier l'espace disque
@@ -736,20 +727,21 @@ sudo podman logs n8n --tail 100
 **Diagnostic** :
 
 ```bash
-sudo journalctl -u cloudflared-tunnel-n8n-whitelily -n 100
+sudo journalctl -u cloudflared-tunnel -n 100
 ```
 
 **Solutions possibles** :
 
-1. **Credentials invalides** :
+1. **Token invalide** :
    ```bash
    # Vérifier que le secret est bien déchiffré
-   sudo cat /run/secrets/agenix/cloudflared-credentials
+   sudo journalctl -u cloudflared-tunnel -n 50
+   # Chercher des erreurs liées au token
    ```
 
 2. **Relancer le tunnel** :
    ```bash
-   sudo systemctl restart cloudflared-tunnel-n8n-whitelily
+   sudo systemctl restart cloudflared-tunnel
    ```
 
 3. **Vérifier la configuration Cloudflare** :
