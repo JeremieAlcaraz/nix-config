@@ -43,19 +43,51 @@ prompt() {
     echo -e "${YELLOW}❓ $1${NC}"
 }
 
+# Détection de l'OS
+detect_os() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    else
+        echo "linux"
+    fi
+}
+
+# Fonction pour générer un hash de mot de passe compatible multi-OS
+generate_password_hash() {
+    local os=$(detect_os)
+
+    if [[ "$os" == "macos" ]]; then
+        # Sur macOS, utiliser openssl passwd avec SHA-512
+        openssl passwd -6
+    else
+        # Sur Linux, utiliser mkpasswd
+        mkpasswd -m sha-512
+    fi
+}
+
 # Vérifications initiales
 check_requirements() {
     local missing=()
+    local os=$(detect_os)
 
-    # Vérifier les commandes nécessaires
-    for cmd in sops age openssl mkpasswd; do
+    # Commandes communes à tous les OS
+    for cmd in sops age openssl; do
         if ! command -v "$cmd" &>/dev/null; then
             missing+=("$cmd")
         fi
     done
 
+    # mkpasswd seulement sur Linux (macOS utilise openssl)
+    if [[ "$os" == "linux" ]] && ! command -v mkpasswd &>/dev/null; then
+        missing+=("mkpasswd")
+    fi
+
     if [[ ${#missing[@]} -gt 0 ]]; then
-        error "Commandes manquantes: ${missing[*]}\nInstallez-les avec: nix-shell -p sops age openssl mkpasswd"
+        if [[ "$os" == "macos" ]]; then
+            error "Commandes manquantes: ${missing[*]}\nInstallez avec: brew install sops age"
+        else
+            error "Commandes manquantes: ${missing[*]}\nInstallez-les avec: nix-shell -p sops age openssl mkpasswd"
+        fi
     fi
 
     # Vérifier qu'on est dans le bon répertoire
@@ -71,39 +103,61 @@ check_requirements() {
 
 # Vérifier la clé age
 check_age_key() {
-    local age_key_file="/var/lib/sops-nix/key.txt"
+    local os=$(detect_os)
+    local age_key_file
 
-    if [[ ! -f "$age_key_file" ]]; then
-        warning "Clé age sops non trouvée à ${age_key_file}"
+    # Chemins différents selon l'OS
+    if [[ "$os" == "macos" ]]; then
+        age_key_file="$HOME/.config/sops/age/keys.txt"
+    else
+        age_key_file="/var/lib/sops-nix/key.txt"
+    fi
+
+    # Vérifier si la clé existe déjà
+    if [[ -f "$age_key_file" ]]; then
+        info "Clé age trouvée : $age_key_file"
+        export SOPS_AGE_KEY_FILE="$age_key_file"
+        return 0
+    fi
+
+    # La clé n'existe pas, proposer de la créer
+    warning "Clé age sops non trouvée à ${age_key_file}"
+    echo ""
+    prompt "Voulez-vous fournir votre clé age ? (oui/non):"
+    read -r provide_key
+
+    if [[ "$provide_key" == "oui" ]]; then
         echo ""
-        prompt "Voulez-vous fournir votre clé age ? (oui/non):"
-        read -r provide_key
+        info "Collez votre clé age (format: AGE-SECRET-KEY-1...)"
+        info "La clé ne sera PAS affichée pour des raisons de sécurité"
+        echo ""
+        prompt "Clé age :"
+        read -rs AGE_KEY
+        echo ""
 
-        if [[ "$provide_key" == "oui" ]]; then
-            echo ""
-            info "Collez votre clé age (format: AGE-SECRET-KEY-1...)"
-            info "La clé ne sera PAS affichée pour des raisons de sécurité"
-            echo ""
-            prompt "Clé age :"
-            read -rs AGE_KEY
-            echo ""
-
-            if [[ -n "$AGE_KEY" ]]; then
-                sudo mkdir -p /var/lib/sops-nix
+        if [[ -n "$AGE_KEY" ]]; then
+            # Créer le répertoire parent
+            local key_dir=$(dirname "$age_key_file")
+            if [[ "$os" == "macos" ]]; then
+                mkdir -p "$key_dir"
+                echo "$AGE_KEY" > "$age_key_file"
+                chmod 600 "$age_key_file"
+            else
+                sudo mkdir -p "$key_dir"
                 echo "$AGE_KEY" | sudo tee "$age_key_file" >/dev/null
                 sudo chmod 600 "$age_key_file"
+            fi
 
-                if grep -q "AGE-SECRET-KEY-1" "$age_key_file"; then
-                    info "Clé age configurée avec succès"
-                else
-                    error "Format de clé invalide"
-                fi
+            if grep -q "AGE-SECRET-KEY-1" "$age_key_file"; then
+                info "Clé age configurée avec succès"
             else
-                error "Aucune clé fournie"
+                error "Format de clé invalide"
             fi
         else
-            error "Clé age requise pour chiffrer les secrets"
+            error "Aucune clé fournie"
         fi
+    else
+        error "Clé age requise pour chiffrer les secrets"
     fi
 
     export SOPS_AGE_KEY_FILE="$age_key_file"
@@ -117,7 +171,7 @@ generate_magnolia_secrets() {
     echo ""
 
     prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
-    JEREMIE_HASH=$(mkpasswd -m sha-512)
+    JEREMIE_HASH=$(generate_password_hash)
 
     cat > "$secrets_file" <<EOF
 # Secrets pour magnolia (infrastructure Proxmox)
@@ -136,7 +190,7 @@ generate_mimosa_secrets() {
 
     # Mot de passe jeremie
     prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
-    JEREMIE_HASH=$(mkpasswd -m sha-512)
+    JEREMIE_HASH=$(generate_password_hash)
 
     # Token Cloudflare
     echo ""
@@ -172,7 +226,7 @@ generate_whitelily_secrets() {
 
     # Mot de passe jeremie
     prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
-    JEREMIE_HASH=$(mkpasswd -m sha-512)
+    JEREMIE_HASH=$(generate_password_hash)
 
     # Génération automatique des secrets n8n
     echo ""
