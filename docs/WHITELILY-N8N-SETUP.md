@@ -1,21 +1,17 @@
-# 🤍 Guide complet d'installation - Whitelily (n8n)
+# 🤍 Guide d'installation - Whitelily (n8n)
 
-Ce guide détaillé vous accompagne dans l'installation et la configuration complète de **whitelily**, une VM NixOS dédiée à n8n avec une architecture production-ready.
+Guide simplifié pour déployer **whitelily**, une VM NixOS dédiée à n8n avec une architecture production-ready.
+
+**⏱️ Temps d'installation : ~15 minutes**
 
 ## 📋 Table des matières
 
 1. [Architecture et fonctionnalités](#architecture-et-fonctionnalités)
-2. [Prérequis](#prérequis)
-3. [Étape 1 : Créer la VM Proxmox](#étape-1--créer-la-vm-proxmox)
-4. [Étape 2 : Installation de NixOS](#étape-2--installation-de-nixos)
-5. [Étape 3 : Configuration initiale](#étape-3--configuration-initiale)
-6. [Étape 4 : Configuration Cloudflare Tunnel](#étape-4--configuration-cloudflare-tunnel)
-7. [Étape 5 : Génération et configuration des secrets](#étape-5--génération-et-configuration-des-secrets)
-8. [Étape 6 : Déploiement final](#étape-6--déploiement-final)
-9. [Étape 7 : Vérifications et tests](#étape-7--vérifications-et-tests)
-10. [Maintenance et opérations](#maintenance-et-opérations)
-11. [Troubleshooting](#troubleshooting)
-12. [Backup et restauration](#backup-et-restauration)
+2. [Installation rapide (3 étapes)](#installation-rapide-3-étapes)
+3. [Installation détaillée](#installation-détaillée)
+4. [Maintenance et opérations](#maintenance-et-opérations)
+5. [Troubleshooting](#troubleshooting)
+6. [Backup et restauration](#backup-et-restauration)
 
 ---
 
@@ -46,26 +42,103 @@ Ce guide détaillé vous accompagne dans l'installation et la configuration comp
 
 ---
 
-## Prérequis
+## Installation rapide (3 étapes)
 
-### 🖥️ Infrastructure
+### Prérequis
+
+- ✅ Serveur Proxmox avec ISO NixOS 24.11
+- ✅ Outils sur Mac : `sops`, `age`, `openssl` (installer avec `brew install sops age`)
+- ✅ Clé age partagée dans `~/.config/sops/age/nixos-shared-key.txt`
+- ✅ Compte Cloudflare avec domaine
+
+### Étape 1 : Créer la VM et installer NixOS (5 min)
+
+**Sur Proxmox** : Créer une VM nommée `whitelily` (2 CPU, 4GB RAM, 32GB disque, boot sur ISO NixOS)
+
+**Dans la console VM** :
+```bash
+# Télécharger et lancer le script d'installation
+curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
+chmod +x install.sh
+sudo ./install.sh whitelily
+
+# Suivre les instructions, la VM s'éteindra automatiquement
+```
+
+**Sur Proxmox** : Détacher l'ISO et redémarrer la VM
+```bash
+qm set <VMID> --ide2 none
+qm start <VMID>
+```
+
+### Étape 2 : Configurer les secrets (5 min)
+
+**Sur ton Mac** :
+```bash
+cd ~/path/to/nix-config
+
+# Lancer le script de configuration (assistant interactif)
+./scripts/setup-whitelily.sh
+
+# Le script va :
+# 1. Créer le Cloudflare Tunnel (instructions guidées)
+# 2. Générer automatiquement tous les secrets
+# 3. Créer et chiffrer secrets/whitelily.yaml
+# 4. Committer et pousser (optionnel)
+```
+
+**Copier la clé sops sur la VM** :
+```bash
+# Trouver l'IP de la VM
+# Puis copier la clé
+scp ~/.config/sops/age/nixos-shared-key.txt root@<IP_VM>:/var/lib/sops-nix/key.txt
+```
+
+### Étape 3 : Déployer (5 min)
+
+**SSH sur la VM** :
+```bash
+ssh jeremie@<IP_VM>  # Mot de passe défini lors du setup
+
+# Déployer la configuration
+cd /root/nix-config
+sudo git pull
+sudo nixos-rebuild switch --flake .#whitelily
+
+# Redémarrer (optionnel mais recommandé)
+sudo reboot
+```
+
+**C'est terminé ! 🎉**
+
+Accéder à n8n : `https://n8n.votredomaine.com` (credentials affichés lors du setup)
+
+---
+
+## Installation détaillée
+
+Cette section détaille chaque étape pour ceux qui veulent comprendre le processus.
+
+### Prérequis détaillés
+
+#### 🖥️ Infrastructure
 
 - [ ] Accès à un serveur Proxmox
 - [ ] ISO NixOS 24.11 téléchargé et disponible sur Proxmox
 - [ ] Réseau DHCP configuré
 - [ ] Accès SSH depuis ton Mac
 
-### 🌐 Cloudflare
+#### 🌐 Cloudflare
 
 - [ ] Compte Cloudflare avec domaine configuré
 - [ ] Accès à Zero Trust (Cloudflare Tunnel)
 - [ ] Domaine ou sous-domaine dédié (ex: `n8n.jeremiealcaraz.com`)
 
-### 💻 Outils locaux (Mac)
+#### 💻 Outils locaux (Mac)
 
 ```bash
 # Vérifier que tu as bien :
-which sops age ssh
+which sops age ssh openssl mkpasswd
 ```
 
 Si manquant, installer :
@@ -73,7 +146,7 @@ Si manquant, installer :
 brew install sops age
 ```
 
-### 🔑 Clé age partagée
+#### 🔑 Clé age partagée
 
 Tu dois avoir ta clé age partagée disponible :
 - **Mac** : `~/.config/sops/age/nixos-shared-key.txt`

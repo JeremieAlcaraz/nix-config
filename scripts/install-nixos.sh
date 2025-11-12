@@ -27,14 +27,14 @@ warning() {
 [[ $EUID -ne 0 ]] && error "Ce script doit être exécuté en tant que root (sudo)"
 [[ ! -d /sys/firmware/efi ]] && error "Ce script nécessite un système UEFI"
 
-# Récupérer le nom de l'host (magnolia ou mimosa)
+# Récupérer le nom de l'host (magnolia, mimosa ou whitelily)
 HOST="${1:-}"
 if [[ -z "$HOST" ]]; then
-    error "Usage: sudo $0 [magnolia|mimosa]"
+    error "Usage: sudo $0 [magnolia|mimosa|whitelily]"
 fi
 
-if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" ]]; then
-    error "Host invalide. Utilisez 'magnolia' (infrastructure Proxmox) ou 'mimosa' (serveur web)"
+if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" ]]; then
+    error "Host invalide. Utilisez 'magnolia' (infrastructure), 'mimosa' (web) ou 'whitelily' (n8n)"
 fi
 
 # Configuration

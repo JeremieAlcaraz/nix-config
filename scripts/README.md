@@ -13,7 +13,10 @@ Script principal d'installation NixOS, à exécuter **depuis l'ISO d'installatio
 # Télécharger et lancer depuis l'ISO NixOS
 curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
 chmod +x install.sh
-sudo ./install.sh [magnolia|mimosa]  # magnolia = Proxmox, mimosa = serveur web
+sudo ./install.sh [magnolia|mimosa|whitelily]
+# magnolia = Infrastructure Proxmox
+# mimosa = Serveur web
+# whitelily = n8n automation
 ```
 
 **Fonctionnalités:**
@@ -30,7 +33,30 @@ sudo ./install.sh [magnolia|mimosa]  # magnolia = Proxmox, mimosa = serveur web
 4. Installe NixOS
 5. S'éteint automatiquement après 10 secondes
 
-### 2. `proxmox-post-install.sh` - Automatisation Proxmox (optionnel)
+### 2. `setup-whitelily.sh` - Configuration automatique des secrets (whitelily uniquement)
+
+Script interactif pour configurer automatiquement les secrets de whitelily (n8n).
+
+**Usage:**
+```bash
+# Sur ton Mac (dans le repo nix-config)
+./scripts/setup-whitelily.sh
+```
+
+**Fonctionnalités:**
+- ✅ Assistant interactif pour Cloudflare Tunnel
+- ✅ Génération automatique de tous les secrets
+- ✅ Création et chiffrement du fichier secrets/whitelily.yaml
+- ✅ Mise à jour du domaine dans la configuration
+- ✅ Commit et push automatique (optionnel)
+
+**Ce script génère automatiquement:**
+- Clé de chiffrement n8n (N8N_ENCRYPTION_KEY)
+- Mot de passe n8n (N8N_BASIC_PASS)
+- Mot de passe PostgreSQL (DB_PASSWORD)
+- Hash du mot de passe utilisateur jeremie
+
+### 3. `proxmox-post-install.sh` - Automatisation Proxmox (optionnel)
 
 Script compagnon à exécuter **sur l'hôte Proxmox** pour automatiser complètement le processus.
 
