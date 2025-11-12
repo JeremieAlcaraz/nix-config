@@ -36,7 +36,7 @@
   programs.zsh = {
     enable = osConfig.networking.hostName == "magnolia";
     enableCompletion = true;
-    autosuggestions.enable = true;
+    autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     initExtra = ''
       echo ""
