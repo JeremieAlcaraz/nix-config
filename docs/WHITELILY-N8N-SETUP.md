@@ -71,7 +71,7 @@ Le script va te demander :
 - Confirmation effacement disque
 - Mot de passe SSH pour `jeremie`
 - Nom d'utilisateur n8n (défaut: `admin`)
-- Domaine (ex: `n8n.jeremiealcaraz.com`)
+- Domaine (ex: `n8nv2.jeremiealcaraz.com`)
 - Credentials JSON Cloudflare Tunnel
 
 Le script fait ensuite **TOUT automatiquement** :
@@ -124,7 +124,7 @@ Cette section détaille chaque étape pour ceux qui veulent comprendre le proces
 
 - [ ] Compte Cloudflare avec domaine configuré
 - [ ] Accès à Zero Trust (Cloudflare Tunnel)
-- [ ] Domaine ou sous-domaine dédié (ex: `n8n.jeremiealcaraz.com`)
+- [ ] Domaine ou sous-domaine dédié (ex: `n8nv2.jeremiealcaraz.com`)
 
 #### 💻 Outils locaux (Mac)
 
@@ -386,7 +386,7 @@ Format attendu :
 nano /root/nix-config/hosts/whitelily/n8n.nix
 
 # Ligne 5, vérifier que le domaine est correct :
-# domain = "n8n.jeremiealcaraz.com";  # ← Ton sous-domaine configuré
+# domain = "n8nv2.jeremiealcaraz.com";  # ← Ton sous-domaine configuré
 ```
 
 Ajuster si nécessaire pour correspondre à ce que tu as configuré dans Cloudflare.
@@ -580,7 +580,7 @@ ls -lah /var/backup/n8n/
 
 **Depuis ton navigateur** (sur ton Mac ou autre) :
 
-1. Ouvrir https://n8n.jeremiealcaraz.com (ton domaine configuré)
+1. Ouvrir https://n8nv2.jeremiealcaraz.com (ton domaine configuré)
 2. Tu devrais voir une page de login avec authentification basique :
    - **Username** : ce que tu as mis dans `n8n/basic_user`
    - **Password** : ce que tu as mis dans `n8n/basic_pass`
@@ -795,7 +795,7 @@ sudo podman exec n8n env | grep WEBHOOK
 
 Devrait afficher :
 ```
-WEBHOOK_URL=https://n8n.jeremiealcaraz.com/
+WEBHOOK_URL=https://n8nv2.jeremiealcaraz.com/
 ```
 
 **Solution** :

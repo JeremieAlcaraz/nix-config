@@ -2,7 +2,7 @@
 
 let
   # Configuration du domaine n8n
-  domain = "n8n.jeremiealcaraz.com";  # ← À adapter selon ton domaine
+  domain = "n8nv2.jeremiealcaraz.com";  # ← À adapter selon ton domaine
 
 in {
   ########################################
