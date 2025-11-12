@@ -291,6 +291,10 @@ step "Étape 5/7 : Génération de la configuration matérielle"
 nixos-generate-config --root /mnt
 info "Configuration matérielle générée"
 
+# Sauvegarder hardware-configuration.nix avant de cloner
+cp /mnt/etc/nixos/hardware-configuration.nix /tmp/hardware-configuration.nix
+info "Hardware configuration sauvegardée temporairement"
+
 # ========================================
 # Étape 6 : Clone du repo et configuration
 # ========================================
@@ -309,7 +313,7 @@ git clone --branch "$BRANCH" "$REPO_URL" /mnt/etc/nixos
 # Copier le hardware-configuration.nix au bon endroit
 info "Placement de hardware-configuration.nix pour ${HOST}..."
 mkdir -p "/mnt/etc/nixos/hosts/${HOST}"
-cp /mnt/etc/nixos/hardware-configuration.nix "/mnt/etc/nixos/hosts/${HOST}/hardware-configuration.nix"
+cp /tmp/hardware-configuration.nix "/mnt/etc/nixos/hosts/${HOST}/hardware-configuration.nix"
 info "Hardware configuration placée dans hosts/${HOST}/"
 
 # Vérifier si les secrets existent
