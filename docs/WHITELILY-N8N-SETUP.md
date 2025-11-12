@@ -42,76 +42,68 @@ Guide simplifié pour déployer **whitelily**, une VM NixOS dédiée à n8n avec
 
 ---
 
-## Installation rapide (3 étapes)
+## Installation rapide (1 étape !)
 
 ### Prérequis
 
 - ✅ Serveur Proxmox avec ISO NixOS 24.11
-- ✅ Outils sur Mac : `sops`, `age`, `openssl` (installer avec `brew install sops age`)
-- ✅ Clé age partagée dans `~/.config/sops/age/nixos-shared-key.txt`
 - ✅ Compte Cloudflare avec domaine
+- ✅ *Optionnel* : Clé age partagée dans `/var/lib/sops-nix/key.txt` sur l'ISO (pour chiffrer les secrets)
 
-### Étape 1 : Créer la VM et installer NixOS (5 min)
+### Étape unique : Lancer le script d'installation (15 min)
 
-**Sur Proxmox** : Créer une VM nommée `whitelily` (2 CPU, 4GB RAM, 32GB disque, boot sur ISO NixOS)
+**1. Sur Proxmox** : Créer une VM nommée `whitelily`
+   - 2 CPU, 4GB RAM, 32GB disque
+   - Boot sur ISO NixOS 24.11
 
-**Dans la console VM** :
+**2. Dans la console VM** :
 ```bash
-# Télécharger et lancer le script d'installation
+# Télécharger et lancer le script all-in-one
 curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
 chmod +x install.sh
 sudo ./install.sh whitelily
-
-# Suivre les instructions, la VM s'éteindra automatiquement
 ```
 
-**Sur Proxmox** : Détacher l'ISO et redémarrer la VM
+**3. Suivre l'assistant interactif** :
+
+Le script va te demander :
+- Branche git (défaut: `main`)
+- Confirmation effacement disque
+- Mot de passe SSH pour `jeremie`
+- Nom d'utilisateur n8n (défaut: `admin`)
+- Domaine (ex: `n8n.jeremiealcaraz.com`)
+- Credentials JSON Cloudflare Tunnel
+
+Le script fait ensuite **TOUT automatiquement** :
+- ✅ Partitionne et formate le disque
+- ✅ Génère `hardware-configuration.nix`
+- ✅ Clone la configuration
+- ✅ Génère tous les secrets n8n
+- ✅ Chiffre les secrets avec sops
+- ✅ Installe NixOS
+- ✅ Éteint la VM
+
+**4. Sur Proxmox** : Détacher l'ISO et redémarrer
 ```bash
 qm set <VMID> --ide2 none
 qm start <VMID>
 ```
 
-### Étape 2 : Configurer les secrets (5 min)
-
-**Sur ton Mac** :
-```bash
-cd ~/path/to/nix-config
-
-# Lancer le script de configuration (assistant interactif)
-./scripts/setup-whitelily.sh
-
-# Le script va :
-# 1. Créer le Cloudflare Tunnel (instructions guidées)
-# 2. Générer automatiquement tous les secrets
-# 3. Créer et chiffrer secrets/whitelily.yaml
-# 4. Committer et pousser (optionnel)
-```
-
-**Copier la clé sops sur la VM** :
-```bash
-# Trouver l'IP de la VM
-# Puis copier la clé
-scp ~/.config/sops/age/nixos-shared-key.txt root@<IP_VM>:/var/lib/sops-nix/key.txt
-```
-
-### Étape 3 : Déployer (5 min)
-
-**SSH sur la VM** :
-```bash
-ssh jeremie@<IP_VM>  # Mot de passe défini lors du setup
-
-# Déployer la configuration
-cd /root/nix-config
-sudo git pull
-sudo nixos-rebuild switch --flake .#whitelily
-
-# Redémarrer (optionnel mais recommandé)
-sudo reboot
-```
-
 **C'est terminé ! 🎉**
 
-Accéder à n8n : `https://n8n.votredomaine.com` (credentials affichés lors du setup)
+Accéder à n8n : `https://n8n.votredomaine.com`
+
+Les credentials ont été affichées pendant l'installation.
+
+### 📝 Note importante
+
+Le script affiche **toutes les credentials générées** avant de continuer :
+- Domaine n8n
+- Utilisateur n8n
+- Mot de passe n8n
+- Clé de chiffrement n8n (à sauvegarder dans 1Password/Bitwarden !)
+
+**Sauvegarde ces informations** avant que le script ne continue.
 
 ---
 

@@ -1,136 +1,165 @@
-# Scripts d'installation NixOS
+# 🚀 Script d'installation NixOS all-in-one
 
-Ce dossier contient les scripts pour installer et configurer NixOS automatiquement.
+Un seul script qui fait **TOUT** automatiquement !
 
-## 📋 Scripts disponibles
+## 📋 Le script : `install-nixos.sh`
 
-### 1. `install-nixos.sh` - Installation dans la VM
+Script complet d'installation NixOS, à exécuter **depuis l'ISO d'installation dans la VM**.
 
-Script principal d'installation NixOS, à exécuter **depuis l'ISO d'installation dans la VM**.
+### ✨ Ce qu'il fait automatiquement
 
-**Usage:**
+1. ✅ **Partitionnement** - GPT + UEFI automatique
+2. ✅ **Génération hardware-configuration.nix** - Pour l'host spécifique
+3. ✅ **Clone de la configuration** - Depuis GitHub
+4. ✅ **Génération interactive des secrets** - Si absents ou incomplets
+5. ✅ **Chiffrement sops** - Automatique si clé age présente
+6. ✅ **Installation NixOS** - Via flake
+7. ✅ **Arrêt automatique** - Avec countdown de 10s
+
+### 🎯 Usage ultra-simple
+
 ```bash
-# Télécharger et lancer depuis l'ISO NixOS
+# Dans la console de la VM (boot sur ISO NixOS)
 curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
 chmod +x install.sh
 sudo ./install.sh [magnolia|mimosa|whitelily]
-# magnolia = Infrastructure Proxmox
-# mimosa = Serveur web
-# whitelily = n8n automation
 ```
 
-**Fonctionnalités:**
-- ✅ Nettoyage automatique du disque (évite "partition in use")
-- ✅ Partitionnement GPT + UEFI
-- ✅ Installation via flake NixOS
-- ✅ Configuration des secrets SOPS
-- ✅ Arrêt automatique après installation (avec countdown de 10s)
+**C'est tout !** Le script fait le reste. ⚡
 
-**Workflow:**
-1. Le script nettoie le disque
-2. Crée les partitions et les formate
-3. Clone la configuration depuis GitHub
-4. Installe NixOS
-5. S'éteint automatiquement après 10 secondes
+### 🎨 Hosts disponibles
 
-### 2. `setup-whitelily.sh` - Configuration automatique des secrets (whitelily uniquement)
+- **`magnolia`** - Infrastructure Proxmox
+- **`mimosa`** - Serveur web (j12zdotcom)
+- **`whitelily`** - n8n automation
 
-Script interactif pour configurer automatiquement les secrets de whitelily (n8n).
+### 🔐 Génération automatique des secrets
 
-**Usage:**
-```bash
-# Sur ton Mac (dans le repo nix-config)
-./scripts/setup-whitelily.sh
+Si les secrets n'existent pas (ou sont incomplets), le script lance un **assistant interactif** :
+
+#### Pour `magnolia`
+- Mot de passe SSH pour `jeremie`
+
+#### Pour `mimosa`
+- Mot de passe SSH pour `jeremie`
+- Token Cloudflare Tunnel (avec instructions)
+
+#### Pour `whitelily`
+- Mot de passe SSH pour `jeremie`
+- Secrets n8n générés automatiquement :
+  - `N8N_ENCRYPTION_KEY` (64 caractères)
+  - `N8N_BASIC_PASS` (mot de passe fort)
+  - `DB_PASSWORD` (PostgreSQL)
+- Nom d'utilisateur n8n (défaut: admin)
+- Domaine (ex: n8n.votredomaine.com)
+- Credentials JSON Cloudflare Tunnel (avec validation)
+
+Le script affiche **toutes les credentials générées** avant de continuer.
+
+### 🗂️ Hardware configuration automatique
+
+Le script génère `hardware-configuration.nix` et le place automatiquement :
+
+```
+hosts/
+├── magnolia/
+│   └── hardware-configuration.nix  ← Généré automatiquement
+├── mimosa/
+│   └── hardware-configuration.nix  ← Généré automatiquement
+└── whitelily/
+    └── hardware-configuration.nix  ← Généré automatiquement
 ```
 
-**Fonctionnalités:**
-- ✅ Assistant interactif pour Cloudflare Tunnel
-- ✅ Génération automatique de tous les secrets
-- ✅ Création et chiffrement du fichier secrets/whitelily.yaml
-- ✅ Mise à jour du domaine dans la configuration
-- ✅ Commit et push automatique (optionnel)
+**Aucune manipulation manuelle nécessaire !**
 
-**Ce script génère automatiquement:**
-- Clé de chiffrement n8n (N8N_ENCRYPTION_KEY)
-- Mot de passe n8n (N8N_BASIC_PASS)
-- Mot de passe PostgreSQL (DB_PASSWORD)
-- Hash du mot de passe utilisateur jeremie
+### 🔒 Chiffrement des secrets
 
-### 3. `proxmox-post-install.sh` - Automatisation Proxmox (optionnel)
+Si une clé age est présente dans `/var/lib/sops-nix/key.txt` :
+- ✅ Les secrets sont chiffrés automatiquement avec sops
+- ✅ La clé est copiée dans le système cible
+- ✅ Le fichier `secrets/{host}.yaml` est créé et chiffré
 
-Script compagnon à exécuter **sur l'hôte Proxmox** pour automatiser complètement le processus.
+Sinon :
+- ⚠️ Les secrets sont copiés non chiffrés (warning affiché)
 
-**Usage:**
+### 📝 Workflow complet
+
 ```bash
-# Sur l'hôte Proxmox
-./proxmox-post-install.sh <VMID>
+# 1. Créer une VM dans Proxmox
+#    - Boot sur ISO NixOS 24.11
+#    - 2 CPU, 4GB RAM, 32GB disque (whitelily)
+#    - 2 CPU, 2GB RAM, 20GB disque (magnolia/mimosa)
+
+# 2. Dans la console VM
+curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
+chmod +x install.sh
+sudo ./install.sh whitelily  # Ou magnolia/mimosa
+
+# 3. Suivre l'assistant interactif pour les secrets
+
+# 4. Attendre la fin de l'installation (5-10 min)
+
+# 5. La VM s'éteint automatiquement
+
+# 6. Sur Proxmox : détacher l'ISO et redémarrer
+qm set <VMID> --ide2 none
+qm start <VMID>
+
+# 7. Se connecter
+ssh jeremie@<IP>
 ```
 
-**Fonctionnalités:**
-- ⏳ Attend que la VM s'éteigne (fin d'installation)
-- 💿 Détache automatiquement l'ISO
-- 🚀 Redémarre la VM sur le système installé
+**Temps total : ~15 minutes** ⏱️
 
-## 🔄 Workflow complet
-
-### Option A: Semi-automatique (recommandé pour débuter)
-
-1. **Dans la VM** (depuis l'ISO NixOS):
-   ```bash
-   curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
-   chmod +x install.sh
-   sudo ./install.sh magnolia  # Infrastructure Proxmox
-   ```
-
-2. **La VM s'éteint automatiquement**
-
-3. **Sur l'hôte Proxmox** (manuellement):
-   ```bash
-   qm set <VMID> --ide2 none  # Détacher l'ISO
-   qm start <VMID>             # Redémarrer la VM
-   ```
-
-4. **Se connecter via SSH**:
-   ```bash
-   ssh jeremie@<IP>
-   ```
-
-### Option B: Entièrement automatique
-
-1. **Sur l'hôte Proxmox** (dans un terminal):
-   ```bash
-   ./proxmox-post-install.sh <VMID>
-   ```
-
-2. **Dans la VM** (depuis la console ou SSH):
-   ```bash
-   curl -L https://raw.githubusercontent.com/JeremieAlcaraz/nix-config/main/scripts/install-nixos.sh -o install.sh
-   chmod +x install.sh
-   sudo ./install.sh magnolia  # Infrastructure Proxmox
-   ```
-
-3. Le script Proxmox attend, détache l'ISO et redémarre automatiquement
-
-4. **Se connecter via SSH**:
-   ```bash
-   ssh jeremie@<IP>
-   ```
-
-## 🔧 Relancer après un échec
-
-Le script `install-nixos.sh` peut être relancé **sans redémarrer la VM** en cas d'échec :
+### 🎯 Exemple complet pour whitelily (n8n)
 
 ```bash
-sudo ./install.sh magnolia
-# Si échec...
-sudo ./install.sh magnolia  # Relancer directement
+# Dans la VM
+sudo ./install.sh whitelily
+
+# Le script demande :
+# 1. Branche git (défaut: main)
+# 2. Confirmation de l'effacement du disque
+# 3. Mot de passe SSH pour jeremie
+# 4. Nom d'utilisateur n8n (défaut: admin)
+# 5. Domaine complet (ex: n8n.jeremiealcaraz.com)
+# 6. Credentials JSON Cloudflare Tunnel
+
+# Le script affiche ensuite :
+# ✅ Domaine          : n8n.jeremiealcaraz.com
+# ✅ Utilisateur      : admin
+# ✅ Mot de passe     : Abc123XYZ789...
+# ✅ Clé chiffrement  : 64 caractères hex
+
+# Puis il installe, configure tout, et éteint la VM
+```
+
+### 🔄 Relancer après un échec
+
+Le script peut être relancé **sans redémarrer la VM** :
+
+```bash
+sudo ./install.sh whitelily  # Relancer directement
 ```
 
 Le nettoyage automatique du disque évite les erreurs "partition in use".
 
-## 📝 Notes
+### ⚡ Différences avec l'ancienne version
 
-- Les deux hosts disponibles: `magnolia` (infrastructure Proxmox) et `mimosa` (serveur web)
-- Le disque cible est toujours `/dev/sda`
-- Les secrets SOPS doivent être présents dans `/var/lib/sops-nix/key.txt` (optionnel)
-- L'arrêt automatique peut être annulé avec `Ctrl+C` pendant le countdown
+| Avant | Maintenant |
+|-------|------------|
+| 4 scripts différents | **1 seul script** |
+| Génération manuelle des secrets | **Assistant interactif** |
+| Configuration manuelle de hardware-configuration.nix | **Automatique** |
+| Édition manuelle du domaine n8n | **Automatique** |
+| ~45 minutes | **~15 minutes** |
+
+### 📚 Pour plus d'infos
+
+Voir le guide complet : [`docs/WHITELILY-N8N-SETUP.md`](../docs/WHITELILY-N8N-SETUP.md)
+
+---
+
+## 🎉 C'est tout !
+
+Un seul script, une seule commande, tout est automatique. 🚀

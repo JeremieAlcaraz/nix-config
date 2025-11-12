@@ -1,14 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Script d'installation NixOS 100% reproductible
-# Usage: sudo ./install-nixos.sh [magnolia|mimosa]
+# Script d'installation NixOS all-in-one
+# Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily]
+#
+# Ce script fait TOUT :
+# - Partitionnement et formatage
+# - Génération du hardware-configuration.nix
+# - Clone du repo de configuration
+# - Génération interactive des secrets si nécessaire
+# - Installation de NixOS
+# - Arrêt automatique
 
-# Couleurs pour les messages
+# Couleurs
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
 error() {
     echo -e "${RED}❌ ERREUR: $1${NC}" >&2
@@ -23,77 +33,206 @@ warning() {
     echo -e "${YELLOW}⚠️  $1${NC}"
 }
 
+step() {
+    echo ""
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}▶ $1${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
+
+prompt() {
+    echo -e "${YELLOW}❓ $1${NC}"
+}
+
 # Vérifications initiales
 [[ $EUID -ne 0 ]] && error "Ce script doit être exécuté en tant que root (sudo)"
 [[ ! -d /sys/firmware/efi ]] && error "Ce script nécessite un système UEFI"
 
-# Récupérer le nom de l'host (magnolia, mimosa ou whitelily)
+# Récupérer le nom de l'host
 HOST="${1:-}"
 if [[ -z "$HOST" ]]; then
     error "Usage: sudo $0 [magnolia|mimosa|whitelily]"
 fi
 
 if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" ]]; then
-    error "Host invalide. Utilisez 'magnolia' (infrastructure), 'mimosa' (web) ou 'whitelily' (n8n)"
+    error "Host invalide. Utilisez 'magnolia', 'mimosa' ou 'whitelily'"
 fi
 
 # Configuration
 DISK="/dev/sda"
 REPO_URL="https://github.com/JeremieAlcaraz/nix-config.git"
 
+echo ""
+echo -e "${CYAN}╔════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║     🌸 Installation NixOS - ${HOST}${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════╝${NC}"
+echo ""
+
 info "Installation de NixOS pour l'host: $HOST"
 info "Disque cible: $DISK"
 
-# Demander la branche à utiliser
+# Demander la branche
 echo ""
 read -p "Branche git à utiliser (main): " BRANCH
 BRANCH="${BRANCH:-main}"
 info "Branche sélectionnée: $BRANCH"
 
-# Demander le mode d'installation pour mimosa
-if [[ "$HOST" == "mimosa" ]]; then
-    echo ""
-    warning "Mode d'installation pour mimosa:"
-    echo "  1. Installation complète (avec le serveur web j12zdotcom)"
-    echo "     ➜ Retry automatique en cas d'erreurs réseau (max 3 tentatives)"
-    echo "     ➜ Configuration DNS optimisée pour les téléchargements npm"
-    echo ""
-    echo "  2. Installation minimale (sans le serveur web)"
-    echo "     ➜ Plus rapide, aucun téléchargement npm requis"
-    echo "     ➜ Le serveur web peut être activé après l'installation"
-    echo ""
-    read -p "Choisissez le mode (1/2, défaut: 1): " INSTALL_MODE
-    INSTALL_MODE="${INSTALL_MODE:-1}"
-
-    if [[ "$INSTALL_MODE" == "2" ]]; then
-        export NIXOS_MINIMAL_INSTALL="true"
-        info "Mode minimal sélectionné - le serveur web sera désactivé pendant l'installation"
-        info "Après l'installation, vous pourrez l'activer avec:"
-        info "  sudo nixos-rebuild switch"
-    else
-        info "Mode complet sélectionné - installation du serveur web j12zdotcom"
-        info "Le script réessayera automatiquement en cas d'erreurs réseau"
-    fi
-fi
-
 # Vérifier que le disque existe
 [[ ! -b "$DISK" ]] && error "Le disque $DISK n'existe pas"
 
 # Demander confirmation
+echo ""
 warning "ATTENTION: Toutes les données sur $DISK seront EFFACÉES!"
-read -p "Êtes-vous sûr de vouloir continuer? (tapez 'oui' pour confirmer): " confirm
+read -p "Continuer? (tapez 'oui'): " confirm
 [[ "$confirm" != "oui" ]] && error "Installation annulée"
 
-# 0. Nettoyage du disque (évite les erreurs "partition in use")
-info "Étape 0/8: Nettoyage du disque..."
+# ========================================
+# Fonction de génération des secrets
+# ========================================
+generate_secrets() {
+    local host="$1"
+    local secrets_file="/tmp/secrets-${host}.yaml"
 
-# Désactiver le swap s'il est actif sur ce disque
+    step "Configuration des secrets pour ${host}"
+
+    info "Génération des secrets..."
+
+    # Secret commun à tous les hosts : mot de passe jeremie
+    prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
+    JEREMIE_HASH=$(mkpasswd -m sha-512)
+
+    case "$host" in
+        magnolia)
+            # Magnolia : juste le mot de passe jeremie
+            cat > "$secrets_file" <<EOF
+# Secrets pour magnolia (infrastructure Proxmox)
+# Généré automatiquement par install-nixos.sh
+
+jeremie-password-hash: ${JEREMIE_HASH}
+EOF
+            ;;
+
+        mimosa)
+            # Mimosa : mot de passe + token cloudflare
+            echo ""
+            info "Configuration Cloudflare Tunnel pour mimosa"
+            echo "1. Allez sur https://one.dash.cloudflare.com/"
+            echo "2. Zero Trust → Access → Tunnels"
+            echo "3. Créez un tunnel (ou utilisez un existant)"
+            echo "4. Copiez le TOKEN (la longue chaîne après --token)"
+            echo ""
+            prompt "Collez le token Cloudflare Tunnel :"
+            read -r CF_TOKEN
+
+            cat > "$secrets_file" <<EOF
+# Secrets pour mimosa (serveur web)
+# Généré automatiquement par install-nixos.sh
+
+jeremie-password-hash: ${JEREMIE_HASH}
+
+cloudflare-tunnel-token: "${CF_TOKEN}"
+EOF
+            ;;
+
+        whitelily)
+            # Whitelily : mot de passe + secrets n8n + cloudflare credentials JSON
+            echo ""
+            info "Configuration n8n pour whitelily"
+
+            # Génération automatique des secrets n8n
+            N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
+            N8N_BASIC_PASS=$(openssl rand -base64 24)
+            DB_PASSWORD=$(openssl rand -base64 32)
+
+            warning "⚠️  IMPORTANT : Clé de chiffrement n8n"
+            echo "Cette clé chiffre TOUTES vos credentials n8n."
+            echo -e "${YELLOW}N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}${NC}"
+            echo "Sauvegardez-la dans un gestionnaire de mots de passe !"
+            echo ""
+            read -p "Appuyez sur Entrée une fois sauvegardée..."
+
+            echo ""
+            prompt "Nom d'utilisateur pour n8n (défaut: admin):"
+            read -r N8N_USER
+            N8N_USER="${N8N_USER:-admin}"
+
+            echo ""
+            prompt "Domaine complet pour n8n (ex: n8n.votredomaine.com):"
+            read -r DOMAIN
+            [[ -z "$DOMAIN" ]] && error "Le domaine ne peut pas être vide"
+
+            echo ""
+            info "Configuration Cloudflare Tunnel"
+            echo "1. Allez sur https://one.dash.cloudflare.com/"
+            echo "2. Zero Trust → Access → Tunnels"
+            echo "3. Créez un tunnel nommé : n8n-whitelily"
+            echo "4. Configurez la route publique :"
+            echo "   - Hostname: ${DOMAIN}"
+            echo "   - Service: http://localhost:80"
+            echo "5. Copiez le JSON complet des credentials"
+            echo ""
+            prompt "Collez le JSON des credentials Cloudflare (puis ligne vide pour terminer) :"
+            CLOUDFLARED_CREDS=""
+            while IFS= read -r line; do
+                [[ -z "$line" ]] && break
+                CLOUDFLARED_CREDS+="$line"$'\n'
+            done
+
+            # Valider le JSON
+            if ! echo "$CLOUDFLARED_CREDS" | jq . &>/dev/null; then
+                error "Le JSON des credentials Cloudflare est invalide"
+            fi
+
+            cat > "$secrets_file" <<EOF
+# Secrets pour whitelily (VM n8n automation)
+# Généré automatiquement par install-nixos.sh
+
+jeremie-password-hash: ${JEREMIE_HASH}
+
+n8n:
+  encryption_key: "${N8N_ENCRYPTION_KEY}"
+  basic_user: "${N8N_USER}"
+  basic_pass: "${N8N_BASIC_PASS}"
+  db_password: "${DB_PASSWORD}"
+
+cloudflared:
+  credentials: |
+    ${CLOUDFLARED_CREDS}
+EOF
+
+            # Sauvegarder le domaine pour la configuration
+            echo "$DOMAIN" > /tmp/whitelily-domain.txt
+
+            info "Résumé de la configuration n8n :"
+            echo "  • Domaine          : ${DOMAIN}"
+            echo "  • Utilisateur      : ${N8N_USER}"
+            echo "  • Mot de passe     : ${N8N_BASIC_PASS}"
+            echo "  • Clé chiffrement  : ${N8N_ENCRYPTION_KEY}"
+            echo ""
+            warning "Sauvegardez ces informations !"
+            echo ""
+            read -p "Appuyez sur Entrée pour continuer..."
+            ;;
+    esac
+
+    info "Fichier de secrets créé : $secrets_file"
+
+    # Copier vers le système cible plus tard
+    export SECRETS_FILE="$secrets_file"
+}
+
+# ========================================
+# Étape 1 : Nettoyage du disque
+# ========================================
+step "Étape 1/7 : Nettoyage du disque"
+
+# Désactiver swap
 if grep -q "$DISK" /proc/swaps 2>/dev/null; then
-    warning "Désactivation du swap sur $DISK..."
+    warning "Désactivation du swap..."
     swapoff "${DISK}"* 2>/dev/null || true
 fi
 
-# Démonter toutes les partitions du disque cible
+# Démonter toutes les partitions
 for part in "${DISK}"*[0-9]; do
     if mountpoint -q "$part" 2>/dev/null || grep -q "$part" /proc/mounts 2>/dev/null; then
         warning "Démontage de $part..."
@@ -101,279 +240,171 @@ for part in "${DISK}"*[0-9]; do
     fi
 done
 
-# Démonter /mnt et ses sous-montages si nécessaire
 if mountpoint -q /mnt 2>/dev/null; then
-    warning "Démontage de /mnt..."
     umount -R /mnt 2>/dev/null || true
 fi
 
-# Effacer toutes les signatures de système de fichiers (empêche le kernel de les reconnaître)
-warning "Effacement des signatures de système de fichiers..."
 wipefs -af "$DISK" 2>/dev/null || true
-
-# S'assurer que le kernel oublie l'ancienne table de partitions
 partprobe "$DISK" 2>/dev/null || true
 sleep 1
 
-# 1. Partitionnement
-info "Étape 1/7: Partitionnement du disque..."
+# ========================================
+# Étape 2 : Partitionnement
+# ========================================
+step "Étape 2/7 : Partitionnement du disque"
+
 parted "$DISK" -- mklabel gpt
 parted "$DISK" -- mkpart ESP fat32 1MiB 513MiB
 parted "$DISK" -- set 1 esp on
 parted "$DISK" -- mkpart primary 513MiB 100%
 
-# Forcer le kernel à relire la nouvelle table de partitions
 partprobe "$DISK" 2>/dev/null || true
-
-# Attendre que les partitions soient reconnues
 sleep 2
 
-# 2. Formatage avec labels STANDARDISÉS
-info "Étape 2/8: Formatage des partitions..."
+# ========================================
+# Étape 3 : Formatage
+# ========================================
+step "Étape 3/7 : Formatage des partitions"
+
 mkfs.vfat -F32 -n ESP "${DISK}1"
 mkfs.ext4 -L nixos-root "${DISK}2"
 
-# Attendre que udev reconnaisse les nouveaux labels
 udevadm settle
 sleep 2
 
-# 3. Montage
-info "Étape 3/8: Montage des partitions..."
+# ========================================
+# Étape 4 : Montage
+# ========================================
+step "Étape 4/7 : Montage des partitions"
+
 mount /dev/disk/by-label/nixos-root /mnt
 mkdir -p /mnt/boot
 mount /dev/disk/by-label/ESP /mnt/boot
 
-# Vérification
 lsblk -f
 
-# 4. Activer les flakes et configurer DNS
-info "Étape 4/8: Configuration de Nix et DNS..."
+# ========================================
+# Étape 5 : Génération hardware-configuration
+# ========================================
+step "Étape 5/7 : Génération de la configuration matérielle"
 
-# Configurer des DNS publics fiables pour éviter les erreurs EAI_AGAIN
-info "Configuration des DNS publics (Cloudflare et Google)..."
+nixos-generate-config --root /mnt
+info "Configuration matérielle générée"
 
-# Fonction pour configurer les DNS sur un système
-configure_dns() {
-    local target_path="$1"
-    local resolv_conf="${target_path}/etc/resolv.conf"
+# ========================================
+# Étape 6 : Clone du repo et configuration
+# ========================================
+step "Étape 6/7 : Clonage du dépôt et configuration"
 
-    # Retirer la protection immutable du fichier si elle existe
-    chattr -i "$resolv_conf" 2>/dev/null || true
+# Configuration Nix
+export NIX_CONFIG='experimental-features = nix-command flakes'
 
-    # Créer le répertoire si nécessaire
-    mkdir -p "$(dirname "$resolv_conf")"
-
-    # Écrire la configuration DNS
-    cat > "$resolv_conf" << EOF
-# DNS publics temporaires pour l'installation NixOS
-# Cloudflare: 1.1.1.1, 1.0.0.1
-# Google: 8.8.8.8, 8.8.4.4
-options timeout:5 attempts:5 rotate
-nameserver 1.1.1.1
-nameserver 1.0.0.1
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOF
-
-    # Protéger le fichier contre l'écriture
-    chattr +i "$resolv_conf" 2>/dev/null || true
-}
-
-# Stopper resolvconf s'il tourne (pour éviter qu'il réécrive /etc/resolv.conf)
-if systemctl is-active resolvconf > /dev/null 2>&1; then
-    warning "Arrêt temporaire de resolvconf pour configurer les DNS publics..."
-    systemctl stop resolvconf 2>/dev/null || true
-fi
-
-# Configurer DNS sur le système hôte (ISO)
-configure_dns ""
-
-# Configurer DNS dans le système cible (/mnt)
-configure_dns "/mnt"
-
-info "DNS publics configurés sur l'hôte et le système cible (protégés contre modification)"
-
-# Tester la résolution DNS
-info "Test de résolution DNS..."
-# Utiliser curl au lieu de nslookup car il est disponible dans l'ISO
-if timeout 5 curl -sS --head --max-time 5 https://registry.npmjs.org > /dev/null 2>&1; then
-    info "Résolution DNS fonctionnelle"
-else
-    warning "La résolution DNS ne fonctionne pas correctement!"
-    warning "L'installation risque d'échouer si des téléchargements npm sont nécessaires"
-    echo ""
-    warning "Pour diagnostiquer le problème réseau, exécutez:"
-    warning "  sudo ./diagnose-network.sh"
-    echo ""
-    read -p "Continuer quand même? (oui/non): " continue_anyway
-    if [[ "$continue_anyway" != "oui" ]]; then
-        error "Installation annulée. Résolvez les problèmes réseau d'abord."
-    fi
-fi
-
-# Configuration Nix avec retry et timeouts augmentés
-export NIX_CONFIG='experimental-features = nix-command flakes
-connect-timeout = 30
-stalled-download-timeout = 300
-max-substitution-jobs = 4'
-
-# Variables d'environnement pour améliorer la résilience réseau de npm/pnpm
-export npm_config_fetch_retries=5
-export npm_config_fetch_retry_factor=3
-export npm_config_fetch_retry_mintimeout=10000
-export npm_config_fetch_retry_maxtimeout=120000
-export npm_config_fetch_timeout=120000
-
-info "Configuration Nix avec retry et timeouts augmentés"
-
-# 5. Cloner le repo
-info "Étape 5/8: Clonage du dépôt..."
+# Clone du repo
+info "Clonage du dépôt..."
 if [[ -d /mnt/etc/nixos ]]; then
     rm -rf /mnt/etc/nixos
 fi
 git clone --branch "$BRANCH" "$REPO_URL" /mnt/etc/nixos
 
-# Configurer npm/pnpm pour plus de résilience aux erreurs réseau
-info "Configuration de npm/pnpm avec retry logic..."
-mkdir -p /mnt/root
-cat > /mnt/root/.npmrc << EOF
-# Configuration npm pour améliorer la résilience réseau
-fetch-retries=5
-fetch-retry-factor=3
-fetch-retry-mintimeout=10000
-fetch-retry-maxtimeout=120000
-fetch-timeout=120000
-maxsockets=5
-registry=https://registry.npmjs.org/
-EOF
+# Copier le hardware-configuration.nix au bon endroit
+info "Placement de hardware-configuration.nix pour ${HOST}..."
+mkdir -p "/mnt/etc/nixos/hosts/${HOST}"
+cp /mnt/etc/nixos/hardware-configuration.nix "/mnt/etc/nixos/hosts/${HOST}/hardware-configuration.nix"
+info "Hardware configuration placée dans hosts/${HOST}/"
 
-info "npm/pnpm configuré avec retry logic dans le système cible"
+# Vérifier si les secrets existent
+SECRETS_PATH="/mnt/etc/nixos/secrets/${HOST}.yaml"
+if [[ ! -f "$SECRETS_PATH" ]] || grep -q "REMPLACER_PAR" "$SECRETS_PATH" 2>/dev/null; then
+    warning "Secrets non trouvés ou incomplets pour ${HOST}"
+    info "Génération interactive des secrets..."
 
-# 6. Copier la clé SOPS dans le système cible si elle existe
-if [[ -f /var/lib/sops-nix/key.txt ]]; then
-    info "Copie de la clé SOPS dans le système cible..."
-    mkdir -p /mnt/var/lib/sops-nix
-    cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
-    chmod 600 /mnt/var/lib/sops-nix/key.txt
-else
-    warning "Aucune clé SOPS trouvée dans /var/lib/sops-nix/key.txt. Les secrets chiffrés ne seront PAS déchiffrés pendant l'installation."
-fi
+    # Installer les outils nécessaires temporairement
+    nix-shell -p sops age openssl mkpasswd jq --run "$(declare -f generate_secrets error info warning step prompt); generate_secrets ${HOST}"
 
-# 7. Installation
-info "Étape 6/8: Installation de NixOS (cela peut prendre plusieurs minutes)..."
-cd /mnt/etc/nixos
+    # Chiffrer les secrets avec sops
+    if [[ -f "$SECRETS_FILE" ]]; then
+        info "Chiffrement des secrets avec sops..."
 
-# Fonction pour installer avec retry en cas d'erreur réseau
-install_with_retry() {
-    local max_attempts=3
-    local attempt=1
-    local wait_time=30
-    local flake_target="${HOST}"
+        # Copier la clé age si elle existe
+        if [[ -f /var/lib/sops-nix/key.txt ]]; then
+            mkdir -p /mnt/var/lib/sops-nix
+            cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
+            chmod 600 /mnt/var/lib/sops-nix/key.txt
 
-    # Si installation minimale de mimosa, utiliser la configuration mimosa-minimal
-    if [[ "$HOST" == "mimosa" && "${NIXOS_MINIMAL_INSTALL:-}" == "true" ]]; then
-        flake_target="mimosa-minimal"
-        info "Installation en mode minimal (sans serveur web) - configuration: mimosa-minimal"
-    fi
+            SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt sops encrypt "$SECRETS_FILE" > "$SECRETS_PATH"
 
-    while [[ $attempt -le $max_attempts ]]; do
-        info "Tentative d'installation $attempt/$max_attempts..."
-
-        if npm_config_fetch_retries=5 \
-           npm_config_fetch_retry_factor=3 \
-           npm_config_fetch_retry_mintimeout=10000 \
-           npm_config_fetch_retry_maxtimeout=120000 \
-           npm_config_fetch_timeout=120000 \
-           nixos-install --flake ".#${flake_target}" --no-root-passwd 2>&1 | tee /tmp/nixos-install.log; then
-            return 0
-        fi
-
-        # Vérifier si l'erreur est liée au réseau
-        if grep -qE "EAI_AGAIN|ETIMEDOUT|ECONNRESET|getaddrinfo" /tmp/nixos-install.log; then
-            if [[ $attempt -lt $max_attempts ]]; then
-                warning "Erreur réseau détectée. Nouvelle tentative dans ${wait_time}s..."
-                sleep "$wait_time"
-                # Augmenter le temps d'attente pour la prochaine tentative (backoff exponentiel)
-                wait_time=$((wait_time * 2))
-                attempt=$((attempt + 1))
+            # Vérifier que c'est bien chiffré
+            if grep -q "sops:" "$SECRETS_PATH"; then
+                info "Secrets chiffrés avec succès"
             else
-                error "Installation échouée après $max_attempts tentatives à cause d'erreurs réseau. Consultez /tmp/nixos-install.log pour plus de détails."
+                error "Échec du chiffrement des secrets"
             fi
         else
-            # Erreur non-réseau, ne pas réessayer
-            error "Installation échouée pour une raison autre que le réseau. Consultez /tmp/nixos-install.log pour plus de détails."
+            warning "Clé age non trouvée, copie du fichier non chiffré"
+            warning "ATTENTION : Les secrets ne sont PAS chiffrés !"
+            cp "$SECRETS_FILE" "$SECRETS_PATH"
         fi
-    done
 
-    return 1
-}
+        # Si whitelily, mettre à jour le domaine dans n8n.nix
+        if [[ "$HOST" == "whitelily" ]] && [[ -f /tmp/whitelily-domain.txt ]]; then
+            DOMAIN=$(cat /tmp/whitelily-domain.txt)
+            sed -i "s|domain = \".*\";|domain = \"${DOMAIN}\";|" "/mnt/etc/nixos/hosts/whitelily/n8n.nix"
+            info "Domaine mis à jour dans n8n.nix : ${DOMAIN}"
+        fi
+    fi
+else
+    info "Secrets existants trouvés pour ${HOST}"
 
-# Lancer l'installation avec retry
-install_with_retry
+    # Copier la clé age si elle existe
+    if [[ -f /var/lib/sops-nix/key.txt ]]; then
+        mkdir -p /mnt/var/lib/sops-nix
+        cp /var/lib/sops-nix/key.txt /mnt/var/lib/sops-nix/key.txt
+        chmod 600 /mnt/var/lib/sops-nix/key.txt
+        info "Clé sops copiée"
+    fi
+fi
 
-# 8. Finalisation
-info "Étape 7/8: Installation terminée!"
-info ""
-info "=========================================="
-info "🎉 Installation réussie!"
-info "=========================================="
-info ""
+# ========================================
+# Étape 7 : Installation de NixOS
+# ========================================
+step "Étape 7/7 : Installation de NixOS"
+
+cd /mnt/etc/nixos
+
+info "Installation en cours (cela peut prendre plusieurs minutes)..."
+nixos-install --flake ".#${HOST}" --no-root-passwd
+
+# ========================================
+# Finalisation
+# ========================================
+echo ""
+echo -e "${CYAN}╔════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║     🎉 Installation réussie !${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+info "Host installé : ${HOST}"
 
 if [[ -f /mnt/var/lib/sops-nix/key.txt ]]; then
-    info "🔐 Les secrets SOPS ont été déchiffrés avec succès"
-    info "Le mot de passe de l'utilisateur 'jeremie' a été configuré via SOPS"
+    info "🔐 Les secrets SOPS ont été déchiffrés"
 else
-    warning "Mot de passe initial de l'utilisateur 'jeremie': nixos"
-    warning "⚠️  Changez-le immédiatement avec: passwd"
-fi
-info ""
-
-# Message spécifique pour l'installation minimale de mimosa
-if [[ "$HOST" == "mimosa" && "${NIXOS_MINIMAL_INSTALL:-}" == "true" ]]; then
-    info "=========================================="
-    info "📝 Installation minimale - Étapes suivantes"
-    info "=========================================="
-    info ""
-    info "Le serveur web j12zdotcom a été désactivé pendant l'installation."
-    info "Pour l'activer après le premier boot:"
-    info ""
-    info "1. Connectez-vous via SSH:"
-    info "   ssh jeremie@<IP>"
-    info ""
-    info "2. Clonez le dépôt de configuration:"
-    info "   cd /etc/nixos"
-    info "   git pull  # Si nécessaire"
-    info ""
-    info "3. Activez le serveur web avec le script dédié:"
-    info "   cd /etc/nixos/scripts"
-    info "   sudo ./activate-webserver.sh"
-    info ""
-    info "Ou manuellement:"
-    info "   sudo nixos-rebuild switch --flake /etc/nixos#mimosa"
-    info ""
-    info "Le système téléchargera et activera le serveur web (~5-10 min)."
-    info ""
+    warning "Clé sops non trouvée"
 fi
 
-# 9. Arrêt automatique
-info "Étape 8/8: Préparation de l'arrêt..."
-info ""
-warning "⚠️  IMPORTANT: Avant de redémarrer la VM, détachez l'ISO d'installation!"
-info ""
-info "Depuis l'hôte Proxmox, exécutez (remplacez VMID par le numéro de votre VM):"
-info "  qm set VMID --ide2 none"
-info ""
-info "Ou via l'interface web Proxmox:"
-info "  Hardware > CD/DVD Drive > Remove"
-info ""
-info "Puis redémarrez la VM:"
-info "  qm start VMID"
-info ""
-info "Connexion SSH après le boot:"
-info "  ssh jeremie@<IP>"
-info ""
+echo ""
+info "Prochaines étapes :"
+echo "1. Détacher l'ISO : qm set <VMID> --ide2 none"
+echo "2. Redémarrer la VM : qm start <VMID>"
+echo "3. Se connecter : ssh jeremie@<IP>"
+echo ""
 
-# Countdown avant l'arrêt
+if [[ "$HOST" == "whitelily" ]]; then
+    echo -e "${YELLOW}📝 Pour whitelily (n8n) :${NC}"
+    echo "   Accédez à https://$(cat /tmp/whitelily-domain.txt 2>/dev/null || echo 'votre-domaine.com')"
+    echo ""
+fi
+
+# Arrêt automatique
 info "La VM va s'éteindre dans 10 secondes..."
 info "Appuyez sur Ctrl+C pour annuler."
 for i in {10..1}; do
