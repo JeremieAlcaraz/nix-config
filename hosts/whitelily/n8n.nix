@@ -38,7 +38,23 @@ in {
       work_mem = "2621kB";
       min_wal_size = "1GB";
       max_wal_size = "4GB";
+      # Listen on all interfaces to allow podman containers to connect
+      listen_addresses = "0.0.0.0";
     };
+    # Allow connections from localhost and podman containers
+    authentication = lib.mkOverride 10 ''
+      # TYPE  DATABASE        USER            ADDRESS                 METHOD
+      # "local" is for Unix domain socket connections only
+      local   all             all                                     peer
+      # IPv4 local connections
+      host    all             all             127.0.0.1/32            scram-sha-256
+      # IPv6 local connections
+      host    all             all             ::1/128                 scram-sha-256
+      # Allow podman containers to connect (podman default bridge network)
+      host    all             all             10.88.0.0/16            scram-sha-256
+      # Alternative podman networks
+      host    all             all             10.89.0.0/16            scram-sha-256
+    '';
   };
 
   # Initialisation du mot de passe PostgreSQL pour l'utilisateur n8n
