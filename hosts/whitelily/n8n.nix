@@ -38,30 +38,11 @@ in {
       DO $$
       DECLARE password TEXT;
       BEGIN
-        password := trim(both from replace(pg_read_file('/run/secrets/n8n-db-password'), E'\n', '''));
+        password := trim(both from replace(pg_read_file('/run/secrets/n8n/db_password'), E'\n', '''));
         EXECUTE format('ALTER USER n8n WITH PASSWORD %L', password);
       END $$;
     EOF
   '';
-
-  # Copier le secret dans un emplacement accessible par PostgreSQL
-  systemd.services."postgresql-secret-setup" = {
-    description = "Setup PostgreSQL password secret for n8n";
-    wantedBy = [ "postgresql.service" ];
-    before = [ "postgresql.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      User = "postgres";
-      Group = "postgres";
-    };
-    script = ''
-      umask 077
-      mkdir -p /run/secrets
-      cp ${config.sops.secrets."n8n/db_password".path} /run/secrets/n8n-db-password
-      chown postgres:postgres /run/secrets/n8n-db-password
-      chmod 0400 /run/secrets/n8n-db-password
-    '';
-  };
 
   ########################################
   # 2) Podman pour les containers OCI
@@ -175,12 +156,6 @@ EOF
     globalConfig = ''
       # Désactiver la télémétrie
       admin off
-
-      # Logs
-      log {
-        output file /var/log/caddy/access.log
-        format json
-      }
     '';
 
     virtualHosts."${domain}" = {
