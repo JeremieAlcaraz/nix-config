@@ -32,19 +32,6 @@
     PermitRootLogin = "no";
   };
 
-  # Clés SSH autorisées
-  services.openssh.authorizedKeysFiles = [
-    "/etc/ssh/authorized_keys.d/%u"
-    "~/.ssh/authorized_keys"
-  ];
-
-  environment.etc."ssh/authorized_keys.d/jeremie" = {
-    text = ''
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac
-    '';
-    mode = "0644";
-  };
-
   # Utilisateurs immuables
   users.mutableUsers = false;
 
@@ -54,6 +41,9 @@
     createHome = true;
     home = "/home/jeremie";
     extraGroups = [ "wheel" ];
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac"
+    ];
   };
 
   # Sudo sans mot de passe (sécurisé car SSH par clé uniquement)
