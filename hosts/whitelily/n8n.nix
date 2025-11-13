@@ -4,6 +4,15 @@ let
   # Configuration du domaine n8n
   domain = "n8nv2.jeremiealcaraz.com";  # ← À adapter selon ton domaine
 
+  # Script pour lancer cloudflared avec le token depuis sops
+  cloudflaredTunnelScript = pkgs.writeShellScript "cloudflared-tunnel" ''
+    set -euo pipefail
+
+    TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."cloudflared/token".path})"
+
+    exec ${pkgs.cloudflared}/bin/cloudflared tunnel run --token "$TOKEN"
+  '';
+
 in {
   ########################################
   # 1) PostgreSQL pour n8n
@@ -230,7 +239,7 @@ EOF
       Group = "cloudflared";
       Restart = "on-failure";
       RestartSec = "5s";
-      ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel run --token $(cat ${config.sops.secrets."cloudflared/token".path})";
+      ExecStart = "${cloudflaredTunnelScript}";
       # Sécurité
       NoNewPrivileges = true;
       PrivateTmp = true;
