@@ -85,8 +85,6 @@ in {
   systemd.services."n8n-envfile" = {
     description = "Render n8n env file from sops secrets";
     wantedBy = [ "multi-user.target" ];
-    after = [ "sops-install-secrets.service" ];
-    requires = [ "sops-install-secrets.service" ];
     before = [ "podman-n8n.service" ];
     serviceConfig = {
       Type = "oneshot";
@@ -94,8 +92,6 @@ in {
     };
     script = ''
       umask 077
-      mkdir -p /run/secrets
-      chmod 700 /run/secrets
 
       # Lire les secrets
       ENCRYPTION_KEY=$(cat ${config.sops.secrets."n8n/encryption_key".path})
@@ -104,7 +100,8 @@ in {
       DB_PASSWORD=$(cat ${config.sops.secrets."n8n/db_password".path})
 
       # Créer le fichier .env avec toutes les variables nécessaires
-      cat > /run/secrets/n8n.env <<EOF
+      # On le met dans /run/n8n/ pour éviter que sops-nix le supprime
+      cat > /run/n8n/n8n.env <<EOF
 N8N_ENCRYPTION_KEY=$ENCRYPTION_KEY
 N8N_BASIC_AUTH_ACTIVE=true
 N8N_BASIC_AUTH_USER=$BASIC_USER
@@ -118,7 +115,7 @@ DB_POSTGRESDB_PASSWORD=$DB_PASSWORD
 DB_POSTGRESDB_CONNECTION_TIMEOUT=30000
 EOF
 
-      chmod 0600 /run/secrets/n8n.env
+      chmod 0600 /run/n8n/n8n.env
     '';
   };
 
@@ -151,7 +148,8 @@ EOF
         # Volume pour les données persistantes
         "--volume=/var/lib/n8n:/home/node/.n8n"
         # Fichier d'environnement avec les secrets (contient les variables DB_*)
-        "--env-file=/run/secrets/n8n.env"
+        # Déplacé de /run/secrets vers /run/n8n pour éviter que sops-nix le supprime
+        "--env-file=/run/n8n/n8n.env"
         # Healthcheck
         "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"
         "--health-interval=30s"
@@ -171,6 +169,7 @@ EOF
   systemd.tmpfiles.rules = [
     # Données n8n, Caddy et Cloudflared
     "d /var/lib/n8n 0750 root root -"
+    "d /run/n8n 0700 root root -"  # Pour le fichier n8n.env
     "d /var/log/caddy 0750 caddy caddy -"
     "d /var/lib/cloudflared 0750 cloudflared cloudflared -"
     # Backups
