@@ -19,6 +19,85 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# ============================================================================
+# AUTO-INSTALLATION DES DÉPENDANCES
+# ============================================================================
+
+# Détection de l'OS (défini tôt car nécessaire pour l'auto-install)
+detect_os() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    else
+        echo "linux"
+    fi
+}
+
+# Fonction pour vérifier si toutes les dépendances sont présentes
+check_dependencies_available() {
+    local os=$(detect_os)
+    local missing=()
+
+    for cmd in sops age openssl; do
+        if ! command -v "$cmd" &>/dev/null; then
+            missing+=("$cmd")
+        fi
+    done
+
+    if [[ "$os" == "linux" ]] && ! command -v mkpasswd &>/dev/null; then
+        missing+=("mkpasswd")
+    fi
+
+    [[ ${#missing[@]} -eq 0 ]]
+}
+
+# Auto-installation : vérifier et guider l'utilisateur
+if ! check_dependencies_available; then
+    os=$(detect_os)
+
+    echo ""
+    echo -e "${RED}❌ Dépendances manquantes${NC}"
+    echo ""
+
+    if [[ "$os" == "linux" ]]; then
+        echo -e "${YELLOW}Pour installer automatiquement les dépendances, lancez :${NC}"
+        echo ""
+        echo -e "${GREEN}  nix-shell -p sops age openssl mkpasswd --run \"bash $0 $*\"${NC}"
+        echo ""
+        echo -e "${BLUE}Ou entrez dans un shell avec les dépendances :${NC}"
+        echo -e "${GREEN}  nix-shell -p sops age openssl mkpasswd${NC}"
+        echo -e "${GREEN}  bash $0 $*${NC}"
+    else
+        echo -e "${YELLOW}Sur macOS, installez avec Homebrew :${NC}"
+        echo -e "${GREEN}  brew install sops age${NC}"
+    fi
+    echo ""
+    exit 1
+fi
+
+# ============================================================================
+# GESTION DES PERMISSIONS
+# ============================================================================
+
+# Vérifier si on peut écrire dans le répertoire secrets
+check_write_permissions() {
+    local test_file="secrets/.write_test_$$"
+
+    if touch "$test_file" 2>/dev/null; then
+        rm -f "$test_file"
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Si on ne peut pas écrire et qu'on n'est pas déjà root, relancer avec sudo
+if [[ -d "secrets" ]] && ! check_write_permissions && [[ $EUID -ne 0 ]] && [[ -z "${SUDO_WRAPPED:-}" ]]; then
+    echo -e "${YELLOW}⚙️  Permissions requises pour écrire dans secrets/. Relancement avec sudo...${NC}"
+    echo ""
+    export SUDO_WRAPPED=1
+    exec sudo -E bash "$0" "$@"
+fi
+
 error() {
     echo -e "${RED}❌ ERREUR: $1${NC}" >&2
     exit 1
@@ -41,15 +120,6 @@ step() {
 
 prompt() {
     echo -e "${YELLOW}❓ $1${NC}"
-}
-
-# Détection de l'OS
-detect_os() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "macos"
-    else
-        echo "linux"
-    fi
 }
 
 # Fonction pour générer un hash de mot de passe compatible multi-OS
