@@ -93,6 +93,7 @@ in {
     script = ''
       umask 077
       mkdir -p /run/secrets
+      chmod 700 /run/secrets
 
       # Lire les secrets
       ENCRYPTION_KEY=$(cat ${config.sops.secrets."n8n/encryption_key".path})
@@ -100,16 +101,22 @@ in {
       BASIC_PASS=$(cat ${config.sops.secrets."n8n/basic_pass".path})
       DB_PASSWORD=$(cat ${config.sops.secrets."n8n/db_password".path})
 
-      # Créer le fichier .env
+      # Créer le fichier .env avec toutes les variables nécessaires
       cat > /run/secrets/n8n.env <<EOF
 N8N_ENCRYPTION_KEY=$ENCRYPTION_KEY
 N8N_BASIC_AUTH_ACTIVE=true
 N8N_BASIC_AUTH_USER=$BASIC_USER
 N8N_BASIC_AUTH_PASSWORD=$BASIC_PASS
+DB_TYPE=postgresdb
+DB_POSTGRESDB_HOST=127.0.0.1
+DB_POSTGRESDB_PORT=5432
+DB_POSTGRESDB_DATABASE=n8n
+DB_POSTGRESDB_USER=n8n
 DB_POSTGRESDB_PASSWORD=$DB_PASSWORD
+DB_POSTGRESDB_CONNECTION_TIMEOUT=30000
 EOF
 
-      chmod 0400 /run/secrets/n8n.env
+      chmod 0600 /run/secrets/n8n.env
     '';
   };
 
@@ -119,7 +126,7 @@ EOF
     containers.n8n = {
       image = "docker.io/n8nio/n8n:1.74.1";  # Version épinglée
       autoStart = true;
-      ports = [ "127.0.0.1:5678:5678" ];  # Écoute uniquement en local
+      # Pas de ports mapping avec --network host (le conteneur utilise directement les ports de l'hôte)
 
       environment = {
         N8N_HOST = domain;
@@ -129,13 +136,6 @@ EOF
         GENERIC_TIMEZONE = "Europe/Paris";
         N8N_LOG_LEVEL = "info";
 
-        # Configuration PostgreSQL
-        DB_TYPE = "postgresdb";
-        DB_POSTGRESDB_HOST = "host.containers.internal";  # Accès au host depuis le container
-        DB_POSTGRESDB_PORT = "5432";
-        DB_POSTGRESDB_DATABASE = "n8n";
-        DB_POSTGRESDB_USER = "n8n";
-
         # Désactiver la télémétrie
         N8N_DIAGNOSTICS_ENABLED = "false";
         N8N_VERSION_NOTIFICATIONS_ENABLED = "false";
@@ -144,12 +144,12 @@ EOF
       };
 
       extraOptions = [
+        # Utiliser le réseau de l'hôte pour accéder à PostgreSQL sur 127.0.0.1
+        "--network=host"
         # Volume pour les données persistantes
         "--volume=/var/lib/n8n:/home/node/.n8n"
-        # Fichier d'environnement avec les secrets
+        # Fichier d'environnement avec les secrets (contient les variables DB_*)
         "--env-file=/run/secrets/n8n.env"
-        # Permettre l'accès au PostgreSQL du host
-        "--add-host=host.containers.internal:host-gateway"
         # Healthcheck
         "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"
         "--health-interval=30s"
