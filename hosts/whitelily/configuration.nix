@@ -22,11 +22,11 @@
   # Réseau
   networking.hostName = "whitelily";  # VM n8n automation
   networking.useDHCP = true;
+  # Configuration DNS (resolvconf désactivé, donc configuration manuelle)
+  networking.nameservers = [ "8.8.8.8" "1.1.1.1" ];
   # Firewall activé (Cloudflare Tunnel = trafic sortant uniquement)
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ ]; # Aucun port public ouvert
-  # Désactiver resolvconf (DHCP gère déjà le DNS)
-  networking.resolvconf.enable = false;
 
   # SSH
   services.openssh.enable = true;
