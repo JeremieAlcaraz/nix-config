@@ -85,6 +85,8 @@ in {
   systemd.services."n8n-envfile" = {
     description = "Render n8n env file from sops secrets";
     wantedBy = [ "multi-user.target" ];
+    after = [ "sops-nix.service" ];
+    requires = [ "sops-nix.service" ];
     before = [ "podman-n8n.service" ];
     serviceConfig = {
       Type = "oneshot";
@@ -157,6 +159,12 @@ EOF
         "--health-retries=3"
       ];
     };
+  };
+
+  # Ajouter les dépendances au service généré par oci-containers
+  systemd.services."podman-n8n" = {
+    after = [ "n8n-envfile.service" "postgresql.service" ];
+    requires = [ "n8n-envfile.service" "postgresql.service" ];
   };
 
   # Répertoires de données et de backup
