@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Script d'installation NixOS all-in-one
-# Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily]
+# Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily|demo]
 #
 # Ce script installe NixOS :
 # - Partitionnement et formatage
@@ -75,7 +75,11 @@ if [[ -z "$HOST" ]]; then
     echo -e "   🤍 n8n automation"
     echo -e "   → Stack complète : n8n + PostgreSQL + Caddy + Cloudflare Tunnel"
     echo ""
-    prompt "Choisissez un host (1-3) :"
+    echo -e "${GREEN}4)${NC} ${YELLOW}demo${NC}"
+    echo -e "   🎯 VM de démonstration minimale"
+    echo -e "   → Configuration basique pour tests et démonstration"
+    echo ""
+    prompt "Choisissez un host (1-4) :"
     read -r choice
 
     case "$choice" in
@@ -88,8 +92,11 @@ if [[ -z "$HOST" ]]; then
         3)
             HOST="whitelily"
             ;;
+        4)
+            HOST="demo"
+            ;;
         *)
-            error "Choix invalide. Utilisez 1, 2 ou 3"
+            error "Choix invalide. Utilisez 1, 2, 3 ou 4"
             ;;
     esac
 
@@ -98,8 +105,8 @@ if [[ -z "$HOST" ]]; then
 fi
 
 # Vérifier que l'host est valide
-if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" ]]; then
-    error "Host invalide. Utilisez 'magnolia', 'mimosa' ou 'whitelily'"
+if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "demo" ]]; then
+    error "Host invalide. Utilisez 'magnolia', 'mimosa', 'whitelily' ou 'demo'"
 fi
 
 # Configuration
