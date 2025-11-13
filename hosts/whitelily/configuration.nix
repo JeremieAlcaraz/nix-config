@@ -76,8 +76,8 @@
   sops = {
     defaultSopsFile = ../../secrets/whitelily.yaml;
     age = {
-      # Utiliser la clé SSH ed25519 de l'hôte (convertie automatiquement en age)
-      sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+      # Utiliser la clé age partagée (copiée depuis le Mac)
+      keyFile = "/var/lib/sops-nix/key.txt";
     };
     secrets = {
       # Hash du mot de passe de l'utilisateur jeremie
