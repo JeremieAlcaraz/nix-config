@@ -39,7 +39,7 @@ in {
       min_wal_size = "1GB";
       max_wal_size = "4GB";
       # Listen on all interfaces to allow podman containers to connect
-      listen_addresses = "0.0.0.0";
+      listen_addresses = lib.mkForce "0.0.0.0";
     };
     # Allow connections from localhost and podman containers
     authentication = lib.mkOverride 10 ''
