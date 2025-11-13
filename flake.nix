@@ -87,6 +87,14 @@
           ];
         };
 
+        # Demo - VM de démonstration minimale
+        demo = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ./hosts/demo/configuration.nix
+          ];
+        };
+
         # ISO d'installation personnalisée
         # Build avec: nix build .#nixosConfigurations.installer.config.system.build.isoImage
         installer = nixpkgs.lib.nixosSystem {
