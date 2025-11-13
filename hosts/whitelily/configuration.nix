@@ -77,6 +77,7 @@
     defaultSopsFile = ../../secrets/whitelily.yaml;
     age = {
       keyFile = "/var/lib/sops-nix/key.txt";
+      sshKeyPaths = []; # Désactiver l'utilisation des clés SSH
     };
     secrets = {
       # Hash du mot de passe de l'utilisateur jeremie
