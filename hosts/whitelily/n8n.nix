@@ -168,7 +168,8 @@ EOF
   # Répertoires de données et de backup
   systemd.tmpfiles.rules = [
     # Données n8n, Caddy et Cloudflared
-    "d /var/lib/n8n 0750 root root -"
+    # n8n tourne en tant qu'utilisateur node (UID 1000) dans le conteneur
+    "d /var/lib/n8n 0750 1000 1000 -"
     "d /run/n8n 0700 root root -"  # Pour le fichier n8n.env
     "d /var/log/caddy 0750 caddy caddy -"
     "d /var/lib/cloudflared 0750 cloudflared cloudflared -"
