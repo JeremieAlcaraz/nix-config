@@ -64,8 +64,8 @@ in {
   # S'exécute en root pour avoir accès aux secrets sops
   systemd.services."postgresql-n8n-setup" = {
     description = "Setup n8n PostgreSQL user with password from sops";
-    after = [ "postgresql.service" "sops-install-secrets.service" ];
-    requires = [ "postgresql.service" "sops-install-secrets.service" ];
+    after = [ "postgresql.service" ];
+    requires = [ "postgresql.service" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
@@ -135,8 +135,6 @@ EOF
   systemd.services."n8n-envfile" = {
     description = "Render n8n env file from sops secrets";
     wantedBy = [ "multi-user.target" ];
-    after = [ "sops-install-secrets.service" ];
-    wants = [ "sops-install-secrets.service" ];
     before = [ "podman-n8n.service" ];
     serviceConfig = {
       Type = "oneshot";
