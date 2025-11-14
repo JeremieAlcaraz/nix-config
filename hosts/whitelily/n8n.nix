@@ -61,13 +61,16 @@ in {
 
   # Initialisation du mot de passe PostgreSQL pour l'utilisateur n8n
   systemd.services.postgresql.postStart = lib.mkAfter ''
-    $PSQL -tA <<'EOF'
-      DO $$
+    # Extraire le mot de passe (gérer le cas où le secret contient "db_password: value")
+    DB_PASS=$(${pkgs.coreutils}/bin/cat /run/secrets/n8n/db_password | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')
+
+    $PSQL -tA <<EOF
+      DO \$\$
       DECLARE password TEXT;
       BEGIN
-        password := trim(both from replace(pg_read_file('/run/secrets/n8n/db_password'), E'\n', '''));
+        password := '$DB_PASS';
         EXECUTE format('ALTER USER n8n WITH PASSWORD %L', password);
-      END $$;
+      END \$\$;
     EOF
   '';
 
@@ -95,11 +98,12 @@ in {
     script = ''
       umask 077
 
-      # Lire les secrets
-      ENCRYPTION_KEY=$(cat ${config.sops.secrets."n8n/encryption_key".path})
-      BASIC_USER=$(cat ${config.sops.secrets."n8n/basic_user".path})
-      BASIC_PASS=$(cat ${config.sops.secrets."n8n/basic_pass".path})
-      DB_PASSWORD=$(cat ${config.sops.secrets."n8n/db_password".path})
+      # Lire les secrets et extraire les valeurs (même approche que cloudflared)
+      # Le secret sops peut contenir "key: value" mais on veut juste "value"
+      ENCRYPTION_KEY="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/encryption_key".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')"
+      BASIC_USER="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/basic_user".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')"
+      BASIC_PASS="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/basic_pass".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')"
+      DB_PASSWORD="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/db_password".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')"
 
       # Créer le fichier .env avec toutes les variables nécessaires
       # On le met dans /run/n8n/ pour éviter que sops-nix le supprime
