@@ -8,7 +8,8 @@ let
   cloudflaredTunnelScript = pkgs.writeShellScript "cloudflared-tunnel" ''
     set -euo pipefail
 
-    TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."cloudflared/token".path})"
+    # Lire le token et enlever les espaces/newlines au début et à la fin
+    TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."cloudflared/token".path} | ${pkgs.findutils}/bin/xargs)"
 
     exec ${pkgs.cloudflared}/bin/cloudflared tunnel run --token "$TOKEN"
   '';
@@ -140,6 +141,12 @@ EOF
         N8N_VERSION_NOTIFICATIONS_ENABLED = "false";
         N8N_TEMPLATES_ENABLED = "true";
         N8N_PUBLIC_API_DISABLED = "false";
+
+        # Configuration des permissions et sécurité
+        N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS = "true";
+        N8N_RUNNERS_ENABLED = "true";
+        N8N_BLOCK_ENV_ACCESS_IN_NODE = "false";
+        N8N_GIT_NODE_DISABLE_BARE_REPOS = "true";
       };
 
       extraOptions = [
