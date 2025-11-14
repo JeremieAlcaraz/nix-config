@@ -90,6 +90,8 @@ in {
   systemd.services."n8n-envfile" = {
     description = "Render n8n env file from sops secrets";
     wantedBy = [ "multi-user.target" ];
+    after = [ "sops-install-secrets.service" ];
+    wants = [ "sops-install-secrets.service" ];
     before = [ "podman-n8n.service" ];
     serviceConfig = {
       Type = "oneshot";
