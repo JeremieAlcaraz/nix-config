@@ -150,12 +150,8 @@ EOF
         # Fichier d'environnement avec les secrets (contient les variables DB_*)
         # Déplacé de /run/secrets vers /run/n8n pour éviter que sops-nix le supprime
         "--env-file=/run/n8n/n8n.env"
-        # Healthcheck avec période de grâce au démarrage
-        "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"
-        "--health-interval=30s"
-        "--health-timeout=10s"
-        "--health-retries=3"
-        "--health-start-period=60s"  # 60s de grâce au démarrage avant que les échecs comptent
+        # Note: Pas de healthcheck Podman, on utilise le timer systemd dédié (n8n-healthcheck.timer)
+        # qui vérifie toutes les 5 minutes sans polluer les logs de nixos-rebuild
       ];
     };
   };
