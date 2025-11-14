@@ -1,0 +1,156 @@
+name: Update n8n next version
+
+on:
+  schedule:
+    # Tous les jours à 2h du matin (UTC)
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Permet déclenchement manuel
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get current n8n image
+        id: current
+        run: |
+          # Extraire l'image actuelle depuis n8n.nix
+          CURRENT_IMAGE=$(grep -oP 'image = "docker.io/n8nio/n8n:\K[^"]+' hosts/whitelily/n8n.nix)
+          echo "image=$CURRENT_IMAGE" >> $GITHUB_OUTPUT
+          echo "Current image: docker.io/n8nio/n8n:$CURRENT_IMAGE"
+
+          # Si l'image contient déjà un digest SHA256, l'extraire
+          if [[ "$CURRENT_IMAGE" == *"@sha256:"* ]]; then
+            CURRENT_DIGEST=$(echo "$CURRENT_IMAGE" | grep -oP '@sha256:\K[a-f0-9]+')
+          else
+            CURRENT_DIGEST="none"
+          fi
+          echo "digest=$CURRENT_DIGEST" >> $GITHUB_OUTPUT
+          echo "Current digest: $CURRENT_DIGEST"
+
+      - name: Get latest n8n:next digest from Docker Hub
+        id: latest
+        run: |
+          echo "Fetching latest n8n:next digest from Docker Hub..."
+
+          # Obtenir un token d'authentification Docker Hub
+          TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" | jq -r .token)
+
+          # Récupérer le manifest de l'image next
+          MANIFEST=$(curl -s -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+            "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next")
+
+          # Extraire le digest du manifest
+          LATEST_DIGEST=$(echo "$MANIFEST" | jq -r '.config.digest' | cut -d: -f2)
+
+          echo "digest=$LATEST_DIGEST" >> $GITHUB_OUTPUT
+          echo "Latest n8n:next digest: sha256:$LATEST_DIGEST"
+
+          # Afficher également quelques infos sur le manifest
+          echo "Manifest size: $(echo "$MANIFEST" | jq -r '.config.size') bytes"
+
+      - name: Check if update needed
+        id: check
+        run: |
+          CURRENT="${{ steps.current.outputs.digest }}"
+          LATEST="${{ steps.latest.outputs.digest }}"
+
+          echo "Comparing digests:"
+          echo "  Current: $CURRENT"
+          echo "  Latest:  $LATEST"
+
+          if [ "$CURRENT" != "$LATEST" ]; then
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+            echo "✅ New version detected! Update needed."
+          else
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Already up to date, no update needed."
+          fi
+
+      - name: Update n8n.nix with new digest
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          LATEST_DIGEST="${{ steps.latest.outputs.digest }}"
+
+          echo "Updating hosts/whitelily/n8n.nix with new digest..."
+
+          # Mise à jour du fichier avec le nouveau digest
+          # On remplace l'ancienne ligne image par la nouvelle avec le digest
+          sed -i 's|image = "docker.io/n8nio/n8n:.*";.*|image = "docker.io/n8nio/n8n:next@sha256:'"$LATEST_DIGEST"'";  # Tag next pour les dernières betas|' hosts/whitelily/n8n.nix
+
+          echo "Updated content:"
+          grep "image =" hosts/whitelily/n8n.nix
+
+      - name: Create Pull Request
+        if: steps.check.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.N8N_UPDATE_TOKEN }}
+          commit-message: "⬆️ Update n8n to next@sha256:${{ steps.latest.outputs.digest }}"
+          branch: update/n8n-next-${{ steps.latest.outputs.digest }}
+          delete-branch: true
+          title: "⬆️ Update n8n:next to latest version"
+          body: |
+            ## 🚀 Automated n8n Update
+
+            A new version of `n8n:next` has been detected on Docker Hub.
+
+            ### 📊 Changes
+
+            | Item | Value |
+            |------|-------|
+            | **Previous digest** | `${{ steps.current.outputs.digest }}` |
+            | **New digest** | `${{ steps.latest.outputs.digest }}` |
+            | **Tag** | `next` (beta releases) |
+            | **Image** | `docker.io/n8nio/n8n:next` |
+
+            ### 🔍 What's in this update?
+
+            This PR updates the n8n container to the latest `next` tag version. The `next` tag includes the latest beta features and improvements from n8n.
+
+            ### ✅ Deployment Instructions
+
+            After merging this PR, deploy on whitelily:
+
+            ```bash
+            # SSH into whitelily
+            ssh jeremie@whitelily
+
+            # Pull the latest config
+            cd /root/nix-config
+            sudo git pull
+
+            # Rebuild and switch
+            sudo nixos-rebuild switch --flake .#whitelily
+
+            # Verify n8n is running
+            sudo systemctl status podman-n8n.service
+            ```
+
+            ### 📚 Release Notes
+
+            Check n8n release notes and changelog:
+            - 🔗 [n8n Releases](https://github.com/n8n-io/n8n/releases)
+            - 🔗 [n8n Changelog](https://docs.n8n.io/changelog/)
+
+            ### 🔐 Security Note
+
+            The digest (`sha256:...`) ensures image integrity and immutability. The exact same image will be deployed.
+
+            ---
+
+            🤖 *This PR was automatically created by the [update-n8n-next workflow](.github/workflows/update-n8n-next.yml)*
+          labels: |
+            dependencies
+            automated
+            n8n
+            enhancement
+          assignees: JeremieAlcaraz

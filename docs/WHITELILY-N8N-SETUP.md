@@ -599,16 +599,185 @@ sudo journalctl -u postgresql -n 50
 
 ## Maintenance et opérations
 
-### 🔄 Mise à jour de n8n
+### 🤖 Mises à jour automatiques de n8n (tag `next`)
 
-Pour mettre à jour n8n vers une nouvelle version :
+**whitelily utilise maintenant le tag `next` de n8n** pour bénéficier des dernières fonctionnalités beta. Un workflow GitHub Actions vérifie quotidiennement les nouvelles versions et crée automatiquement des Pull Requests.
+
+#### Fonctionnement
+
+1. **Workflow quotidien** : Tous les jours à 2h du matin (UTC), le workflow `.github/workflows/update-n8n-next.yml` s'exécute
+2. **Vérification Docker Hub** : Le workflow interroge l'API Docker Hub pour obtenir le digest SHA256 du tag `next`
+3. **Comparaison** : Compare avec le digest actuellement déployé dans `n8n.nix`
+4. **Création de PR** : Si une nouvelle version est détectée, une Pull Request est automatiquement créée
+5. **Notification** : Vous recevez une notification GitHub de la nouvelle PR
+6. **Review & Merge** : Vous reviewez les changements et mergez la PR
+7. **Déploiement** : Vous déployez manuellement sur whitelily
+
+#### Prérequis (Configuration initiale)
+
+Cette configuration est déjà faite si vous avez utilisé le script `manage-secrets.sh` pour générer les secrets. Sinon :
+
+**1. Créer un token GitHub** (une seule fois)
+
+Documentation complète : [docs/GITHUB-TOKEN-SETUP.md](GITHUB-TOKEN-SETUP.md)
+
+Résumé rapide :
+- Aller sur https://github.com/settings/tokens/new
+- Note : `n8n auto-update workflow`
+- Scope : ✅ `repo` (Full control)
+- Générer le token (commence par `ghp_...`)
+
+**2. Ajouter le token dans sops**
+
+```bash
+# Sur ton Mac
+cd ~/path/to/nix-config
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+sops secrets/whitelily.yaml
+
+# Ajouter ou vérifier la section github:
+# github:
+#   token: "ghp_votre_token_ici"
+```
+
+**3. Ajouter le token dans GitHub Secrets**
+
+- Aller dans Settings → Secrets and variables → Actions
+- New repository secret
+  - Name : `N8N_UPDATE_TOKEN`
+  - Value : [coller le token GitHub]
+- Add secret
+
+#### Utilisation quotidienne
+
+**Automatique** :
+- Le workflow tourne tous les jours
+- Vous recevez une notification si une nouvelle version est disponible
+- Rien à faire de votre côté !
+
+**Manuel** (test ou déclenchement immédiat) :
+1. Aller dans Actions → "Update n8n next version"
+2. Cliquer sur "Run workflow"
+3. Sélectionner la branche `main`
+4. Run workflow
+
+#### Après la création d'une PR
+
+Lorsqu'une nouvelle version est détectée, vous recevez une PR automatique :
+
+**1. Review de la PR** :
+```bash
+# La PR contient :
+# - Le digest SHA256 de l'ancienne version
+# - Le digest SHA256 de la nouvelle version
+# - Liens vers les release notes n8n
+# - Instructions de déploiement
+```
+
+**2. Merger la PR** :
+- Vérifier les release notes : https://github.com/n8n-io/n8n/releases
+- Vérifier qu'il n'y a pas de breaking changes
+- Merger la PR sur GitHub
+
+**3. Déployer sur whitelily** :
+```bash
+# SSH vers whitelily
+ssh jeremie@whitelily
+
+# Pull de la configuration
+cd /root/nix-config
+sudo git pull
+
+# Rebuild (télécharge et redémarre le nouveau container)
+sudo nixos-rebuild switch --flake .#whitelily
+
+# Vérifier que n8n fonctionne
+sudo podman ps
+sudo podman logs n8n --tail 20
+curl http://127.0.0.1:5678/healthz
+```
+
+**4. Vérifier l'interface web** :
+- Aller sur https://votre-domaine.com
+- Vérifier que n8n fonctionne correctement
+- Vérifier que vos workflows existants fonctionnent toujours
+
+#### Avantages du tag `next`
+
+✅ **Fonctionnalités beta** : Accès anticipé aux nouvelles fonctionnalités
+✅ **Mises à jour fréquentes** : Corrections de bugs plus rapides
+✅ **Digest SHA256** : Garantie d'intégrité de l'image
+✅ **Pull Requests** : Traçabilité complète des mises à jour
+✅ **Contrôle total** : Vous décidez quand déployer
+
+⚠️ **Considérations** :
+- Le tag `next` peut contenir des fonctionnalités instables
+- Testez vos workflows critiques après chaque mise à jour
+- Consultez toujours les release notes avant de merger
+
+#### Dépannage du workflow
+
+**Le workflow ne crée pas de PR** :
+```bash
+# Vérifier les logs du workflow
+# GitHub → Actions → Update n8n next version → Dernière exécution
+
+# Causes possibles :
+# 1. Aucune nouvelle version disponible (normal)
+# 2. Token GitHub expiré ou invalide
+# 3. Permissions insuffisantes
+
+# Vérifier que le secret existe
+# Settings → Secrets and variables → Actions → N8N_UPDATE_TOKEN
+```
+
+**Erreur 403 ou permissions** :
+- Vérifier que le token a le scope `repo` complet
+- Re-créer le token si nécessaire (voir docs/GITHUB-TOKEN-SETUP.md)
+- Mettre à jour le secret dans GitHub
+
+**Le workflow est en erreur** :
+- Consulter les logs dans Actions
+- Vérifier la syntaxe du workflow YAML
+- Tester manuellement avec "Run workflow"
+
+#### Revenir à une version stable
+
+Si vous préférez une version stable plutôt que `next` :
+
+```bash
+# 1. Sur ton Mac, éditer n8n.nix
+nano hosts/whitelily/n8n.nix
+
+# 2. Ligne 126, remplacer par une version stable :
+# image = "docker.io/n8nio/n8n:1.75.0";  # Version stable
+
+# 3. Désactiver le workflow (optionnel)
+# Renommer .github/workflows/update-n8n-next.yml en .disabled
+
+# 4. Committer et déployer
+git add hosts/whitelily/n8n.nix
+git commit -m "⬇️ Switch n8n to stable version 1.75.0"
+git push
+
+# 5. Sur whitelily
+cd /root/nix-config
+sudo git pull
+sudo nixos-rebuild switch --flake .#whitelily
+```
+
+### 🔄 Mise à jour manuelle de n8n
+
+Si vous désactivez l'automatisation, vous pouvez toujours mettre à jour manuellement :
 
 ```bash
 # 1. Sur ton Mac, éditer le fichier n8n.nix
 nano hosts/whitelily/n8n.nix
 
-# 2. Ligne 88, changer la version :
-# image = "docker.io/n8nio/n8n:1.75.0";  # Nouvelle version
+# 2. Ligne 126, changer la version :
+# image = "docker.io/n8nio/n8n:next@sha256:nouvelle-version";
+# ou
+# image = "docker.io/n8nio/n8n:1.75.0";  # Version stable
 
 # 3. Committer et pousser
 git add hosts/whitelily/n8n.nix

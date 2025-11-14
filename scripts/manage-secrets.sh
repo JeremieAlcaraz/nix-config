@@ -354,6 +354,54 @@ generate_whitelily_secrets() {
         error "Le token Cloudflare ne peut pas être vide"
     fi
 
+    # Token GitHub pour auto-update
+    echo ""
+    info "Configuration GitHub (pour mises à jour automatiques de n8n)"
+    echo "Le token GitHub permet au workflow d'automatiser les mises à jour de n8n:next."
+    echo ""
+    echo "📚 Documentation complète : docs/GITHUB-TOKEN-SETUP.md"
+    echo ""
+    echo "Résumé rapide :"
+    echo "1. Aller sur https://github.com/settings/tokens/new"
+    echo "2. Note: 'n8n auto-update workflow'"
+    echo "3. Expiration: 'No expiration' ou 1 an"
+    echo "4. Scope: ✅ repo (cocher TOUT le scope 'repo')"
+    echo "5. Generate token"
+    echo "6. Copier le token (commence par 'ghp_...')"
+    echo ""
+    prompt "Voulez-vous configurer l'auto-update GitHub ? (oui/non, défaut: non):"
+    read -r setup_github
+    setup_github="${setup_github:-non}"
+
+    if [[ "$setup_github" == "oui" ]]; then
+        prompt "Collez le token GitHub (ghp_...) :"
+        read -r GITHUB_TOKEN
+
+        if [[ -z "$GITHUB_TOKEN" ]]; then
+            warning "Token GitHub non fourni - fonctionnalité d'auto-update désactivée"
+            GITHUB_TOKEN="PLACEHOLDER_GITHUB_TOKEN_DISABLED"
+        elif [[ ! "$GITHUB_TOKEN" =~ ^ghp_ ]]; then
+            warning "Le token ne commence pas par 'ghp_' - vérifiez qu'il s'agit d'un Personal Access Token"
+            prompt "Voulez-vous continuer quand même ? (oui/non):"
+            read -r continue_anyway
+            if [[ "$continue_anyway" != "oui" ]]; then
+                GITHUB_TOKEN="PLACEHOLDER_GITHUB_TOKEN_DISABLED"
+            fi
+        fi
+
+        echo ""
+        warning "⚠️  N'oubliez pas d'ajouter ce token dans GitHub Secrets !"
+        echo "Allez dans Settings → Secrets and variables → Actions → New repository secret"
+        echo "  - Name: N8N_UPDATE_TOKEN"
+        echo "  - Value: ${GITHUB_TOKEN}"
+        echo ""
+        read -p "Appuyez sur Entrée pour continuer..."
+    else
+        warning "Auto-update GitHub non configuré"
+        echo "Vous pourrez l'ajouter plus tard avec: sops secrets/whitelily.yaml"
+        GITHUB_TOKEN="PLACEHOLDER_GITHUB_TOKEN_DISABLED"
+    fi
+
     cat > "$secrets_file" <<EOF
 # Secrets pour whitelily (VM n8n automation)
 # Généré par manage-secrets.sh le $(date '+%Y-%m-%d %H:%M:%S')
@@ -368,6 +416,9 @@ n8n:
 
 cloudflared:
   token: "${CLOUDFLARED_TOKEN}"
+
+github:
+  token: "${GITHUB_TOKEN}"
 EOF
 
     # Sauvegarder le domaine pour référence
