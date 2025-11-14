@@ -539,8 +539,8 @@ generate_whitelily_secrets() {
         info "Réutilisation du mot de passe DB existant"
     fi
 
-    # Domaine (toujours demander ou réutiliser)
-    if [[ "$update_mode" == "full" ]]; then
+    # Domaine (demander si full mode ou si on change le domaine)
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "n8n_domain" ]]; then
         echo ""
         prompt "Domaine complet pour n8n (ex: n8n.votredomaine.com):"
         read -r DOMAIN
@@ -798,8 +798,9 @@ main() {
                     echo -e "${GREEN}5)${NC} Mot de passe base de données PostgreSQL"
                     echo -e "${GREEN}6)${NC} Token Cloudflare Tunnel"
                     echo -e "${GREEN}7)${NC} Token GitHub (auto-update)"
+                    echo -e "${GREEN}8)${NC} Nom de domaine n8n"
                     echo ""
-                    prompt "Votre choix (1-7) :"
+                    prompt "Votre choix (1-8) :"
                     read -r secret_choice
 
                     case "$secret_choice" in
@@ -820,6 +821,7 @@ main() {
                         5) SECRET_TO_UPDATE="db_password" ;;
                         6) SECRET_TO_UPDATE="cloudflare_token" ;;
                         7) SECRET_TO_UPDATE="github_token" ;;
+                        8) SECRET_TO_UPDATE="n8n_domain" ;;
                         *) error "Choix invalide" ;;
                     esac
                 elif [[ "$HOST" == "mimosa" ]]; then
