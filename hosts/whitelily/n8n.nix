@@ -2,7 +2,7 @@
 
 let
   # Configuration du domaine n8n
-  domain = "n8nv2.jeremiealcaraz.com";  # ← À adapter selon ton domaine
+  domain = "n8n.jeremiealcaraz.com";  # ← À adapter selon ton domaine
 
   # Script pour lancer cloudflared avec le token depuis sops
   cloudflaredTunnelScript = pkgs.writeShellScript "cloudflared-tunnel" ''
@@ -107,17 +107,18 @@ in {
 
       # Créer le fichier .env avec toutes les variables nécessaires
       # On le met dans /run/n8n/ pour éviter que sops-nix le supprime
+      # Les valeurs sont entre guillemets pour gérer les caractères spéciaux
       cat > /run/n8n/n8n.env <<EOF
-N8N_ENCRYPTION_KEY=$ENCRYPTION_KEY
+N8N_ENCRYPTION_KEY="$ENCRYPTION_KEY"
 N8N_BASIC_AUTH_ACTIVE=true
-N8N_BASIC_AUTH_USER=$BASIC_USER
-N8N_BASIC_AUTH_PASSWORD=$BASIC_PASS
+N8N_BASIC_AUTH_USER="$BASIC_USER"
+N8N_BASIC_AUTH_PASSWORD="$BASIC_PASS"
 DB_TYPE=postgresdb
 DB_POSTGRESDB_HOST=127.0.0.1
 DB_POSTGRESDB_PORT=5432
 DB_POSTGRESDB_DATABASE=n8n
 DB_POSTGRESDB_USER=n8n
-DB_POSTGRESDB_PASSWORD=$DB_PASSWORD
+DB_POSTGRESDB_PASSWORD="$DB_PASSWORD"
 DB_POSTGRESDB_CONNECTION_TIMEOUT=30000
 EOF
 

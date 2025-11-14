@@ -519,7 +519,8 @@ generate_whitelily_secrets() {
 
         if [[ "$create_new_db_password" == "oui" ]]; then
             info "Génération du mot de passe DB PostgreSQL..."
-            DB_PASSWORD=$(openssl rand -base64 32)
+            # Utiliser hex au lieu de base64 pour éviter les caractères spéciaux (+, /, =)
+            DB_PASSWORD=$(openssl rand -hex 32)
             echo "Nouveau mot de passe DB: ${DB_PASSWORD}"
         else
             echo ""
