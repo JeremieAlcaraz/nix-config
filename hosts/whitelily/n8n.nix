@@ -8,8 +8,9 @@ let
   cloudflaredTunnelScript = pkgs.writeShellScript "cloudflared-tunnel" ''
     set -euo pipefail
 
-    # Lire le token et enlever les espaces/newlines au début et à la fin
-    TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."cloudflared/token".path} | ${pkgs.findutils}/bin/xargs)"
+    # Lire le token, nettoyer les espaces, et extraire la valeur après "token:"
+    # Le secret sops contient "token: eyJxxxx" mais cloudflared attend juste "eyJxxxx"
+    TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."cloudflared/token".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{print $2}')"
 
     exec ${pkgs.cloudflared}/bin/cloudflared tunnel run --token "$TOKEN"
   '';
