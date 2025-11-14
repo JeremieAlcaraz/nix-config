@@ -248,15 +248,39 @@ check_age_key() {
     export SOPS_AGE_KEY_FILE="$age_key_file"
 }
 
+# Parser tous les secrets existants pour magnolia
+parse_existing_magnolia_secrets() {
+    local secrets_file="$1"
+
+    # Déchiffrer le fichier
+    local decrypted=$(sops -d "$secrets_file")
+
+    # Extraire chaque secret
+    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //')
+}
+
 # Générer les secrets pour magnolia
 generate_magnolia_secrets() {
     local secrets_file="$1"
+    local update_mode="${2:-full}"
+    local secret_to_update="${3:-}"
 
     info "Configuration pour magnolia (infrastructure Proxmox)"
     echo ""
 
-    prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
-    JEREMIE_HASH=$(generate_password_hash)
+    # Si mode selective, charger les secrets existants
+    if [[ "$update_mode" == "selective" ]]; then
+        parse_existing_magnolia_secrets "secrets/magnolia.yaml"
+    fi
+
+    # Mot de passe jeremie
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "jeremie_password" ]]; then
+        prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
+        JEREMIE_HASH=$(generate_password_hash)
+    else
+        JEREMIE_HASH="$EXISTING_JEREMIE_HASH"
+        info "Réutilisation du mot de passe jeremie existant"
+    fi
 
     cat > "$secrets_file" <<EOF
 # Secrets pour magnolia (infrastructure Proxmox)
@@ -266,30 +290,59 @@ jeremie-password-hash: ${JEREMIE_HASH}
 EOF
 }
 
+# Parser tous les secrets existants pour mimosa
+parse_existing_mimosa_secrets() {
+    local secrets_file="$1"
+
+    # Déchiffrer le fichier
+    local decrypted=$(sops -d "$secrets_file")
+
+    # Extraire chaque secret
+    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //')
+    EXISTING_CF_TOKEN=$(echo "$decrypted" | grep "cloudflare-tunnel-token:" | sed 's/.*cloudflare-tunnel-token: "//' | sed 's/".*//')
+}
+
 # Générer les secrets pour mimosa
 generate_mimosa_secrets() {
     local secrets_file="$1"
+    local update_mode="${2:-full}"
+    local secret_to_update="${3:-}"
 
     info "Configuration pour mimosa (serveur web)"
     echo ""
 
+    # Si mode selective, charger les secrets existants
+    if [[ "$update_mode" == "selective" ]]; then
+        parse_existing_mimosa_secrets "secrets/mimosa.yaml"
+    fi
+
     # Mot de passe jeremie
-    prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
-    JEREMIE_HASH=$(generate_password_hash)
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "jeremie_password" ]]; then
+        prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
+        JEREMIE_HASH=$(generate_password_hash)
+    else
+        JEREMIE_HASH="$EXISTING_JEREMIE_HASH"
+        info "Réutilisation du mot de passe jeremie existant"
+    fi
 
     # Token Cloudflare
-    echo ""
-    info "Configuration Cloudflare Tunnel"
-    echo "1. Allez sur https://one.dash.cloudflare.com/"
-    echo "2. Zero Trust → Access → Tunnels"
-    echo "3. Créez un tunnel (ou utilisez un existant)"
-    echo "4. Copiez le TOKEN (la longue chaîne après --token)"
-    echo ""
-    prompt "Collez le token Cloudflare Tunnel :"
-    read -r CF_TOKEN
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "cloudflare_token" ]]; then
+        echo ""
+        info "Configuration Cloudflare Tunnel"
+        echo "1. Allez sur https://one.dash.cloudflare.com/"
+        echo "2. Zero Trust → Access → Tunnels"
+        echo "3. Créez un tunnel (ou utilisez un existant)"
+        echo "4. Copiez le TOKEN (la longue chaîne après --token)"
+        echo ""
+        prompt "Collez le token Cloudflare Tunnel :"
+        read -r CF_TOKEN
 
-    if [[ -z "$CF_TOKEN" ]]; then
-        error "Le token Cloudflare ne peut pas être vide"
+        if [[ -z "$CF_TOKEN" ]]; then
+            error "Le token Cloudflare ne peut pas être vide"
+        fi
+    else
+        CF_TOKEN="$EXISTING_CF_TOKEN"
+        info "Réutilisation du token Cloudflare existant"
     fi
 
     cat > "$secrets_file" <<EOF
@@ -302,104 +355,202 @@ cloudflare-tunnel-token: "${CF_TOKEN}"
 EOF
 }
 
+# Déchiffrer et extraire un secret existant
+extract_existing_secret() {
+    local secrets_file="$1"
+    local key_path="$2"
+
+    # Déchiffrer et extraire la valeur
+    sops -d "$secrets_file" | grep -A100 "$key_path" | head -1 | sed 's/.*: //' | sed 's/"//g'
+}
+
+# Parser tous les secrets existants pour whitelily
+parse_existing_whitelily_secrets() {
+    local secrets_file="$1"
+
+    # Déchiffrer le fichier
+    local decrypted=$(sops -d "$secrets_file")
+
+    # Extraire chaque secret
+    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //')
+    EXISTING_N8N_ENCRYPTION=$(echo "$decrypted" | grep "encryption_key:" | sed 's/.*encryption_key: "//' | sed 's/".*//')
+    EXISTING_N8N_USER=$(echo "$decrypted" | grep "basic_user:" | sed 's/.*basic_user: "//' | sed 's/".*//')
+    EXISTING_N8N_PASS=$(echo "$decrypted" | grep "basic_pass:" | sed 's/.*basic_pass: "//' | sed 's/".*//')
+    EXISTING_DB_PASS=$(echo "$decrypted" | grep "db_password:" | sed 's/.*db_password: "//' | sed 's/".*//')
+    EXISTING_CF_TOKEN=$(echo "$decrypted" | grep "cloudflared:" -A1 | grep "token:" | sed 's/.*token: "//' | sed 's/".*//')
+    EXISTING_GH_TOKEN=$(echo "$decrypted" | grep "github:" -A1 | grep "token:" | sed 's/.*token: "//' | sed 's/".*//')
+}
+
 # Générer les secrets pour whitelily
 generate_whitelily_secrets() {
     local secrets_file="$1"
+    local update_mode="${2:-full}"  # full ou selective
+    local secret_to_update="${3:-}"
 
     info "Configuration pour whitelily (n8n automation)"
     echo ""
 
+    # Si mode selective, charger les secrets existants
+    if [[ "$update_mode" == "selective" ]]; then
+        parse_existing_whitelily_secrets "secrets/whitelily.yaml"
+    fi
+
     # Mot de passe jeremie
-    prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
-    JEREMIE_HASH=$(generate_password_hash)
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "jeremie_password" ]]; then
+        prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
+        JEREMIE_HASH=$(generate_password_hash)
+    else
+        JEREMIE_HASH="$EXISTING_JEREMIE_HASH"
+        info "Réutilisation du mot de passe jeremie existant"
+    fi
 
     # Génération automatique des secrets n8n
     echo ""
-    info "Génération des secrets n8n..."
-    N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
-    N8N_BASIC_PASS=$(openssl rand -base64 24)
-    DB_PASSWORD=$(openssl rand -base64 32)
 
-    warning "⚠️  IMPORTANT : Clé de chiffrement n8n"
-    echo "Cette clé chiffre TOUTES vos credentials n8n."
-    echo -e "${YELLOW}N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}${NC}"
-    echo "Sauvegardez-la dans un gestionnaire de mots de passe !"
-    echo ""
-    read -p "Appuyez sur Entrée une fois sauvegardée..."
+    # N8N Encryption Key
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "n8n_encryption" ]]; then
+        info "Génération de la clé de chiffrement n8n..."
+        N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
+        warning "⚠️  IMPORTANT : Clé de chiffrement n8n"
+        echo "Cette clé chiffre TOUTES vos credentials n8n."
+        echo -e "${YELLOW}N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}${NC}"
+        echo "Sauvegardez-la dans un gestionnaire de mots de passe !"
+        echo ""
+        read -p "Appuyez sur Entrée une fois sauvegardée..."
+    else
+        N8N_ENCRYPTION_KEY="$EXISTING_N8N_ENCRYPTION"
+        info "Réutilisation de la clé de chiffrement n8n existante"
+    fi
 
-    echo ""
-    prompt "Nom d'utilisateur pour n8n (défaut: admin):"
-    read -r N8N_USER
-    N8N_USER="${N8N_USER:-admin}"
+    # N8N User
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "n8n_user" ]]; then
+        echo ""
+        prompt "Nom d'utilisateur pour n8n (défaut: admin):"
+        read -r N8N_USER
+        N8N_USER="${N8N_USER:-admin}"
+    else
+        N8N_USER="$EXISTING_N8N_USER"
+        info "Réutilisation du nom d'utilisateur n8n existant: $N8N_USER"
+    fi
 
-    echo ""
-    prompt "Domaine complet pour n8n (ex: n8n.votredomaine.com):"
-    read -r DOMAIN
-    [[ -z "$DOMAIN" ]] && error "Le domaine ne peut pas être vide"
+    # N8N Password
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "n8n_password" ]]; then
+        echo ""
+        info "Génération du mot de passe n8n..."
+        N8N_BASIC_PASS=$(openssl rand -base64 24)
+        echo "Nouveau mot de passe n8n: ${N8N_BASIC_PASS}"
+    else
+        N8N_BASIC_PASS="$EXISTING_N8N_PASS"
+        info "Réutilisation du mot de passe n8n existant"
+    fi
 
-    echo ""
-    info "Configuration Cloudflare Tunnel"
-    echo "1. Allez sur https://one.dash.cloudflare.com/"
-    echo "2. Zero Trust → Access → Tunnels"
-    echo "3. Créez un tunnel (ou utilisez un existant)"
-    echo "4. Configurez la route publique :"
-    echo "   - Public Hostname: ${DOMAIN}"
-    echo "   - Service: http://localhost:80"
-    echo "5. Copiez le TOKEN du tunnel (la longue chaîne qui commence par 'eyJ...')"
-    echo ""
-    prompt "Collez le token Cloudflare Tunnel :"
-    read -r CLOUDFLARED_TOKEN
+    # DB Password
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "db_password" ]]; then
+        echo ""
+        info "Génération du mot de passe DB PostgreSQL..."
+        DB_PASSWORD=$(openssl rand -base64 32)
+        echo "Nouveau mot de passe DB: ${DB_PASSWORD}"
+    else
+        DB_PASSWORD="$EXISTING_DB_PASS"
+        info "Réutilisation du mot de passe DB existant"
+    fi
 
-    if [[ -z "$CLOUDFLARED_TOKEN" ]]; then
-        error "Le token Cloudflare ne peut pas être vide"
+    # Domaine (toujours demander ou réutiliser)
+    if [[ "$update_mode" == "full" ]]; then
+        echo ""
+        prompt "Domaine complet pour n8n (ex: n8n.votredomaine.com):"
+        read -r DOMAIN
+        [[ -z "$DOMAIN" ]] && error "Le domaine ne peut pas être vide"
+    else
+        # Tenter de récupérer le domaine depuis n8n.nix
+        if [[ -f "hosts/whitelily/n8n.nix" ]]; then
+            DOMAIN=$(grep 'domain = ' hosts/whitelily/n8n.nix | head -1 | sed 's/.*domain = "//' | sed 's/".*//')
+            info "Réutilisation du domaine existant: $DOMAIN"
+        else
+            prompt "Domaine complet pour n8n (ex: n8n.votredomaine.com):"
+            read -r DOMAIN
+            [[ -z "$DOMAIN" ]] && error "Le domaine ne peut pas être vide"
+        fi
+    fi
+
+    # Cloudflare Token
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "cloudflare_token" ]]; then
+        echo ""
+        info "Configuration Cloudflare Tunnel"
+        echo "1. Allez sur https://one.dash.cloudflare.com/"
+        echo "2. Zero Trust → Access → Tunnels"
+        echo "3. Créez un tunnel (ou utilisez un existant)"
+        echo "4. Configurez la route publique :"
+        echo "   - Public Hostname: ${DOMAIN}"
+        echo "   - Service: http://localhost:80"
+        echo "5. Copiez le TOKEN du tunnel (la longue chaîne qui commence par 'eyJ...')"
+        echo ""
+        prompt "Collez le token Cloudflare Tunnel :"
+        read -r CLOUDFLARED_TOKEN
+
+        if [[ -z "$CLOUDFLARED_TOKEN" ]]; then
+            error "Le token Cloudflare ne peut pas être vide"
+        fi
+    else
+        CLOUDFLARED_TOKEN="$EXISTING_CF_TOKEN"
+        info "Réutilisation du token Cloudflare existant"
     fi
 
     # Token GitHub pour auto-update
-    echo ""
-    info "Configuration GitHub (pour mises à jour automatiques de n8n)"
-    echo "Le token GitHub permet au workflow d'automatiser les mises à jour de n8n:next."
-    echo ""
-    echo "📚 Documentation complète : docs/GITHUB-TOKEN-SETUP.md"
-    echo ""
-    echo "Résumé rapide :"
-    echo "1. Aller sur https://github.com/settings/tokens/new"
-    echo "2. Note: 'n8n auto-update workflow'"
-    echo "3. Expiration: 'No expiration' ou 1 an"
-    echo "4. Scope: ✅ repo (cocher TOUT le scope 'repo')"
-    echo "5. Generate token"
-    echo "6. Copier le token (commence par 'ghp_...')"
-    echo ""
-    prompt "Voulez-vous configurer l'auto-update GitHub ? (oui/non, défaut: non):"
-    read -r setup_github
-    setup_github="${setup_github:-non}"
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "github_token" ]]; then
+        echo ""
+        info "Configuration GitHub (pour mises à jour automatiques de n8n)"
+        echo "Le token GitHub permet au workflow d'automatiser les mises à jour de n8n:next."
+        echo ""
+        echo "📚 Documentation complète : docs/GITHUB-TOKEN-SETUP.md"
+        echo ""
+        echo "Résumé rapide :"
+        echo "1. Aller sur https://github.com/settings/tokens/new"
+        echo "2. Note: 'n8n auto-update workflow'"
+        echo "3. Expiration: 'No expiration' ou 1 an"
+        echo "4. Scope: ✅ repo (cocher TOUT le scope 'repo')"
+        echo "5. Generate token"
+        echo "6. Copier le token (commence par 'ghp_...')"
+        echo ""
+        prompt "Voulez-vous configurer l'auto-update GitHub ? (oui/non, défaut: non):"
+        read -r setup_github
+        setup_github="${setup_github:-non}"
 
-    if [[ "$setup_github" == "oui" ]]; then
-        prompt "Collez le token GitHub (ghp_...) :"
-        read -r GITHUB_TOKEN
+        if [[ "$setup_github" == "oui" ]]; then
+            prompt "Collez le token GitHub (ghp_...) :"
+            read -r GITHUB_TOKEN
 
-        if [[ -z "$GITHUB_TOKEN" ]]; then
-            warning "Token GitHub non fourni - fonctionnalité d'auto-update désactivée"
-            GITHUB_TOKEN="PLACEHOLDER_GITHUB_TOKEN_DISABLED"
-        elif [[ ! "$GITHUB_TOKEN" =~ ^ghp_ ]]; then
-            warning "Le token ne commence pas par 'ghp_' - vérifiez qu'il s'agit d'un Personal Access Token"
-            prompt "Voulez-vous continuer quand même ? (oui/non):"
-            read -r continue_anyway
-            if [[ "$continue_anyway" != "oui" ]]; then
+            if [[ -z "$GITHUB_TOKEN" ]]; then
+                warning "Token GitHub non fourni - fonctionnalité d'auto-update désactivée"
                 GITHUB_TOKEN="PLACEHOLDER_GITHUB_TOKEN_DISABLED"
+            elif [[ ! "$GITHUB_TOKEN" =~ ^ghp_ ]]; then
+                warning "Le token ne commence pas par 'ghp_' - vérifiez qu'il s'agit d'un Personal Access Token"
+                prompt "Voulez-vous continuer quand même ? (oui/non):"
+                read -r continue_anyway
+                if [[ "$continue_anyway" != "oui" ]]; then
+                    GITHUB_TOKEN="PLACEHOLDER_GITHUB_TOKEN_DISABLED"
+                fi
             fi
-        fi
 
-        echo ""
-        warning "⚠️  N'oubliez pas d'ajouter ce token dans GitHub Secrets !"
-        echo "Allez dans Settings → Secrets and variables → Actions → New repository secret"
-        echo "  - Name: N8N_UPDATE_TOKEN"
-        echo "  - Value: ${GITHUB_TOKEN}"
-        echo ""
-        read -p "Appuyez sur Entrée pour continuer..."
+            echo ""
+            warning "⚠️  N'oubliez pas d'ajouter ce token dans GitHub Secrets !"
+            echo "Allez dans Settings → Secrets and variables → Actions → New repository secret"
+            echo "  - Name: N8N_UPDATE_TOKEN"
+            echo "  - Value: ${GITHUB_TOKEN}"
+            echo ""
+            read -p "Appuyez sur Entrée pour continuer..."
+        else
+            warning "Auto-update GitHub non configuré"
+            echo "Vous pourrez l'ajouter plus tard avec: sops secrets/whitelily.yaml"
+            GITHUB_TOKEN="PLACEHOLDER_GITHUB_TOKEN_DISABLED"
+        fi
     else
-        warning "Auto-update GitHub non configuré"
-        echo "Vous pourrez l'ajouter plus tard avec: sops secrets/whitelily.yaml"
-        GITHUB_TOKEN="PLACEHOLDER_GITHUB_TOKEN_DISABLED"
+        GITHUB_TOKEN="$EXISTING_GH_TOKEN"
+        if [[ "$GITHUB_TOKEN" == "PLACEHOLDER_GITHUB_TOKEN_DISABLED" ]]; then
+            info "Auto-update GitHub non configuré précédemment"
+        else
+            info "Réutilisation du token GitHub existant"
+        fi
     fi
 
     cat > "$secrets_file" <<EOF
@@ -518,24 +669,114 @@ main() {
     # Définir le chemin du fichier de secrets
     SECRETS_FILE="secrets/${HOST}.yaml"
 
+    # Variables pour le mode de mise à jour
+    UPDATE_MODE="full"
+    SECRET_TO_UPDATE=""
+
     # Vérifier si les secrets existent déjà
     if [[ -f "$SECRETS_FILE" ]] && grep -q "sops:" "$SECRETS_FILE" 2>/dev/null; then
         echo ""
         warning "Secrets existants trouvés pour ${HOST}"
         info "Fichier: $SECRETS_FILE"
         echo ""
-        prompt "Voulez-vous les régénérer ? (oui/non):"
-        read -r regenerate
+        echo -e "${BLUE}Que souhaitez-vous faire ?${NC}"
+        echo ""
+        echo -e "${GREEN}1)${NC} Régénérer ${RED}TOUS${NC} les secrets (⚠️  perte des secrets existants)"
+        echo -e "${GREEN}2)${NC} Régénérer ${YELLOW}UN SEUL${NC} secret (les autres sont conservés)"
+        echo -e "${GREEN}3)${NC} Annuler"
+        echo ""
+        prompt "Votre choix (1-3) :"
+        read -r regenerate_choice
 
-        if [[ "$regenerate" != "oui" ]]; then
-            info "Opération annulée"
-            exit 0
-        fi
+        case "$regenerate_choice" in
+            1)
+                info "Régénération complète de tous les secrets"
+                UPDATE_MODE="full"
+                # Sauvegarder l'ancien fichier
+                backup_file="${SECRETS_FILE}.backup.$(date +%Y%m%d-%H%M%S)"
+                cp "$SECRETS_FILE" "$backup_file"
+                info "Anciens secrets sauvegardés : $backup_file"
+                ;;
+            2)
+                info "Régénération sélective d'un secret"
+                UPDATE_MODE="selective"
 
-        # Sauvegarder l'ancien fichier
-        backup_file="${SECRETS_FILE}.backup.$(date +%Y%m%d-%H%M%S)"
-        cp "$SECRETS_FILE" "$backup_file"
-        info "Anciens secrets sauvegardés : $backup_file"
+                # Menu spécifique selon l'host
+                echo ""
+                echo -e "${BLUE}Quel secret souhaitez-vous changer pour ${HOST} ?${NC}"
+                echo ""
+
+                if [[ "$HOST" == "whitelily" ]]; then
+                    echo -e "${GREEN}1)${NC} Mot de passe utilisateur jeremie (SSH)"
+                    echo -e "${GREEN}2)${NC} Clé de chiffrement n8n (${RED}⚠️  CRITIQUE${NC})"
+                    echo -e "${GREEN}3)${NC} Nom d'utilisateur n8n (basic auth)"
+                    echo -e "${GREEN}4)${NC} Mot de passe n8n (basic auth)"
+                    echo -e "${GREEN}5)${NC} Mot de passe base de données PostgreSQL"
+                    echo -e "${GREEN}6)${NC} Token Cloudflare Tunnel"
+                    echo -e "${GREEN}7)${NC} Token GitHub (auto-update)"
+                    echo ""
+                    prompt "Votre choix (1-7) :"
+                    read -r secret_choice
+
+                    case "$secret_choice" in
+                        1) SECRET_TO_UPDATE="jeremie_password" ;;
+                        2)
+                            warning "⚠️  Attention : changer la clé de chiffrement n8n rendra TOUTES vos credentials n8n inaccessibles !"
+                            prompt "Êtes-vous sûr de vouloir continuer ? (oui/non) :"
+                            read -r confirm
+                            if [[ "$confirm" == "oui" ]]; then
+                                SECRET_TO_UPDATE="n8n_encryption"
+                            else
+                                info "Opération annulée"
+                                exit 0
+                            fi
+                            ;;
+                        3) SECRET_TO_UPDATE="n8n_user" ;;
+                        4) SECRET_TO_UPDATE="n8n_password" ;;
+                        5) SECRET_TO_UPDATE="db_password" ;;
+                        6) SECRET_TO_UPDATE="cloudflare_token" ;;
+                        7) SECRET_TO_UPDATE="github_token" ;;
+                        *) error "Choix invalide" ;;
+                    esac
+                elif [[ "$HOST" == "mimosa" ]]; then
+                    echo -e "${GREEN}1)${NC} Mot de passe utilisateur jeremie (SSH)"
+                    echo -e "${GREEN}2)${NC} Token Cloudflare Tunnel"
+                    echo ""
+                    prompt "Votre choix (1-2) :"
+                    read -r secret_choice
+
+                    case "$secret_choice" in
+                        1) SECRET_TO_UPDATE="jeremie_password" ;;
+                        2) SECRET_TO_UPDATE="cloudflare_token" ;;
+                        *) error "Choix invalide" ;;
+                    esac
+                elif [[ "$HOST" == "magnolia" ]]; then
+                    echo -e "${GREEN}1)${NC} Mot de passe utilisateur jeremie (SSH)"
+                    echo ""
+                    prompt "Votre choix (1) :"
+                    read -r secret_choice
+
+                    case "$secret_choice" in
+                        1) SECRET_TO_UPDATE="jeremie_password" ;;
+                        *) error "Choix invalide" ;;
+                    esac
+                fi
+
+                info "Secret sélectionné pour mise à jour : $SECRET_TO_UPDATE"
+
+                # Sauvegarder l'ancien fichier
+                backup_file="${SECRETS_FILE}.backup.$(date +%Y%m%d-%H%M%S)"
+                cp "$SECRETS_FILE" "$backup_file"
+                info "Anciens secrets sauvegardés : $backup_file"
+                ;;
+            3)
+                info "Opération annulée"
+                exit 0
+                ;;
+            *)
+                error "Choix invalide. Utilisez 1, 2 ou 3"
+                ;;
+        esac
     fi
 
     step "Génération des secrets pour ${HOST}"
@@ -547,13 +788,13 @@ main() {
     # Générer les secrets selon l'host
     case "$HOST" in
         magnolia)
-            generate_magnolia_secrets "$temp_file"
+            generate_magnolia_secrets "$temp_file" "$UPDATE_MODE" "$SECRET_TO_UPDATE"
             ;;
         mimosa)
-            generate_mimosa_secrets "$temp_file"
+            generate_mimosa_secrets "$temp_file" "$UPDATE_MODE" "$SECRET_TO_UPDATE"
             ;;
         whitelily)
-            generate_whitelily_secrets "$temp_file"
+            generate_whitelily_secrets "$temp_file" "$UPDATE_MODE" "$SECRET_TO_UPDATE"
             ;;
     esac
 
