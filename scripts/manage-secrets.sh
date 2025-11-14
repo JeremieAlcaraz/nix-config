@@ -484,9 +484,27 @@ generate_whitelily_secrets() {
     # N8N Password
     if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "n8n_password" ]]; then
         echo ""
-        info "Génération du mot de passe n8n..."
-        N8N_BASIC_PASS=$(openssl rand -base64 24)
-        echo "Nouveau mot de passe n8n: ${N8N_BASIC_PASS}"
+        prompt "Voulez-vous créer un nouveau mot de passe pour n8n ? (oui/non, défaut: oui):"
+        read -r create_new_password
+        create_new_password="${create_new_password:-oui}"
+
+        if [[ "$create_new_password" == "oui" ]]; then
+            info "Génération du mot de passe n8n..."
+            N8N_BASIC_PASS=$(openssl rand -base64 24)
+            echo "Nouveau mot de passe n8n: ${N8N_BASIC_PASS}"
+        else
+            echo ""
+            info "Veuillez fournir votre mot de passe n8n existant"
+            echo ""
+            prompt "Mot de passe n8n :"
+            read -r N8N_BASIC_PASS
+
+            if [[ -z "$N8N_BASIC_PASS" ]]; then
+                error "Le mot de passe n8n ne peut pas être vide"
+            fi
+
+            info "Mot de passe n8n personnalisé configuré"
+        fi
     else
         N8N_BASIC_PASS="$EXISTING_N8N_PASS"
         info "Réutilisation du mot de passe n8n existant"
@@ -495,9 +513,27 @@ generate_whitelily_secrets() {
     # DB Password
     if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "db_password" ]]; then
         echo ""
-        info "Génération du mot de passe DB PostgreSQL..."
-        DB_PASSWORD=$(openssl rand -base64 32)
-        echo "Nouveau mot de passe DB: ${DB_PASSWORD}"
+        prompt "Voulez-vous créer un nouveau mot de passe pour la base de données PostgreSQL ? (oui/non, défaut: oui):"
+        read -r create_new_db_password
+        create_new_db_password="${create_new_db_password:-oui}"
+
+        if [[ "$create_new_db_password" == "oui" ]]; then
+            info "Génération du mot de passe DB PostgreSQL..."
+            DB_PASSWORD=$(openssl rand -base64 32)
+            echo "Nouveau mot de passe DB: ${DB_PASSWORD}"
+        else
+            echo ""
+            info "Veuillez fournir votre mot de passe PostgreSQL existant"
+            echo ""
+            prompt "Mot de passe PostgreSQL :"
+            read -r DB_PASSWORD
+
+            if [[ -z "$DB_PASSWORD" ]]; then
+                error "Le mot de passe PostgreSQL ne peut pas être vide"
+            fi
+
+            info "Mot de passe PostgreSQL personnalisé configuré"
+        fi
     else
         DB_PASSWORD="$EXISTING_DB_PASS"
         info "Réutilisation du mot de passe DB existant"
