@@ -62,8 +62,8 @@ in {
 
   # Initialisation du mot de passe PostgreSQL pour l'utilisateur n8n
   systemd.services.postgresql.postStart = lib.mkAfter ''
-    # Extraire le mot de passe (gérer le cas où le secret contient "db_password: value")
-    DB_PASS=$(${pkgs.coreutils}/bin/cat /run/secrets/n8n/db_password | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')
+    # Nettoyer le mot de passe de tous les caractères parasites (guillemets, newlines, espaces)
+    DB_PASS=$(${pkgs.coreutils}/bin/cat /run/secrets/n8n/db_password | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')
 
     $PSQL -tA <<EOF
       DO \$\$
@@ -101,27 +101,27 @@ in {
     script = ''
       umask 077
 
-      # Lire les secrets et extraire les valeurs (même approche que cloudflared)
-      # Le secret sops peut contenir "key: value" mais on veut juste "value"
-      ENCRYPTION_KEY="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/encryption_key".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')"
-      BASIC_USER="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/basic_user".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')"
-      BASIC_PASS="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/basic_pass".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')"
-      DB_PASSWORD="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/db_password".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')"
+      # Lire les secrets et nettoyer TOUS les caractères parasites
+      # tr -d '\n"' enlève les retours à la ligne ET les guillemets
+      # xargs nettoie les espaces blancs
+      ENCRYPTION_KEY=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/encryption_key".path} | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')
+      BASIC_USER=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/basic_user".path} | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')
+      BASIC_PASS=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/basic_pass".path} | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')
+      DB_PASSWORD=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."n8n/db_password".path} | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')
 
-      # Créer le fichier .env avec toutes les variables nécessaires
-      # On le met dans /run/n8n/ pour éviter que sops-nix le supprime
-      # Les valeurs sont entre guillemets pour gérer les caractères spéciaux
+      # Créer le fichier .env SANS guillemets autour des valeurs
+      # PostgreSQL n'accepte PAS les guillemets dans le mot de passe !
       cat > /run/n8n/n8n.env <<EOF
-N8N_ENCRYPTION_KEY="$ENCRYPTION_KEY"
+N8N_ENCRYPTION_KEY=$ENCRYPTION_KEY
 N8N_BASIC_AUTH_ACTIVE=true
-N8N_BASIC_AUTH_USER="$BASIC_USER"
-N8N_BASIC_AUTH_PASSWORD="$BASIC_PASS"
+N8N_BASIC_AUTH_USER=$BASIC_USER
+N8N_BASIC_AUTH_PASSWORD=$BASIC_PASS
 DB_TYPE=postgresdb
 DB_POSTGRESDB_HOST=127.0.0.1
 DB_POSTGRESDB_PORT=5432
 DB_POSTGRESDB_DATABASE=n8n
 DB_POSTGRESDB_USER=n8n
-DB_POSTGRESDB_PASSWORD="$DB_PASSWORD"
+DB_POSTGRESDB_PASSWORD=$DB_PASSWORD
 DB_POSTGRESDB_CONNECTION_TIMEOUT=30000
 EOF
 
