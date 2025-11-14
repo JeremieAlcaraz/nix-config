@@ -147,6 +147,10 @@ EOF
         N8N_TEMPLATES_ENABLED = "true";
         N8N_PUBLIC_API_DISABLED = "false";
 
+        # Configuration reverse proxy (Cloudflare Tunnel → Caddy → n8n)
+        # Active trust proxy pour les headers X-Forwarded-*
+        N8N_PROXY_HOPS = "1";
+
         # Configuration des permissions et sécurité
         N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS = "true";
         N8N_RUNNERS_ENABLED = "true";
