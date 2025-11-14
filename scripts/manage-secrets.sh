@@ -253,10 +253,16 @@ parse_existing_magnolia_secrets() {
     local secrets_file="$1"
 
     # Déchiffrer le fichier
-    local decrypted=$(sops -d "$secrets_file")
+    info "Déchiffrement des secrets existants..."
+    local decrypted
+    if ! decrypted=$(sops -d "$secrets_file" 2>&1); then
+        error "Impossible de déchiffrer $secrets_file. Erreur: $decrypted"
+    fi
 
     # Extraire chaque secret
-    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //')
+    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //' || echo "")
+
+    info "Secrets existants chargés avec succès"
 }
 
 # Générer les secrets pour magnolia
@@ -294,12 +300,18 @@ EOF
 parse_existing_mimosa_secrets() {
     local secrets_file="$1"
 
-    # Déchiffrer le fichier
-    local decrypted=$(sops -d "$secrets_file")
+    # Déchiffrement du fichier
+    info "Déchiffrement des secrets existants..."
+    local decrypted
+    if ! decrypted=$(sops -d "$secrets_file" 2>&1); then
+        error "Impossible de déchiffrer $secrets_file. Erreur: $decrypted"
+    fi
 
     # Extraire chaque secret
-    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //')
-    EXISTING_CF_TOKEN=$(echo "$decrypted" | grep "cloudflare-tunnel-token:" | sed 's/.*cloudflare-tunnel-token: "//' | sed 's/".*//')
+    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //' || echo "")
+    EXISTING_CF_TOKEN=$(echo "$decrypted" | grep "cloudflare-tunnel-token:" | sed 's/.*cloudflare-tunnel-token: "//' | sed 's/".*//' || echo "")
+
+    info "Secrets existants chargés avec succès"
 }
 
 # Générer les secrets pour mimosa
@@ -369,16 +381,22 @@ parse_existing_whitelily_secrets() {
     local secrets_file="$1"
 
     # Déchiffrer le fichier
-    local decrypted=$(sops -d "$secrets_file")
+    info "Déchiffrement des secrets existants..."
+    local decrypted
+    if ! decrypted=$(sops -d "$secrets_file" 2>&1); then
+        error "Impossible de déchiffrer $secrets_file. Erreur: $decrypted"
+    fi
 
     # Extraire chaque secret
-    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //')
-    EXISTING_N8N_ENCRYPTION=$(echo "$decrypted" | grep "encryption_key:" | sed 's/.*encryption_key: "//' | sed 's/".*//')
-    EXISTING_N8N_USER=$(echo "$decrypted" | grep "basic_user:" | sed 's/.*basic_user: "//' | sed 's/".*//')
-    EXISTING_N8N_PASS=$(echo "$decrypted" | grep "basic_pass:" | sed 's/.*basic_pass: "//' | sed 's/".*//')
-    EXISTING_DB_PASS=$(echo "$decrypted" | grep "db_password:" | sed 's/.*db_password: "//' | sed 's/".*//')
-    EXISTING_CF_TOKEN=$(echo "$decrypted" | grep "cloudflared:" -A1 | grep "token:" | sed 's/.*token: "//' | sed 's/".*//')
-    EXISTING_GH_TOKEN=$(echo "$decrypted" | grep "github:" -A1 | grep "token:" | sed 's/.*token: "//' | sed 's/".*//')
+    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //' || echo "")
+    EXISTING_N8N_ENCRYPTION=$(echo "$decrypted" | grep "encryption_key:" | sed 's/.*encryption_key: "//' | sed 's/".*//' || echo "")
+    EXISTING_N8N_USER=$(echo "$decrypted" | grep "basic_user:" | sed 's/.*basic_user: "//' | sed 's/".*//' || echo "")
+    EXISTING_N8N_PASS=$(echo "$decrypted" | grep "basic_pass:" | sed 's/.*basic_pass: "//' | sed 's/".*//' || echo "")
+    EXISTING_DB_PASS=$(echo "$decrypted" | grep "db_password:" | sed 's/.*db_password: "//' | sed 's/".*//' || echo "")
+    EXISTING_CF_TOKEN=$(echo "$decrypted" | grep "cloudflared:" -A1 | grep "token:" | sed 's/.*token: "//' | sed 's/".*//' || echo "")
+    EXISTING_GH_TOKEN=$(echo "$decrypted" | grep "github:" -A1 | grep "token:" | sed 's/.*token: "//' | sed 's/".*//' || echo "")
+
+    info "Secrets existants chargés avec succès"
 }
 
 # Générer les secrets pour whitelily
