@@ -25,6 +25,7 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 | **whitelily** ✨ | Orchestration | Service d'orchestration et workflows (n8n) en Podman. Stable et fonctionnel ! |
 | **demo** 🎬 | Démonstration | Hôte de démonstration pour tests et expérimentations. |
 
+
 ## 💿 ISO personnalisée
 
 Une ISO NixOS minimale optimisée pour Proxmox/NoVNC avec :
