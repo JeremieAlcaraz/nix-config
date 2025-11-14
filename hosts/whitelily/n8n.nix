@@ -60,51 +60,64 @@ in {
     '';
   };
 
-  # Initialisation du mot de passe PostgreSQL pour l'utilisateur n8n
-  systemd.services.postgresql.postStart = lib.mkAfter ''
-    set -euo pipefail
+  # Service systemd pour configurer le mot de passe PostgreSQL
+  # S'exécute en root pour avoir accès aux secrets sops
+  systemd.services."postgresql-n8n-setup" = {
+    description = "Setup n8n PostgreSQL user with password from sops";
+    after = [ "postgresql.service" "sops-install-secrets.service" ];
+    requires = [ "postgresql.service" "sops-install-secrets.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      User = "root";  # S'exécute en root pour accéder aux secrets sops
+    };
+    script = ''
+      set -euo pipefail
 
-    echo "[n8n-setup] Début de la configuration du mot de passe PostgreSQL"
+      echo "[n8n-setup] Début de la configuration du mot de passe PostgreSQL"
 
-    # Vérifier que le secret existe
-    if [ ! -f /run/secrets/n8n/db_password ]; then
-      echo "[n8n-setup] ERREUR: Le secret /run/secrets/n8n/db_password n'existe pas !"
-      exit 1
-    fi
-
-    # Nettoyer le mot de passe (enlever newlines, guillemets, espaces)
-    DB_PASS=$(${pkgs.coreutils}/bin/cat /run/secrets/n8n/db_password | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs)
-
-    echo "[n8n-setup] Mot de passe lu et nettoyé (longueur: ''${#DB_PASS} caractères)"
-
-    # Attendre que PostgreSQL soit vraiment prêt
-    echo "[n8n-setup] Attente que PostgreSQL soit prêt..."
-    for i in {1..30}; do
-      if $PSQL -c '\q' 2>/dev/null; then
-        echo "[n8n-setup] PostgreSQL est prêt !"
-        break
+      # Vérifier que le secret existe
+      if [ ! -f /run/secrets/n8n/db_password ]; then
+        echo "[n8n-setup] ERREUR: Le secret /run/secrets/n8n/db_password n'existe pas !"
+        exit 1
       fi
-      sleep 1
-    done
 
-    # Mettre à jour le mot de passe (syntaxe SQL simple, pas de DO $$)
-    echo "[n8n-setup] Configuration du mot de passe pour l'utilisateur n8n"
-    $PSQL -tA <<EOF
+      # Nettoyer le mot de passe (enlever newlines, guillemets, espaces)
+      DB_PASS=$(${pkgs.coreutils}/bin/cat /run/secrets/n8n/db_password | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs)
+
+      echo "[n8n-setup] Mot de passe lu et nettoyé (longueur: ''${#DB_PASS} caractères)"
+
+      # Attendre que PostgreSQL soit vraiment prêt
+      echo "[n8n-setup] Attente que PostgreSQL soit prêt..."
+      for i in {1..30}; do
+        if ${pkgs.postgresql}/bin/pg_isready -h localhost -U postgres >/dev/null 2>&1; then
+          echo "[n8n-setup] PostgreSQL est prêt !"
+          break
+        fi
+        echo "[n8n-setup] Attente... ($i/30)"
+        sleep 1
+      done
+
+      # Mettre à jour le mot de passe
+      echo "[n8n-setup] Configuration du mot de passe pour l'utilisateur n8n"
+      ${pkgs.sudo}/bin/sudo -u postgres ${pkgs.postgresql}/bin/psql -tA <<EOF
 ALTER USER n8n WITH PASSWORD '$DB_PASS';
 GRANT ALL PRIVILEGES ON DATABASE n8n TO n8n;
 EOF
 
-    # Configurer les permissions sur le schéma public
-    echo "[n8n-setup] Configuration des permissions sur le schéma public"
-    $PSQL -d n8n -tA <<EOF
+      # Configurer les permissions sur le schéma public
+      echo "[n8n-setup] Configuration des permissions sur le schéma public"
+      ${pkgs.sudo}/bin/sudo -u postgres ${pkgs.postgresql}/bin/psql -d n8n -tA <<EOF
 ALTER SCHEMA public OWNER TO n8n;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO n8n;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO n8n;
 GRANT ALL PRIVILEGES ON SCHEMA public TO n8n;
 EOF
 
-    echo "[n8n-setup] Configuration PostgreSQL terminée avec succès !"
-  '';
+      echo "[n8n-setup] Configuration PostgreSQL terminée avec succès !"
+    '';
+  };
 
   ########################################
   # 2) Podman pour les containers OCI
@@ -209,8 +222,8 @@ EOF
 
   # Ajouter les dépendances au service généré par oci-containers
   systemd.services."podman-n8n" = {
-    after = [ "n8n-envfile.service" "postgresql.service" ];
-    requires = [ "n8n-envfile.service" "postgresql.service" ];
+    after = [ "n8n-envfile.service" "postgresql-n8n-setup.service" ];
+    requires = [ "n8n-envfile.service" "postgresql-n8n-setup.service" ];
   };
 
   # Répertoires de données et de backup
