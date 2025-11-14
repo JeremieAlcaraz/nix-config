@@ -252,9 +252,108 @@ Voir le guide complet : [`docs/WHITELILY-N8N-SETUP.md`](../docs/WHITELILY-N8N-SE
 
 ---
 
+## 🔍 Script 3 : `check-n8n.sh`
+
+Script de **diagnostic automatique** pour n8n, à utiliser en cas de problème.
+
+### 🎯 Usage
+
+```bash
+# Depuis la racine du repo
+sudo ./scripts/check-n8n.sh
+```
+
+### ✨ Ce qu'il fait
+
+1. ✅ **Vérifie les services** - PostgreSQL, n8n, Caddy, Cloudflared
+2. ✅ **Analyse les secrets** - Détecte les guillemets parasites dans les secrets sops
+3. ✅ **Vérifie le .env** - Contrôle le fichier `/run/n8n/n8n.env` généré
+4. ✅ **Test connexion DB** - Essaye de se connecter à PostgreSQL
+5. ✅ **Affiche les erreurs** - Montre les dernières erreurs dans les logs
+6. ✅ **Test port local** - Vérifie si n8n répond sur `localhost:5678`
+7. ✅ **Résumé clair** - Diagnostic complet avec actions suggérées
+
+### 💡 Quand l'utiliser
+
+- ✅ **Après un `nixos-rebuild switch`** - Vérifier que tout est OK
+- ✅ **Si n8n ne démarre pas** - Identifier le problème
+- ✅ **Erreur d'authentification** - "password authentication failed"
+- ✅ **Diagnostic rapide** - État global du système n8n
+
+### 📊 Exemple de sortie
+
+```
+╔══════════════════════════════════╗
+║  DIAGNOSTIC n8n AUTOMATIQUE      ║
+╚══════════════════════════════════╝
+
+📊 Services
+✅ PostgreSQL actif
+✅ n8n actif
+✅ Caddy actif
+✅ Cloudflared actif
+
+🔐 Secrets (longueur en caractères)
+Encryption key: 33 caractères
+DB password: 13 caractères
+
+⚙️  Variables .env
+Encryption key: [xyz...] (32 chars)
+DB password: [n8n_password] (12 chars)
+✅ Pas de guillemets parasites dans le mot de passe
+
+🗄️  Test connexion PostgreSQL
+✅ Connexion DB réussie avec le mot de passe du .env
+
+📝 Dernières erreurs n8n
+✅ Aucune erreur récente
+
+🌐 Test port local
+✅ n8n répond sur localhost:5678 (HTTP 401)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RÉSUMÉ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Tout est OK ! n8n fonctionne correctement.
+```
+
+### 🐛 Problème résolu : Guillemets dans les mots de passe
+
+**Contexte du bug** : Les secrets sops contenaient parfois des guillemets littéraux (`"password"`) qui étaient écrits dans le fichier `.env` de n8n. PostgreSQL recevait donc le mot de passe avec les guillemets, provoquant l'erreur :
+
+```
+password authentication failed for user "n8n"
+```
+
+**Solution appliquée** :
+1. Ajout de `tr -d '\n"'` pour supprimer tous les guillemets et newlines des secrets sops
+2. Suppression des guillemets dans le fichier .env généré
+3. Application cohérente dans le script PostgreSQL `postStart` et `n8n-envfile`
+
+**Fichiers modifiés** : `hosts/whitelily/n8n.nix` (lignes 66, 104-110, 115-124)
+
+### 🔧 Vérification manuelle
+
+Si tu veux vérifier manuellement les secrets :
+
+```bash
+# Voir les caractères cachés dans les secrets
+sudo cat /run/secrets/n8n/db_password | od -c
+
+# Vérifier le fichier .env
+sudo cat /run/n8n/n8n.env | grep PASSWORD
+
+# Tester la connexion DB
+DB_PASS=$(sudo cat /run/n8n/n8n.env | grep "DB_POSTGRESDB_PASSWORD=" | cut -d= -f2)
+PGPASSWORD="$DB_PASS" psql -h 127.0.0.1 -U n8n -d n8n -c "SELECT 1;"
+```
+
+---
+
 ## 🎉 C'est tout !
 
-Deux scripts, deux responsabilités, une architecture propre. 🚀
+Trois scripts pour une gestion complète de votre infrastructure NixOS. 🚀
 
 **`install-nixos.sh`** → Installation du système
 **`manage-secrets.sh`** → Gestion des secrets
+**`check-n8n.sh`** → Diagnostic automatique n8n
