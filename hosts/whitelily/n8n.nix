@@ -8,9 +8,10 @@ let
   cloudflaredTunnelScript = pkgs.writeShellScript "cloudflared-tunnel" ''
     set -euo pipefail
 
-    # Lire le token, nettoyer les espaces, et extraire la valeur après "token:"
-    # Le secret sops contient "token: eyJxxxx" mais cloudflared attend juste "eyJxxxx"
-    TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."cloudflared/token".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{print $2}')"
+    # Lire le token et extraire la valeur
+    # Le secret sops peut contenir soit "token: eyJxxxx" soit juste "eyJxxxx"
+    # On gère les deux cas comme pour les secrets n8n
+    TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."cloudflared/token".path} | ${pkgs.findutils}/bin/xargs | ${pkgs.gawk}/bin/awk '{if (NF==2) print $2; else print $0}')"
 
     exec ${pkgs.cloudflared}/bin/cloudflared tunnel run --token "$TOKEN"
   '';
