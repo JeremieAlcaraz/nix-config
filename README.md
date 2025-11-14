@@ -12,7 +12,9 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 - 🚀 **Architecture basée sur les flakes** pour une reproductibilité totale
 - 🔑 **Authentification SSH par clés uniquement** (pas de mots de passe)
 - 📦 **Multi-hôtes** avec configuration centralisée
+- 🏠 **Home Manager** pour la gestion déclarative de l'environnement utilisateur
 - 🔄 **Infrastructure as Code** avec historique Git complet
+- 🐳 **Containerisation** avec Podman pour les services (n8n)
 - 💿 **ISO minimale personnalisée** avec support console série pour Proxmox/NoVNC
 - 📚 **Documentation détaillée** en français
 
@@ -20,11 +22,44 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 
 | Hôte | Type | Description |
 |------|------|-------------|
-| **magnolia** 🌸 | Hyperviseur | Infrastructure Proxmox avec console série, QEMU Guest Agent et SSH par clés. |
-| **mimosa** 🌼 | Serveur Web | Serveur web complet avec j12zdotcom, Caddy, Cloudflare Tunnel et ports 80/443 automatiques. |
-| **whitelily** ✨ | Orchestration | Service d'orchestration et workflows (n8n) en Podman. Stable et fonctionnel ! |
-| **demo** 🎬 | Démonstration | Hôte de démonstration pour tests et expérimentations. |
+| **magnolia** 🌸 | Hyperviseur | Infrastructure Proxmox avec console série, QEMU Guest Agent, SSH par clés et ZSH. |
+| **mimosa** 🌼 | Serveur Web | Serveur web complet avec j12zdotcom, Caddy, Cloudflare Tunnel, ports 80/443 automatiques et Fish shell. |
+| **whitelily** 🤍 | Automation | Service d'orchestration n8n avec Podman, PostgreSQL 16, Cloudflare Tunnel, backups automatiques et ZSH. Architecture production-ready ! |
+| **demo** 🎬 | Démonstration | Hôte de démonstration minimal pour tests et expérimentations. |
 
+### 🏠 Gestion de l'environnement utilisateur avec Home Manager
+
+Tous les hôtes (sauf demo) utilisent **Home Manager** pour gérer de manière déclarative l'environnement utilisateur :
+
+- **Shells personnalisés par hôte** :
+  - 🌸 **magnolia** et 🤍 **whitelily** : ZSH avec autosuggestions et syntax highlighting
+  - 🌼 **mimosa** : Fish shell friendly
+- **Prompt moderne** : Starship configuré pour tous les hôtes
+- **Éditeur** : Vim comme éditeur par défaut
+- **Message de bienvenue** : Banner personnalisé par hôte au login
+
+Configuration centralisée dans `home/jeremie.nix` avec logique conditionnelle par hostname.
+
+### ✨ WhiteLily - Architecture production-ready
+
+**WhiteLily** est le dernier ajout au projet et représente une architecture complète pour un service n8n en production :
+
+**Stack technique** :
+- 🐳 **Podman** : Containerisation sans daemon (OCI compliant)
+- 🗄️ **PostgreSQL 16** : Base de données robuste avec optimisations
+- 🔄 **n8n** : Plateforme d'orchestration épinglée pour stabilité
+- 🌐 **Caddy** : Reverse proxy avec compression automatique
+- 🔒 **Cloudflare Tunnel** : Exposition sécurisée sans ports publics ouverts
+
+**Fonctionnalités** :
+- ✅ Zero-trust security (aucun port ouvert sur le firewall)
+- ✅ Backups automatiques quotidiens (base de données + données n8n)
+- ✅ Healthchecks toutes les 5 minutes
+- ✅ Logs rotatifs automatiques
+- ✅ TLS automatique via Cloudflare
+- ✅ Configuration 100% déclarative et reproductible
+
+**Documentation complète** : [docs/WHITELILY-N8N-SETUP.md](docs/WHITELILY-N8N-SETUP.md)
 
 ## 💿 ISO personnalisée
 
@@ -87,7 +122,11 @@ cd nix-config
 sudo nixos-rebuild switch --flake .#magnolia        # Infrastructure Proxmox
 sudo nixos-rebuild switch --flake .#mimosa-minimal  # Serveur web (minimal)
 sudo nixos-rebuild switch --flake .#mimosa          # Serveur web (complet)
+sudo nixos-rebuild switch --flake .#whitelily       # Automation n8n
+sudo nixos-rebuild switch --flake .#demo            # VM de démonstration
 ```
+
+**Note** : Pour whitelily, consultez le guide complet [docs/WHITELILY-N8N-SETUP.md](docs/WHITELILY-N8N-SETUP.md) qui détaille la configuration des secrets SOPS et du Cloudflare Tunnel.
 
 ## 📁 Structure du repository
 
@@ -95,36 +134,59 @@ sudo nixos-rebuild switch --flake .#mimosa          # Serveur web (complet)
 nix-config/
 ├── flake.nix                    # Définition principale du flake
 ├── flake.lock                   # Versions verrouillées des dépendances
+├── .sops.yaml                   # Configuration SOPS globale
 ├── hosts/                       # Configurations par hôte
-│   ├── magnolia/                # Infrastructure Proxmox (ex-proxmox)
+│   ├── magnolia/                # Infrastructure Proxmox
 │   │   ├── configuration.nix
 │   │   └── hardware-configuration.nix
-│   └── mimosa/                  # Serveur web (ex-jeremie-web)
-│       ├── configuration.nix    # Configuration système de base
-│       ├── webserver.nix        # Configuration serveur web (mimosa uniquement)
+│   ├── mimosa/                  # Serveur web
+│   │   ├── configuration.nix    # Configuration système de base
+│   │   ├── webserver.nix        # Configuration serveur web
+│   │   └── hardware-configuration.nix
+│   ├── whitelily/               # Automation n8n
+│   │   ├── configuration.nix    # Configuration système
+│   │   ├── n8n.nix              # Configuration n8n + Podman
+│   │   └── hardware-configuration.nix
+│   └── demo/                    # VM de démonstration
+│       ├── configuration.nix
 │       └── hardware-configuration.nix
+├── home/                        # Configuration utilisateur Home Manager
+│   └── jeremie.nix              # Environnement utilisateur (shells, vim, starship)
 ├── scripts/                     # Scripts d'installation et gestion
 │   ├── install-nixos.sh         # Installation automatisée
 │   └── activate-webserver.sh    # Activation du serveur web post-installation
 ├── iso/                         # Configuration ISO personnalisée
-│   └── flake.nix                # Builder ISO minimale avec TTY série
+│   ├── flake.nix                # Builder ISO minimale avec TTY série
+│   └── custom-installer.nix     # Configuration de l'installateur
 ├── secrets/                     # Gestion des secrets chiffrés
 │   ├── README.md
-│   ├── .sops.yaml
-│   └── *.yaml                   # Fichiers de secrets chiffrés
+│   └── *.yaml                   # Fichiers de secrets chiffrés par hôte
 └── docs/                        # Documentation complète
     ├── BOOTSTRAP.md             # Guide d'initialisation des VMs
     ├── SECRETS.md               # Gestion des secrets avec SOPS
-    └── ISO-BUILDER.md           # Guide de construction d'ISO personnalisée
+    ├── QUICKSTART-SOPS.md       # Démarrage rapide SOPS
+    ├── SECURE-PASSWORDS.md      # Guide de gestion sécurisée des mots de passe
+    ├── DEPLOY.md                # Guide de déploiement
+    ├── ISO-BUILDER.md           # Guide de construction d'ISO personnalisée
+    └── WHITELILY-N8N-SETUP.md   # Installation complète de whitelily (n8n)
 ```
 
 ## 📖 Documentation
 
 Pour plus d'informations, consultez la documentation dans le dossier `docs/` :
 
+### 🚀 Démarrage
 - **[docs/BOOTSTRAP.md](docs/BOOTSTRAP.md)** - Guide complet pour initialiser une nouvelle VM
-- **[docs/SECRETS.md](docs/SECRETS.md)** - Gestion et rotation des clés de chiffrement
+- **[docs/DEPLOY.md](docs/DEPLOY.md)** - Guide de déploiement des configurations
 - **[docs/ISO-BUILDER.md](docs/ISO-BUILDER.md)** - Builder une ISO NixOS personnalisée pour Proxmox
+
+### 🔐 Sécurité
+- **[docs/SECRETS.md](docs/SECRETS.md)** - Gestion et rotation des clés de chiffrement
+- **[docs/QUICKSTART-SOPS.md](docs/QUICKSTART-SOPS.md)** - Démarrage rapide avec SOPS
+- **[docs/SECURE-PASSWORDS.md](docs/SECURE-PASSWORDS.md)** - Guide de gestion sécurisée des mots de passe
+
+### 🖥️ Hôtes spécifiques
+- **[docs/WHITELILY-N8N-SETUP.md](docs/WHITELILY-N8N-SETUP.md)** - Installation complète de whitelily (n8n)
 
 ## 🔐 Gestion des secrets
 
@@ -139,12 +201,31 @@ Voir [docs/SECRETS.md](docs/SECRETS.md) pour le guide complet.
 
 ## 🛠️ Technologies utilisées
 
-- **NixOS** - Système d'exploitation déclaratif et reproductible
+### Infrastructure et système
+- **NixOS 24.11** - Système d'exploitation déclaratif et reproductible
 - **Nix Flakes** - Gestion moderne des dépendances
-- **SOPS-Nix** - Gestion sécurisée des secrets
-- **Tailscale** - VPN mesh pour accès sécurisé
+- **Home Manager** - Gestion déclarative de l'environnement utilisateur
 - **Proxmox** - Hyperviseur de virtualisation
+- **QEMU Guest Agent** - Intégration VM/Hôte
+
+### Sécurité
+- **SOPS-Nix** - Gestion sécurisée des secrets (chiffrement Age)
+- **SSH Keys** - Authentification par clés uniquement
+- **Tailscale** - VPN mesh pour accès sécurisé
+- **Cloudflare Tunnel** - Exposition sécurisée sans ports ouverts
+
+### Services et applications
+- **Podman** - Containerisation OCI (alternative à Docker)
+- **n8n** - Plateforme d'orchestration et workflows
+- **PostgreSQL 16** - Base de données relationnelle
+- **Caddy** - Reverse proxy moderne avec HTTP/2
+- **Cloudflared** - Client Cloudflare Tunnel
+
+### Outils de développement
 - **Git** - Contrôle de version et infrastructure as code
+- **ZSH + Starship** - Shell moderne pour magnolia et whitelily
+- **Fish** - Shell friendly pour mimosa
+- **Vim** - Éditeur de texte par défaut
 
 ## 📝 Conventions
 
