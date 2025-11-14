@@ -200,8 +200,8 @@ EOF
 
     # Configuration globale
     globalConfig = ''
-      # Désactiver la télémétrie
-      admin off
+      # API admin accessible uniquement en local (nécessaire pour les reloads)
+      admin localhost:2019
     '';
 
     virtualHosts."${domain}" = {
