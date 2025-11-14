@@ -93,6 +93,8 @@
       "n8n/db_password" = { owner = "postgres"; group = "postgres"; mode = "0400"; };
       # Cloudflare Tunnel token (simplifié)
       "cloudflared/token" = { owner = "cloudflared"; group = "cloudflared"; mode = "0400"; };
+      # GitHub token pour auto-update workflow
+      "github/token" = { owner = "root"; group = "root"; mode = "0400"; };
     };
   };
 
