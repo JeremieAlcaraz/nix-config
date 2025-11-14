@@ -21,9 +21,10 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 | Hôte | Type | Description |
 |------|------|-------------|
 | **magnolia** 🌸 | Hyperviseur | Infrastructure Proxmox avec console série, QEMU Guest Agent et SSH par clés. |
-| **mimosa-minimal** 🌼 | Serveur (Installation) | Configuration minimale pour installation initiale, sans serveur web pour éviter problèmes réseau. |
-| **mimosa** 🌼 | Serveur (Production) | Serveur web complet avec j12zdotcom, Caddy, Cloudflare Tunnel et ports 80/443 automatiques. |
-| **whitelily** ✨ | Orchestration | Service d'orchestration et workflows (n8n) en Podman. |
+| **mimosa** 🌼 | Serveur Web | Serveur web complet avec j12zdotcom, Caddy, Cloudflare Tunnel et ports 80/443 automatiques. |
+| **whitelily** ✨ | Orchestration | Service d'orchestration et workflows (n8n) en Podman. Stable et fonctionnel ! |
+| **demo** 🎬 | Démonstration | Hôte de démonstration pour tests et expérimentations. |
+
 
 ## 💿 ISO personnalisée
 
