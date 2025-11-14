@@ -427,14 +427,44 @@ generate_whitelily_secrets() {
 
     # N8N Encryption Key
     if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "n8n_encryption" ]]; then
-        info "Génération de la clé de chiffrement n8n..."
-        N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
-        warning "⚠️  IMPORTANT : Clé de chiffrement n8n"
-        echo "Cette clé chiffre TOUTES vos credentials n8n."
-        echo -e "${YELLOW}N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}${NC}"
-        echo "Sauvegardez-la dans un gestionnaire de mots de passe !"
         echo ""
-        read -p "Appuyez sur Entrée une fois sauvegardée..."
+        prompt "Voulez-vous créer une nouvelle clé d'encryption pour n8n ? (oui/non, défaut: oui):"
+        read -r create_new_key
+        create_new_key="${create_new_key:-oui}"
+
+        if [[ "$create_new_key" == "oui" ]]; then
+            info "Génération de la clé de chiffrement n8n..."
+            N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
+            warning "⚠️  IMPORTANT : Clé de chiffrement n8n"
+            echo "Cette clé chiffre TOUTES vos credentials n8n."
+            echo -e "${YELLOW}N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}${NC}"
+            echo "Sauvegardez-la dans un gestionnaire de mots de passe !"
+            echo ""
+            read -p "Appuyez sur Entrée une fois sauvegardée..."
+        else
+            echo ""
+            info "Veuillez fournir votre clé d'encryption n8n existante"
+            echo "La clé doit être une chaîne hexadécimale de 64 caractères (32 bytes)"
+            echo ""
+            prompt "Clé d'encryption n8n :"
+            read -r N8N_ENCRYPTION_KEY
+
+            if [[ -z "$N8N_ENCRYPTION_KEY" ]]; then
+                error "La clé d'encryption ne peut pas être vide"
+            fi
+
+            # Validation simple : vérifier que c'est bien une chaîne hexadécimale de 64 caractères
+            if [[ ! "$N8N_ENCRYPTION_KEY" =~ ^[0-9a-fA-F]{64}$ ]]; then
+                warning "⚠️  La clé fournie ne semble pas avoir le format attendu (64 caractères hexadécimaux)"
+                prompt "Voulez-vous continuer quand même ? (oui/non):"
+                read -r continue_anyway
+                if [[ "$continue_anyway" != "oui" ]]; then
+                    error "Opération annulée"
+                fi
+            fi
+
+            info "Clé d'encryption personnalisée configurée"
+        fi
     else
         N8N_ENCRYPTION_KEY="$EXISTING_N8N_ENCRYPTION"
         info "Réutilisation de la clé de chiffrement n8n existante"
