@@ -4,7 +4,7 @@ Configuration NixOS personnelle basée sur les flakes pour la gestion d'infrastr
 
 ## 📋 Vue d'ensemble
 
-Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs hôtes virtuels sur Proxmox. Il s'agit d'un projet d'apprentissage ("Learnix") qui met l'accent sur la sécurité, la reproductibilité et les bonnes pratiques modernes de NixOS.
+Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs hôtes virtuels sur Proxmox. Il s'agit d'un projet en développement (pour mise en production) qui met l'accent sur la sécurité, la reproductibilité et les bonnes pratiques modernes de NixOS.
 
 ### Caractéristiques principales
 
