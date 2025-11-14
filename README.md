@@ -18,38 +18,12 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 
 ## 🖥️ Hôtes configurés
 
-### `magnolia` 🌸
-Hôte hyperviseur Proxmox avec configuration minimale (anciennement `proxmox`).
-
-**Caractéristiques :**
-- Console série pour accès Proxmox
-- QEMU Guest Agent
-- SSH avec authentification par clés
-- Outils de base : vim, git, curl, wget, htop, tmux
-
-### `mimosa` 🌼
-Serveur web avec fonctionnalités avancées (anciennement `jeremie-web`).
-
-**Deux configurations disponibles :**
-
-#### `mimosa-minimal` (Installation initiale)
-Configuration système de base sans le serveur web, utilisée pendant l'installation pour éviter les problèmes réseau liés aux téléchargements npm.
-
-**Caractéristiques :**
-- Configuration système minimale
-- Tailscale VPN
-- Configuration Git
-- Sudo sans mot de passe
-- QEMU Guest Agent
-
-#### `mimosa` (Production)
-Configuration complète incluant le serveur web j12zdotcom.
-
-**Caractéristiques supplémentaires :**
-- Site web j12zdotcom (Astro + pnpm)
-- Caddy (reverse proxy)
-- Cloudflare Tunnel
-- Ports 80, 443 ouverts automatiquement
+| Hôte | Type | Description |
+|------|------|-------------|
+| **magnolia** 🌸 | Hyperviseur | Infrastructure Proxmox avec console série, QEMU Guest Agent et SSH par clés. |
+| **mimosa** 🌼 | Serveur Web | Serveur web complet avec j12zdotcom, Caddy, Cloudflare Tunnel et ports 80/443 automatiques. |
+| **whitelily** ✨ | Orchestration | Service d'orchestration et workflows (n8n) en Podman. Stable et fonctionnel ! |
+| **demo** 🎬 | Démonstration | Hôte de démonstration pour tests et expérimentations. |
 
 ## 💿 ISO personnalisée
 
