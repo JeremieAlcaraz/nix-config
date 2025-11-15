@@ -46,7 +46,7 @@ cd "${BACKUP_ROOT_DIR}/${BACKUP_NESTED_DIR}"
 echo -e "${BLUE}[1/7]${NC} 🔍 Récupération des variables d'environnement..."
 
 # Vérifier que n8n tourne
-if ! sudo podman ps | grep -q n8n; then
+if ! podman ps | grep -q n8n; then
     echo -e "${RED}⚠️  ATTENTION: Le container n8n ne semble pas actif${NC}"
     echo "Voulez-vous continuer ? (y/n)"
     read -r response
@@ -57,7 +57,7 @@ if ! sudo podman ps | grep -q n8n; then
 fi
 
 # Extraire les variables d'environnement
-sudo podman inspect n8n --format='{{range .Config.Env}}{{println .}}{{end}}' > n8n_env_vars.txt
+podman inspect n8n --format='{{range .Config.Env}}{{println .}}{{end}}' > n8n_env_vars.txt
 
 echo -e "${GREEN}✓${NC} Variables d'environnement récupérées"
 
@@ -71,8 +71,8 @@ ENCRYPTION_KEY=""
 
 echo "  Tentative 1/4: Depuis le fichier de config n8n..."
 # Méthode 1 : Depuis le fichier de config n8n
-if sudo podman exec n8n test -f /home/node/.n8n/config 2>/dev/null; then
-    ENCRYPTION_KEY=$(sudo podman exec n8n cat /home/node/.n8n/config 2>/dev/null | grep -o '"encryptionKey":"[^"]*"' | cut -d'"' -f4)
+if podman exec n8n test -f /home/node/.n8n/config 2>/dev/null; then
+    ENCRYPTION_KEY=$(podman exec n8n cat /home/node/.n8n/config 2>/dev/null | grep -o '"encryptionKey":"[^"]*"' | cut -d'"' -f4)
     [ -n "$ENCRYPTION_KEY" ] && echo "    ✓ Trouvée !"
 fi
 
@@ -134,10 +134,10 @@ echo -e "${GREEN}✓${NC} Clé d'encryption récupérée (${#ENCRYPTION_KEY} car
 # ========================================
 echo -e "${BLUE}[3/7]${NC} ⏸️  Arrêt de n8n pour garantir la cohérence..."
 
-sudo systemctl stop podman-n8n.service
+systemctl stop podman-n8n.service
 sleep 2
 
-if sudo podman ps | grep -q n8n; then
+if podman ps | grep -q n8n; then
     echo -e "${RED}⚠️  n8n n'est pas complètement arrêté !${NC}"
     exit 1
 fi
@@ -171,7 +171,7 @@ echo -e "${GREEN}✓${NC} Base de données sauvegardée (${DB_SIZE})"
 echo -e "${BLUE}[5/7]${NC} 📦 Backup des fichiers n8n (community nodes, configs)..."
 
 # Trouver le chemin des données
-N8N_DATA_PATH=$(sudo podman inspect n8n 2>/dev/null | grep -A 5 "Mounts" | grep "Source" | grep n8n | sed 's/.*"Source": "\(.*\)",/\1/' | head -1)
+N8N_DATA_PATH=$(podman inspect n8n 2>/dev/null | grep -A 5 "Mounts" | grep "Source" | grep n8n | sed 's/.*"Source": "\(.*\)",/\1/' | head -1)
 
 if [ -z "$N8N_DATA_PATH" ]; then
     N8N_DATA_PATH="/var/lib/n8n"
@@ -186,7 +186,7 @@ if [ ! -d "$N8N_DATA_PATH" ]; then
 fi
 
 # Backup du répertoire
-sudo tar czf n8n_data_real.tar.gz -C "$(dirname "$N8N_DATA_PATH")" "$(basename "$N8N_DATA_PATH")"
+tar czf n8n_data_real.tar.gz -C "$(dirname "$N8N_DATA_PATH")" "$(basename "$N8N_DATA_PATH")"
 
 DATA_SIZE=$(ls -lh n8n_data_real.tar.gz | awk '{print $5}')
 echo -e "${GREEN}✓${NC} Fichiers n8n sauvegardés (${DATA_SIZE})"
@@ -259,9 +259,9 @@ Node: ${NODE_VERSION}
 EOF
 
 # Lister les community nodes si disponibles
-if sudo test -f "${N8N_DATA_PATH}/nodes/package.json" 2>/dev/null; then
+if test -f "${N8N_DATA_PATH}/nodes/package.json" 2>/dev/null; then
     echo "# Packages détectés dans nodes/package.json:" >> migration_config.txt
-    sudo cat "${N8N_DATA_PATH}/nodes/package.json" | grep -A 20 '"dependencies"' >> migration_config.txt 2>/dev/null || echo "# Aucun package détecté" >> migration_config.txt
+    cat "${N8N_DATA_PATH}/nodes/package.json" | grep -A 20 '"dependencies"' >> migration_config.txt 2>/dev/null || echo "# Aucun package détecté" >> migration_config.txt
 else
     echo "# Aucun community node détecté" >> migration_config.txt
 fi
@@ -379,10 +379,10 @@ echo -e "${GREEN}✓${NC} Hash SHA256 généré"
 # ========================================
 echo ""
 echo -e "${YELLOW}⚡ Redémarrage de n8n...${NC}"
-sudo systemctl start podman-n8n.service
+systemctl start podman-n8n.service
 sleep 3
 
-if sudo podman ps | grep -q n8n; then
+if podman ps | grep -q n8n; then
     echo -e "${GREEN}✓${NC} n8n redémarré avec succès"
 else
     echo -e "${RED}⚠️  Problème au redémarrage de n8n !${NC}"
