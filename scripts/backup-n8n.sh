@@ -15,7 +15,15 @@ NC='\033[0m' # No Color
 
 # Configuration
 BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_ROOT_DIR="${HOME}/Downloads"
+
+# Utiliser le HOME de l'utilisateur réel (même si lancé avec sudo)
+if [ -n "$SUDO_USER" ]; then
+    REAL_USER_HOME=$(eval echo "~$SUDO_USER")
+else
+    REAL_USER_HOME="$HOME"
+fi
+
+BACKUP_ROOT_DIR="${REAL_USER_HOME}/Downloads"
 BACKUP_NESTED_DIR="n8n_migration_backup_${BACKUP_DATE}"
 BACKUP_ARCHIVE="n8n_migration_${BACKUP_DATE}.tar.gz"
 BACKUP_HASH="${BACKUP_ARCHIVE}.sha256"
@@ -61,25 +69,62 @@ echo -e "${BLUE}[2/7]${NC} 🔐 Récupération de la clé d'encryption..."
 # Plusieurs méthodes pour récupérer la clé
 ENCRYPTION_KEY=""
 
+echo "  Tentative 1/4: Depuis le fichier de config n8n..."
 # Méthode 1 : Depuis le fichier de config n8n
 if sudo podman exec n8n test -f /home/node/.n8n/config 2>/dev/null; then
     ENCRYPTION_KEY=$(sudo podman exec n8n cat /home/node/.n8n/config 2>/dev/null | grep -o '"encryptionKey":"[^"]*"' | cut -d'"' -f4)
+    [ -n "$ENCRYPTION_KEY" ] && echo "    ✓ Trouvée !"
 fi
 
-# Méthode 2 : Depuis les variables d'environnement
 if [ -z "$ENCRYPTION_KEY" ]; then
+    echo "  Tentative 2/4: Depuis les variables d'environnement du container..."
+    # Méthode 2 : Depuis les variables d'environnement
     ENCRYPTION_KEY=$(grep "N8N_ENCRYPTION_KEY=" n8n_env_vars.txt | cut -d= -f2 || echo "")
-fi
-
-# Méthode 3 : Depuis le fichier env sur l'hôte
-if [ -z "$ENCRYPTION_KEY" ] && [ -f /run/n8n/n8n.env ]; then
-    ENCRYPTION_KEY=$(sudo grep "N8N_ENCRYPTION_KEY=" /run/n8n/n8n.env | cut -d= -f2 || echo "")
+    [ -n "$ENCRYPTION_KEY" ] && echo "    ✓ Trouvée !"
 fi
 
 if [ -z "$ENCRYPTION_KEY" ]; then
-    echo -e "${RED}⚠️  ERREUR: Impossible de récupérer la clé d'encryption !${NC}"
-    echo "Veuillez la saisir manuellement (elle sera sauvegardée dans migration_config.txt) :"
+    echo "  Tentative 3/4: Depuis le fichier env sur l'hôte (/run/n8n/n8n.env)..."
+    # Méthode 3 : Depuis le fichier env sur l'hôte
+    # Le script tourne déjà en root via sudo, donc pas besoin de sudo supplémentaire
+    if [ -f /run/n8n/n8n.env ]; then
+        ENCRYPTION_KEY=$(grep "N8N_ENCRYPTION_KEY=" /run/n8n/n8n.env | cut -d= -f2 | tr -d '\n' || echo "")
+        [ -n "$ENCRYPTION_KEY" ] && echo "    ✓ Trouvée !"
+    else
+        echo "    ✗ Fichier /run/n8n/n8n.env non trouvé"
+    fi
+fi
+
+if [ -z "$ENCRYPTION_KEY" ]; then
+    echo "  Tentative 4/4: Depuis les secrets sops-nix..."
+    # Méthode 4 : Depuis les secrets sops-nix
+    if [ -f /run/secrets/n8n/encryption_key ]; then
+        ENCRYPTION_KEY=$(cat /run/secrets/n8n/encryption_key | tr -d '\n"' | xargs || echo "")
+        [ -n "$ENCRYPTION_KEY" ] && echo "    ✓ Trouvée !"
+    else
+        echo "    ✗ Fichier /run/secrets/n8n/encryption_key non trouvé"
+    fi
+fi
+
+if [ -z "$ENCRYPTION_KEY" ]; then
+    echo ""
+    echo -e "${RED}⚠️  ERREUR: Impossible de récupérer automatiquement la clé d'encryption !${NC}"
+    echo ""
+    echo "La clé d'encryption est CRITIQUE pour pouvoir restaurer les credentials."
+    echo "Sans cette clé, tous vos identifiants API seront perdus !"
+    echo ""
+    echo "Pour trouver votre clé, vous pouvez :"
+    echo "  1. Vérifier dans votre configuration sops-nix"
+    echo "  2. Lancer : sudo systemctl restart n8n-envfile.service"
+    echo "  3. Puis : cat /run/n8n/n8n.env | grep ENCRYPTION"
+    echo ""
+    echo -e "${YELLOW}Veuillez saisir la clé manuellement (ou Ctrl+C pour annuler) :${NC}"
     read -r ENCRYPTION_KEY
+
+    if [ -z "$ENCRYPTION_KEY" ]; then
+        echo -e "${RED}Erreur: Aucune clé saisie. Backup annulé.${NC}"
+        exit 1
+    fi
 fi
 
 echo -e "${GREEN}✓${NC} Clé d'encryption récupérée (${#ENCRYPTION_KEY} caractères)"
