@@ -86,8 +86,9 @@ fi
 if [ -z "$ENCRYPTION_KEY" ]; then
     echo "  Tentative 3/4: Depuis le fichier env sur l'hôte (/run/n8n/n8n.env)..."
     # Méthode 3 : Depuis le fichier env sur l'hôte
+    # Le script tourne déjà en root via sudo, donc pas besoin de sudo supplémentaire
     if [ -f /run/n8n/n8n.env ]; then
-        ENCRYPTION_KEY=$(sudo grep "N8N_ENCRYPTION_KEY=" /run/n8n/n8n.env | cut -d= -f2 || echo "")
+        ENCRYPTION_KEY=$(grep "N8N_ENCRYPTION_KEY=" /run/n8n/n8n.env | cut -d= -f2 | tr -d '\n' || echo "")
         [ -n "$ENCRYPTION_KEY" ] && echo "    ✓ Trouvée !"
     else
         echo "    ✗ Fichier /run/n8n/n8n.env non trouvé"
@@ -98,7 +99,7 @@ if [ -z "$ENCRYPTION_KEY" ]; then
     echo "  Tentative 4/4: Depuis les secrets sops-nix..."
     # Méthode 4 : Depuis les secrets sops-nix
     if [ -f /run/secrets/n8n/encryption_key ]; then
-        ENCRYPTION_KEY=$(cat /run/secrets/n8n/encryption_key | tr -d '\n"' | xargs)
+        ENCRYPTION_KEY=$(cat /run/secrets/n8n/encryption_key | tr -d '\n"' | xargs || echo "")
         [ -n "$ENCRYPTION_KEY" ] && echo "    ✓ Trouvée !"
     else
         echo "    ✗ Fichier /run/secrets/n8n/encryption_key non trouvé"
