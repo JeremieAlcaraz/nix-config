@@ -384,10 +384,13 @@ let
         ${pkgs.systemd}/bin/systemctl start podman-n8n.service
         error_exit "Répertoire n8n introuvable: ''${N8N_DATA_PATH}"
     fi
-    
-    if ! ${pkgs.gnutar}/bin/tar czf n8n_data_real.tar.gz -C "$(${pkgs.coreutils}/bin/dirname "$N8N_DATA_PATH")" "$(${pkgs.coreutils}/bin/basename "$N8N_DATA_PATH")" 2>/dev/null; then
+
+    log "   N8N_DATA_PATH = ''${N8N_DATA_PATH}"
+
+    if ! ${pkgs.gnutar}/bin/tar czf n8n_data_real.tar.gz -C "$(${pkgs.coreutils}/bin/dirname "$N8N_DATA_PATH")" "$(${pkgs.coreutils}/bin/basename "$N8N_DATA_PATH")"; then
+        rc=$?
         ${pkgs.systemd}/bin/systemctl start podman-n8n.service
-        error_exit "Échec de l'archivage des fichiers n8n"
+        error_exit "Échec de l'archivage des fichiers n8n (tar exit code ''${rc})"
     fi
 
     DATA_SIZE=$(${pkgs.coreutils}/bin/ls -lh n8n_data_real.tar.gz | ${pkgs.gawk}/bin/awk '{print $5}')
