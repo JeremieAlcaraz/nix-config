@@ -28,29 +28,29 @@ let
     HOSTNAME=$(${pkgs.nettools}/bin/hostname)
     
     # Charger les secrets depuis sops-nix
-    NOTION_API_KEY=$(cat ${config.sops.secrets."notion/api_token".path})
-    NOTION_DATABASE_ID=$(cat ${config.sops.secrets."notion/database_id".path})
-    GMAIL_FROM=$(cat ${config.sops.secrets."gmail/from".path})
-    GMAIL_TO=$(cat ${config.sops.secrets."gmail/to".path})
-    GMAIL_PASSWORD=$(cat ${config.sops.secrets."gmail/app_password".path})
-    SLACK_WEBHOOK=$(cat ${config.sops.secrets."slack/webhook_url".path})
-    GDRIVE_FOLDER_ID=$(cat ${config.sops.secrets."google_drive/folder_id".path})
+    NOTION_API_KEY=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."notion/api_token".path})
+    NOTION_DATABASE_ID=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."notion/database_id".path})
+    GMAIL_FROM=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."gmail/from".path})
+    GMAIL_TO=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."gmail/to".path})
+    GMAIL_PASSWORD=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."gmail/app_password".path})
+    SLACK_WEBHOOK=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."slack/webhook_url".path})
+    GDRIVE_FOLDER_ID=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."google_drive/folder_id".path})
     
     # Variables du backup
-    BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+    BACKUP_DATE=$(${pkgs.coreutils}/bin/date +%Y%m%d_%H%M%S)
     BACKUP_NESTED_DIR="n8n_migration_backup_''${BACKUP_DATE}"
     BACKUP_ARCHIVE="n8n_migration_''${BACKUP_DATE}.tar.gz"
     BACKUP_HASH="''${BACKUP_ARCHIVE}.sha256"
     STATUS="success"
     ERROR_MESSAGE=""
-    START_TIME=$(date +%s)
+    START_TIME=$(${pkgs.coreutils}/bin/date +%s)
     
     # ----------------------------------------------------------------
     # FONCTIONS UTILITAIRES
     # ----------------------------------------------------------------
     
     log() {
-        echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+        echo "[$(${pkgs.coreutils}/bin/date +'%Y-%m-%d %H:%M:%S')] $1" | ${pkgs.coreutils}/bin/tee -a "$LOG_FILE"
     }
     
     error_exit() {
@@ -72,13 +72,13 @@ let
             color="danger"
         fi
         
-        local duration=$(($(date +%s) - START_TIME))
+        local duration=$(($(${pkgs.coreutils}/bin/date +%s) - START_TIME))
         local archive_size="N/A"
         if [ -f "$BACKUP_DIR/$BACKUP_ARCHIVE" ]; then
-            archive_size=$(ls -lh "$BACKUP_DIR/$BACKUP_ARCHIVE" | awk '{print $5}')
+            archive_size=$(${pkgs.coreutils}/bin/ls -lh "$BACKUP_DIR/$BACKUP_ARCHIVE" | ${pkgs.gawk}/bin/awk '{print $5}')
         fi
-        
-        cat > /tmp/slack_payload.json << EOF
+
+        ${pkgs.coreutils}/bin/cat > /tmp/slack_payload.json << EOF
     {
       "attachments": [
         {
@@ -122,14 +122,14 @@ let
             -H "Content-Type: application/json" \
             -d @/tmp/slack_payload.json \
             || log "⚠️ Échec d'envoi à Slack"
-        
-        rm -f /tmp/slack_payload.json
+
+        ${pkgs.coreutils}/bin/rm -f /tmp/slack_payload.json
     }
-    
+
     send_error_email() {
         log "📧 Envoi de l'email d'erreur..."
 
-        cat > /tmp/email_body.txt << EOF
+        ${pkgs.coreutils}/bin/cat > /tmp/email_body.txt << EOF
     Subject: ⚠️ Erreur Backup n8n - $HOSTNAME
     From: ''${GMAIL_FROM}
     To: ''${GMAIL_TO}
@@ -150,14 +150,14 @@ let
     
     <h3>Dernières lignes du log:</h3>
     <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px;">
-    $(tail -20 "$LOG_FILE" 2>/dev/null || echo "Log non disponible")
+    $(${pkgs.coreutils}/bin/tail -20 "$LOG_FILE" 2>/dev/null || echo "Log non disponible")
     </pre>
-    
+
     <p>Veuillez vérifier le serveur.</p>
     </body>
     </html>
     EOF
-    
+
         ${pkgs.curl}/bin/curl -s --url "smtp://smtp.gmail.com:587" \
             --ssl-reqd \
             --mail-from "''${GMAIL_FROM}" \
@@ -165,8 +165,8 @@ let
             --user "''${GMAIL_FROM}:''${GMAIL_PASSWORD}" \
             --upload-file /tmp/email_body.txt \
             || log "⚠️ Échec d'envoi de l'email"
-        
-        rm -f /tmp/email_body.txt
+
+        ${pkgs.coreutils}/bin/rm -f /tmp/email_body.txt
     }
     
     log_to_notion() {
@@ -174,16 +174,16 @@ let
         local gdrive_url="$2"
         local file_size="$3"
         local duration="$4"
-        
+
         log "📝 Enregistrement dans Notion..."
-        
+
         # Mapper le status pour Notion
         local notion_status="completed"
         if [ "$status" = "failed" ]; then
             notion_status="failed"
         fi
-        
-        cat > /tmp/notion_payload.json << EOF
+
+        ${pkgs.coreutils}/bin/cat > /tmp/notion_payload.json << EOF
     {
       "parent": { "database_id": "''${NOTION_DATABASE_ID}" },
       "properties": {
@@ -198,7 +198,7 @@ let
         },
         "date": {
           "date": {
-            "start": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+            "start": "$(${pkgs.coreutils}/bin/date -u +%Y-%m-%dT%H:%M:%S.000Z)"
           }
         },
         "status": {
@@ -246,8 +246,8 @@ let
             -H "Notion-Version: 2022-06-28" \
             -d @/tmp/notion_payload.json \
             || log "⚠️ Échec d'envoi à Notion"
-        
-        rm -f /tmp/notion_payload.json
+
+        ${pkgs.coreutils}/bin/rm -f /tmp/notion_payload.json
     }
     
     send_notifications() {
@@ -257,8 +257,8 @@ let
             send_error_email
             send_slack_notification "failed"
         else
-            local duration=$(($(date +%s) - START_TIME))
-            local archive_size=$(ls -lh "$BACKUP_DIR/$BACKUP_ARCHIVE" | awk '{print $5}')
+            local duration=$(($(${pkgs.coreutils}/bin/date +%s) - START_TIME))
+            local archive_size=$(${pkgs.coreutils}/bin/ls -lh "$BACKUP_DIR/$BACKUP_ARCHIVE" | ${pkgs.gawk}/bin/awk '{print $5}')
             local gdrive_url="https://drive.google.com/drive/folders/''${GDRIVE_FOLDER_ID}"
 
             log_to_notion "success" "''${gdrive_url}" "''${archive_size}" "''${duration}"
@@ -282,55 +282,63 @@ let
     # ÉTAPE 1 : Préparation
     # ----------------------------------------------------------------
     log "[1/14] 📁 Préparation des dossiers..."
-    
+
+    ${pkgs.coreutils}/bin/mkdir -p "$BACKUP_DIR" || error_exit "Impossible de créer le dossier de backup principal"
     cd "$BACKUP_DIR"
-    mkdir -p "''${BACKUP_NESTED_DIR}" || error_exit "Impossible de créer le dossier de backup"
+    ${pkgs.coreutils}/bin/mkdir -p "''${BACKUP_NESTED_DIR}" || error_exit "Impossible de créer le dossier de backup"
     cd "''${BACKUP_NESTED_DIR}"
     
     # ----------------------------------------------------------------
     # ÉTAPE 2 : Variables d'environnement
     # ----------------------------------------------------------------
     log "[2/14] 🔍 Récupération des variables d'environnement..."
-    
-    if ! ${pkgs.podman}/bin/podman inspect n8n --format='{{range .Config.Env}}{{println .}}{{end}}' > n8n_env_vars.txt 2>/dev/null; then
-        error_exit "Impossible de récupérer les variables d'environnement de n8n"
+
+    # Les variables critiques (DB credentials, encryption key) sont dans /run/n8n/n8n.env
+    # Les autres variables sont dans la config du container
+    if [ ! -f /run/n8n/n8n.env ]; then
+        error_exit "Fichier /run/n8n/n8n.env introuvable"
     fi
-    
-    log "✓ Variables d'environnement récupérées"
-    
+
+    # Copier le fichier env pour le backup
+    ${pkgs.coreutils}/bin/cp /run/n8n/n8n.env n8n_env_vars.txt
+
+    # Récupérer aussi les variables du container et les ajouter
+    if ${pkgs.podman}/bin/podman inspect n8n --format='{{range .Config.Env}}{{println .}}{{end}}' >> n8n_env_vars.txt 2>/dev/null; then
+        log "✓ Variables d'environnement récupérées (env file + container)"
+    else
+        log "⚠️ Avertissement: impossible de récupérer les variables du container, utilisation du fichier env uniquement"
+    fi
+
     # ----------------------------------------------------------------
     # ÉTAPE 3 : Clé d'encryption
     # ----------------------------------------------------------------
     log "[3/14] 🔐 Récupération de la clé d'encryption..."
-    
-    if [ -f /run/n8n/n8n.env ]; then
-        ENCRYPTION_KEY=$(cat /run/n8n/n8n.env | grep "N8N_ENCRYPTION_KEY=" | cut -d= -f2)
-    else
-        error_exit "Fichier /run/n8n/n8n.env introuvable"
-    fi
-    
+
+    ENCRYPTION_KEY=$(${pkgs.gnugrep}/bin/grep "N8N_ENCRYPTION_KEY=" /run/n8n/n8n.env | ${pkgs.coreutils}/bin/cut -d= -f2)
+
     if [ -z "$ENCRYPTION_KEY" ]; then
         error_exit "Clé d'encryption vide"
     fi
-    
+
     log "✓ Clé récupérée (''${#ENCRYPTION_KEY} caractères)"
-    
+
     # ----------------------------------------------------------------
     # ÉTAPE 4 : Extraction des infos de config
     # ----------------------------------------------------------------
     log "[4/14] ⚙️  Extraction des informations de configuration..."
-    
-    DB_NAME=$(grep "DB_POSTGRESDB_DATABASE=" n8n_env_vars.txt | cut -d= -f2 || echo "n8n")
-    DB_USER=$(grep "DB_POSTGRESDB_USER=" n8n_env_vars.txt | cut -d= -f2 || echo "n8n")
-    DB_HOST=$(grep "DB_POSTGRESDB_HOST=" n8n_env_vars.txt | cut -d= -f2 || echo "127.0.0.1")
-    DB_PORT=$(grep "DB_POSTGRESDB_PORT=" n8n_env_vars.txt | cut -d= -f2 || echo "5432")
-    DB_PASSWORD=$(grep "DB_POSTGRESDB_PASSWORD=" n8n_env_vars.txt | cut -d= -f2 || echo "")
-    N8N_HOST=$(grep "N8N_HOST=" n8n_env_vars.txt | cut -d= -f2 || echo "localhost")
-    N8N_PROTOCOL=$(grep "N8N_PROTOCOL=" n8n_env_vars.txt | cut -d= -f2 || echo "https")
-    N8N_PORT=$(grep "N8N_PORT=" n8n_env_vars.txt | cut -d= -f2 || echo "5678")
-    WEBHOOK_URL=$(grep "WEBHOOK_URL=" n8n_env_vars.txt | cut -d= -f2 || echo "")
-    TIMEZONE=$(grep "GENERIC_TIMEZONE=" n8n_env_vars.txt | cut -d= -f2 || echo "Europe/Paris")
-    NODE_VERSION=$(grep "NODE_VERSION=" n8n_env_vars.txt | cut -d= -f2 || echo "unknown")
+
+    # Lire depuis le fichier env et le container inspect
+    DB_NAME=$(${pkgs.gnugrep}/bin/grep "DB_POSTGRESDB_DATABASE=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "n8n")
+    DB_USER=$(${pkgs.gnugrep}/bin/grep "DB_POSTGRESDB_USER=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "n8n")
+    DB_HOST=$(${pkgs.gnugrep}/bin/grep "DB_POSTGRESDB_HOST=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "127.0.0.1")
+    DB_PORT=$(${pkgs.gnugrep}/bin/grep "DB_POSTGRESDB_PORT=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "5432")
+    DB_PASSWORD=$(${pkgs.gnugrep}/bin/grep "DB_POSTGRESDB_PASSWORD=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "")
+    N8N_HOST=$(${pkgs.gnugrep}/bin/grep "N8N_HOST=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "localhost")
+    N8N_PROTOCOL=$(${pkgs.gnugrep}/bin/grep "N8N_PROTOCOL=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "https")
+    N8N_PORT=$(${pkgs.gnugrep}/bin/grep "N8N_PORT=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "5678")
+    WEBHOOK_URL=$(${pkgs.gnugrep}/bin/grep "WEBHOOK_URL=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "")
+    TIMEZONE=$(${pkgs.gnugrep}/bin/grep "GENERIC_TIMEZONE=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "Europe/Paris")
+    NODE_VERSION=$(${pkgs.gnugrep}/bin/grep "NODE_VERSION=" n8n_env_vars.txt | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/head -1 || echo "unknown")
     
     log "✓ Configuration extraite"
     
@@ -340,9 +348,9 @@ let
     log "[5/14] ⏸️  Arrêt de n8n..."
     
     ${pkgs.systemd}/bin/systemctl stop podman-n8n.service || error_exit "Impossible d'arrêter n8n"
-    sleep 2
-    
-    if ${pkgs.podman}/bin/podman ps 2>/dev/null | grep -q n8n; then
+    ${pkgs.coreutils}/bin/sleep 2
+
+    if ${pkgs.podman}/bin/podman ps 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q n8n; then
         error_exit "n8n n'est pas complètement arrêté"
     fi
     
@@ -357,8 +365,8 @@ let
         ${pkgs.systemd}/bin/systemctl start podman-n8n.service
         error_exit "Échec du dump PostgreSQL"
     fi
-    
-    DB_SIZE=$(ls -lh n8n_database_backup.sql | awk '{print $5}')
+
+    DB_SIZE=$(${pkgs.coreutils}/bin/ls -lh n8n_database_backup.sql | ${pkgs.gawk}/bin/awk '{print $5}')
     log "✓ Base sauvegardée (''${DB_SIZE})"
     
     # ----------------------------------------------------------------
@@ -377,12 +385,12 @@ let
         error_exit "Répertoire n8n introuvable: ''${N8N_DATA_PATH}"
     fi
     
-    if ! ${pkgs.gnutar}/bin/tar czf n8n_data_real.tar.gz -C "$(dirname "$N8N_DATA_PATH")" "$(basename "$N8N_DATA_PATH")" 2>/dev/null; then
+    if ! ${pkgs.gnutar}/bin/tar czf n8n_data_real.tar.gz -C "$(${pkgs.coreutils}/bin/dirname "$N8N_DATA_PATH")" "$(${pkgs.coreutils}/bin/basename "$N8N_DATA_PATH")" 2>/dev/null; then
         ${pkgs.systemd}/bin/systemctl start podman-n8n.service
         error_exit "Échec de l'archivage des fichiers n8n"
     fi
-    
-    DATA_SIZE=$(ls -lh n8n_data_real.tar.gz | awk '{print $5}')
+
+    DATA_SIZE=$(${pkgs.coreutils}/bin/ls -lh n8n_data_real.tar.gz | ${pkgs.gawk}/bin/awk '{print $5}')
     log "✓ Fichiers sauvegardés (''${DATA_SIZE})"
     
     # ----------------------------------------------------------------
@@ -391,8 +399,8 @@ let
     log "[8/14] 📝 Création du fichier de configuration..."
 
     PG_VERSION=$(${pkgs.sudo}/bin/sudo -u postgres ${pkgs.postgresql}/bin/psql --version 2>/dev/null | ${pkgs.gnugrep}/bin/grep -oP '\d+' | ${pkgs.coreutils}/bin/head -1 || echo "unknown")
-    
-    cat > migration_config.txt << EOF
+
+    ${pkgs.coreutils}/bin/cat > migration_config.txt << EOF
     # ================================================================
     # CONFIGURATION N8N - BACKUP DU ''${BACKUP_DATE}
     # ================================================================
@@ -444,8 +452,8 @@ let
     # ÉTAPE 9 : Création du README
     # ----------------------------------------------------------------
     log "[9/14] 📄 Création du README..."
-    
-    cat > MIGRATION_README.txt << 'EOFREADME'
+
+    ${pkgs.coreutils}/bin/cat > MIGRATION_README.txt << 'EOFREADME'
     # ================================================================
     # README - BACKUP AUTOMATISÉ N8N
     # ================================================================
@@ -503,9 +511,9 @@ let
     log "[10/14] ⚡ Redémarrage de n8n..."
     
     ${pkgs.systemd}/bin/systemctl start podman-n8n.service || error_exit "Impossible de redémarrer n8n"
-    sleep 3
-    
-    if ! ${pkgs.podman}/bin/podman ps 2>/dev/null | grep -q n8n; then
+    ${pkgs.coreutils}/bin/sleep 3
+
+    if ! ${pkgs.podman}/bin/podman ps 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q n8n; then
         error_exit "n8n n'a pas redémarré correctement"
     fi
     
@@ -523,8 +531,8 @@ let
     fi
     
     ${pkgs.coreutils}/bin/sha256sum "''${BACKUP_ARCHIVE}" > "''${BACKUP_HASH}"
-    
-    ARCHIVE_SIZE=$(ls -lh "''${BACKUP_ARCHIVE}" | awk '{print $5}')
+
+    ARCHIVE_SIZE=$(${pkgs.coreutils}/bin/ls -lh "''${BACKUP_ARCHIVE}" | ${pkgs.gawk}/bin/awk '{print $5}')
     log "✓ Archive créée (''${ARCHIVE_SIZE})"
     
     # ----------------------------------------------------------------
@@ -548,11 +556,11 @@ let
     log "[13/14] 🧹 Nettoyage des anciens backups..."
     
     cd "$BACKUP_DIR"
-    
+
     # Nettoyage local
-    ls -t n8n_migration_*.tar.gz 2>/dev/null | tail -n +$((${toString cfg.retentionLocal} + 1)) | xargs -r rm -f
-    ls -t n8n_migration_*.tar.gz.sha256 2>/dev/null | tail -n +$((${toString cfg.retentionLocal} + 1)) | xargs -r rm -f
-    rm -rf n8n_migration_backup_* 2>/dev/null
+    ${pkgs.coreutils}/bin/ls -t n8n_migration_*.tar.gz 2>/dev/null | ${pkgs.coreutils}/bin/tail -n +$((${toString cfg.retentionLocal} + 1)) | ${pkgs.findutils}/bin/xargs -r ${pkgs.coreutils}/bin/rm -f
+    ${pkgs.coreutils}/bin/ls -t n8n_migration_*.tar.gz.sha256 2>/dev/null | ${pkgs.coreutils}/bin/tail -n +$((${toString cfg.retentionLocal} + 1)) | ${pkgs.findutils}/bin/xargs -r ${pkgs.coreutils}/bin/rm -f
+    ${pkgs.coreutils}/bin/rm -rf n8n_migration_backup_* 2>/dev/null
     
     # Nettoyage GDrive
     ${pkgs.rclone}/bin/rclone delete "''${RCLONE_REMOTE}:''${GDRIVE_BACKUP_FOLDER}/" \
@@ -567,7 +575,7 @@ let
     # ----------------------------------------------------------------
     log "[14/14] 📢 Envoi des notifications..."
 
-    END_TIME=$(date +%s)
+    END_TIME=$(${pkgs.coreutils}/bin/date +%s)
     DURATION=$((END_TIME - START_TIME))
     GDRIVE_URL="https://drive.google.com/drive/folders/''${GDRIVE_FOLDER_ID}"
 
