@@ -632,7 +632,13 @@ in {
   config = mkIf cfg.enable {
     # Déclarer les secrets sops (ils existent déjà, on les référence juste)
     sops.secrets = {
-      "google_drive/service_account_json_base64" = {
+      "google_drive/client_id" = {
+        sopsFile = ../../secrets/whitelily.yaml;
+      };
+      "google_drive/client_secret" = {
+        sopsFile = ../../secrets/whitelily.yaml;
+      };
+      "google_drive/token" = {
         sopsFile = ../../secrets/whitelily.yaml;
       };
       "google_drive/folder_id" = {
@@ -658,7 +664,7 @@ in {
       };
     };
     
-    # Créer le fichier rclone.conf depuis le Service Account JSON
+    # Créer le fichier rclone.conf avec OAuth
     systemd.services."n8n-backup-rclone-config" = {
       description = "Générer la config rclone pour n8n-backup";
       wantedBy = [ "multi-user.target" ];
@@ -669,22 +675,24 @@ in {
       };
       script = ''
         mkdir -p /run/n8n-backup
-        
-        # Décoder le JSON base64
-        SA_JSON=$(${pkgs.coreutils}/bin/base64 -d ${config.sops.secrets."google_drive/service_account_json_base64".path})
-        
-        # Récupérer le folder_id
+
+        # Récupérer les credentials OAuth
+        CLIENT_ID=$(cat ${config.sops.secrets."google_drive/client_id".path})
+        CLIENT_SECRET=$(cat ${config.sops.secrets."google_drive/client_secret".path})
+        TOKEN=$(cat ${config.sops.secrets."google_drive/token".path})
         FOLDER_ID=$(cat ${config.sops.secrets."google_drive/folder_id".path})
-        
-        # Créer la config rclone
+
+        # Créer la config rclone avec OAuth
         cat > /run/n8n-backup/rclone.conf << EOF
-        [gdrive]
-        type = drive
-        scope = drive
-        service_account_credentials = $SA_JSON
-        root_folder_id = $FOLDER_ID
-        EOF
-        
+[gdrive]
+type = drive
+scope = drive
+client_id = $CLIENT_ID
+client_secret = $CLIENT_SECRET
+token = $TOKEN
+root_folder_id = $FOLDER_ID
+EOF
+
         chmod 600 /run/n8n-backup/rclone.conf
       '';
     };
