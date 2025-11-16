@@ -4,6 +4,8 @@
   imports = [
     ./hardware-configuration.nix
     ./n8n.nix
+    ./n8n-backup.nix 
+
   ];
 
   boot.loader.systemd-boot.enable = true;
@@ -96,6 +98,47 @@
       # GitHub token pour auto-update workflow
       "github/token" = { owner = "root"; group = "root"; mode = "0400"; };
     };
+  };
+
+   # ========================================================================
+  # CONFIGURATION DU BACKUP AUTOMATISÉ N8N
+  # ========================================================================
+  
+  services.n8n-backup = {
+    enable = true;
+    
+    # Répertoire où créer les backups temporaires (avant upload GDrive)
+    # Changé de /tmp à /var/backups/n8n pour plus de persistance
+    backupDir = "/var/backups/n8n";
+    
+    # Fichier de log du backup
+    logFile = "/var/log/n8n-backup.log";
+    
+    # Chemin dans Google Drive où stocker les backups
+    # Tu dois avoir créé ce dossier dans GDrive : backups/n8n
+    gdrivePath = "backups/n8n";
+    
+    # ID du dossier Google Drive (pour générer le lien cliquable dans Notion)
+    # ⚠️ REMPLACE "1aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT" PAR TON VRAI ID
+    # Tu l'as récupéré dans la Partie 1 avec :
+    # rclone lsf gdrive:backups/n8n --dirs-only --format "pi" --absolute
+    # gdriveFolderId = "1aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT";
+    
+    # Calendrier systemd (format OnCalendar) pour l'exécution du backup
+    # "*-*-* 00:00:00" = tous les jours à minuit
+    # Tu peux changer pour :
+    # - "*-*-* 02:00:00" = tous les jours à 2h du matin
+    # - "*-*-01 00:00:00" = le 1er de chaque mois à minuit
+    # - "Mon *-*-* 00:00:00" = tous les lundis à minuit
+    schedule = "*-*-* 00:00:00";
+    
+    # Nombre de backups à garder localement dans /var/backups/n8n
+    # 7 = garde les 7 backups les plus récents, supprime les plus anciens
+    retentionLocal = 7;
+    
+    # Nombre de jours de backups à garder sur Google Drive
+    # 30 = supprime automatiquement les backups de plus de 30 jours
+    retentionGdrive = 30;
   };
 
   # ZSH activé au niveau système (requis pour users.users.jeremie.shell)
