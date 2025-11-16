@@ -14,17 +14,18 @@ let
   # Script de backup principal
   backupScript = pkgs.writeShellScript "n8n-backup-automated.sh" ''
     set -euo pipefail
-    
+
     # ================================================================
     # SCRIPT DE BACKUP AUTOMATISÉ N8N
     # ================================================================
-    
+
     # Configuration depuis les options du module
     BACKUP_DIR="${cfg.backupDir}"
     RCLONE_CONFIG_PATH="/run/n8n-backup/rclone.conf"
     RCLONE_REMOTE="gdrive"
     GDRIVE_BACKUP_FOLDER="${cfg.gdrivePath}"
     LOG_FILE="${cfg.logFile}"
+    HOSTNAME=$(${pkgs.nettools}/bin/hostname)
     
     # Charger les secrets depuis sops-nix
     NOTION_API_KEY=$(cat ${config.sops.secrets."notion/api_token".path})
@@ -87,7 +88,7 @@ let
               "type": "header",
               "text": {
                 "type": "plain_text",
-                "text": "$emoji Backup n8n - $(hostname)"
+                "text": "$emoji Backup n8n - $HOSTNAME"
               }
             },
             {
@@ -127,18 +128,18 @@ let
     
     send_error_email() {
         log "📧 Envoi de l'email d'erreur..."
-        
+
         cat > /tmp/email_body.txt << EOF
-    Subject: ⚠️ Erreur Backup n8n - $(hostname)
+    Subject: ⚠️ Erreur Backup n8n - $HOSTNAME
     From: ''${GMAIL_FROM}
     To: ''${GMAIL_TO}
     Content-Type: text/html; charset=UTF-8
-    
+
     <html>
     <body>
     <h2>⚠️ Erreur lors du backup n8n</h2>
-    
-    <p><strong>Serveur:</strong> $(hostname)</p>
+
+    <p><strong>Serveur:</strong> $HOSTNAME</p>
     <p><strong>Date:</strong> $(date +'%Y-%m-%d %H:%M:%S')</p>
     <p><strong>Status:</strong> ❌ ÉCHEC</p>
     
@@ -209,7 +210,7 @@ let
           "rich_text": [
             {
               "text": {
-                "content": "$(hostname)"
+                "content": "$HOSTNAME"
               }
             }
           ]
@@ -274,7 +275,7 @@ let
     log "╚════════════════════════════════════════╝"
     log ""
     log "📅 Date: ''${BACKUP_DATE}"
-    log "🖥️  Serveur: $(hostname)"
+    log "🖥️  Serveur: $HOSTNAME"
     log ""
     
     # ----------------------------------------------------------------
@@ -351,8 +352,8 @@ let
     # ÉTAPE 6 : Backup PostgreSQL
     # ----------------------------------------------------------------
     log "[6/14] 💾 Backup de la base de données PostgreSQL..."
-    
-    if ! sudo -u postgres ${pkgs.postgresql}/bin/pg_dump "$DB_NAME" > n8n_database_backup.sql 2>/dev/null; then
+
+    if ! ${pkgs.sudo}/bin/sudo -u postgres ${pkgs.postgresql}/bin/pg_dump "$DB_NAME" > n8n_database_backup.sql 2>/dev/null; then
         ${pkgs.systemd}/bin/systemctl start podman-n8n.service
         error_exit "Échec du dump PostgreSQL"
     fi
@@ -388,8 +389,8 @@ let
     # ÉTAPE 8 : Création du fichier de configuration
     # ----------------------------------------------------------------
     log "[8/14] 📝 Création du fichier de configuration..."
-    
-    PG_VERSION=$(sudo -u postgres ${pkgs.postgresql}/bin/psql --version 2>/dev/null | grep -oP '\d+' | head -1 || echo "unknown")
+
+    PG_VERSION=$(${pkgs.sudo}/bin/sudo -u postgres ${pkgs.postgresql}/bin/psql --version 2>/dev/null | ${pkgs.gnugrep}/bin/grep -oP '\d+' | ${pkgs.coreutils}/bin/head -1 || echo "unknown")
     
     cat > migration_config.txt << EOF
     # ================================================================
@@ -400,9 +401,9 @@ let
     #            Sauvegardez ce fichier dans un gestionnaire de
     #            mots de passe sécurisé !
     # ================================================================
-    
+
     Date backup: ''${BACKUP_DATE}
-    Hostname source: $(hostname)
+    Hostname source: $HOSTNAME
     
     # ----------------------------------------------------------------
     # Base de données PostgreSQL
