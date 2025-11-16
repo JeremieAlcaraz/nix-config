@@ -715,7 +715,7 @@ EOF
       after = [ "network-online.target" "podman-n8n.service" "postgresql.service" "n8n-backup-rclone-config.service" ];
       wants = [ "network-online.target" ];
       requires = [ "n8n-backup-rclone-config.service" ];
-      
+
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${backupScript}";
@@ -724,6 +724,10 @@ EOF
         StandardError = "append:${cfg.logFile}";
         TimeoutStartSec = 1800; # 30 minutes max
       };
+
+      path = with pkgs; [
+        gzip
+      ];
     };
     
     # Timer systemd
