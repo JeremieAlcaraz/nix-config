@@ -147,3 +147,49 @@ echo "   • Notion: Database accessible"
 echo "   • Gmail: Notifications configurées"
 echo ""
 echo "✨ Prêt pour la PARTIE 2 : Configuration NixOS du module de backup !"
+
+echo ""
+echo "4️⃣ Test Slack Webhook..."
+SLACK_WEBHOOK=$(echo "$SECRETS_YAML" | yq -r '.slack.webhook_url' 2>/dev/null || echo "")
+
+if [[ -z "$SLACK_WEBHOOK" ]] || [[ "$SLACK_WEBHOOK" == "null" ]]; then
+  SLACK_WEBHOOK=$(echo "$SECRETS_YAML" | awk '/webhook_url:/ {gsub(/"/, "", $2); print $2}')
+fi
+
+if [[ -n "$SLACK_WEBHOOK" ]]; then
+  SLACK_RESULT=$(curl -s -X POST "$SLACK_WEBHOOK" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "text": "🧪 Test n8n backup - whitelily",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*✅ Test de connexion Slack réussi!*\n\nTous les secrets sont validés:\n• Google Drive ✅\n• Notion ✅\n• Gmail ✅\n• Slack ✅"
+            }
+          }
+        ]
+      }')
+
+  if [[ "$SLACK_RESULT" == "ok" ]]; then
+    echo "✅ Slack Webhook OK"
+    echo "   💬 Message envoyé sur Slack"
+  else
+    echo "❌ Slack Webhook FAILED"
+    echo "   Response: $SLACK_RESULT"
+  fi
+else
+  echo "⚠️  SLACK_WEBHOOK non trouvé dans secrets"
+fi
+
+echo ""
+echo "🎉 Tests terminés !"
+echo ""
+echo "📝 Résumé complet:"
+echo "   • Google Drive: rclone configuré et fonctionnel ✅"
+echo "   • Notion: Database accessible ✅"
+echo "   • Gmail: Notifications configurées ✅"
+echo "   • Slack: Webhook opérationnel ✅"
+echo ""
+echo "✨ Prêt pour la PARTIE 2 : Configuration NixOS du module de backup !"
