@@ -33,6 +33,7 @@ let
     GMAIL_TO=$(cat ${config.sops.secrets."gmail/to".path})
     GMAIL_PASSWORD=$(cat ${config.sops.secrets."gmail/app_password".path})
     SLACK_WEBHOOK=$(cat ${config.sops.secrets."slack/webhook_url".path})
+    GDRIVE_FOLDER_ID=$(cat ${config.sops.secrets."google_drive/folder_id".path})
     
     # Variables du backup
     BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
@@ -257,8 +258,8 @@ let
         else
             local duration=$(($(date +%s) - START_TIME))
             local archive_size=$(ls -lh "$BACKUP_DIR/$BACKUP_ARCHIVE" | awk '{print $5}')
-            local gdrive_url="https://drive.google.com/drive/folders/${cfg.gdriveFolderId}"
-            
+            local gdrive_url="https://drive.google.com/drive/folders/''${GDRIVE_FOLDER_ID}"
+
             log_to_notion "success" "''${gdrive_url}" "''${archive_size}" "''${duration}"
             send_slack_notification "success"
         fi
@@ -564,11 +565,11 @@ let
     # ÉTAPE 14 : Notifications et finalisation
     # ----------------------------------------------------------------
     log "[14/14] 📢 Envoi des notifications..."
-    
+
     END_TIME=$(date +%s)
     DURATION=$((END_TIME - START_TIME))
-    GDRIVE_URL="https://drive.google.com/drive/folders/${cfg.gdriveFolderId}"
-    
+    GDRIVE_URL="https://drive.google.com/drive/folders/''${GDRIVE_FOLDER_ID}"
+
     send_notifications "success"
     
     log ""
@@ -608,12 +609,7 @@ in {
       default = "backups/n8n";
       description = "Chemin dans Google Drive où stocker les backups";
     };
-    
-    gdriveFolderId = mkOption {
-      type = types.str;
-      description = "ID du dossier Google Drive (pour générer le lien)";
-    };
-    
+
     schedule = mkOption {
       type = types.str;
       default = "*-*-* 00:00:00";

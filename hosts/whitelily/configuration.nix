@@ -117,13 +117,10 @@
     # Chemin dans Google Drive où stocker les backups
     # Tu dois avoir créé ce dossier dans GDrive : backups/n8n
     gdrivePath = "backups/n8n";
-    
-    # ID du dossier Google Drive (pour générer le lien cliquable dans Notion)
-    # ⚠️ REMPLACE "1aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT" PAR TON VRAI ID
-    # Tu l'as récupéré dans la Partie 1 avec :
-    # rclone lsf gdrive:backups/n8n --dirs-only --format "pi" --absolute
-    # gdriveFolderId = "1aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT";
-    
+
+    # Note: L'ID du dossier Google Drive est lu depuis les secrets sops
+    # (google_drive/folder_id) et n'a plus besoin d'être configuré ici
+
     # Calendrier systemd (format OnCalendar) pour l'exécution du backup
     # "*-*-* 00:00:00" = tous les jours à minuit
     # Tu peux changer pour :
