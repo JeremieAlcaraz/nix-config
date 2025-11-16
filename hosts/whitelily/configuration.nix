@@ -121,6 +121,7 @@
     # Note: L'ID du dossier Google Drive est lu depuis les secrets sops
     # (google_drive/folder_id) et n'a plus besoin d'être configuré ici
 
+
     # Calendrier systemd (format OnCalendar) pour l'exécution du backup
     # "*-*-* 00:00:00" = tous les jours à minuit
     # Tu peux changer pour :
