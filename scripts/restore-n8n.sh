@@ -23,6 +23,9 @@ DB_NAME="n8n"
 DB_USER="n8n"
 SERVICE_NAME="podman-n8n"
 
+# Indiquer à sops où est la clé age du système sur Whitelily
+export SOPS_AGE_KEY_FILE="/var/lib/sops-nix/key.txt"
+
 log() { echo -e "${BLUE}[RESTORE]${NC} $1"; }
 success() { echo -e "${GREEN}✅ $1${NC}"; }
 error() { echo -e "${RED}❌ $1${NC}"; exit 1; }
@@ -31,6 +34,10 @@ warn() { echo -e "${YELLOW}⚠️  $1${NC}"; }
 # 1. Vérifications initiales
 if [[ $EUID -ne 0 ]]; then
     error "Ce script doit être exécuté en tant que root (sudo)"
+fi
+
+if [[ ! -f "$SOPS_AGE_KEY_FILE" ]]; then
+    error "Clé Age introuvable à l'emplacement : $SOPS_AGE_KEY_FILE"
 fi
 
 if [[ ! -f "$SECRETS_FILE" ]]; then
@@ -54,7 +61,7 @@ SECRETS_CONTENT=$(sops -d "$SECRETS_FILE")
 CLIENT_ID=$(echo "$SECRETS_CONTENT" | grep "client_id:" | head -1 | sed 's/.*: "\(.*\)"/\1/' | tr -d '"')
 CLIENT_SECRET=$(echo "$SECRETS_CONTENT" | grep "client_secret:" | head -1 | sed 's/.*: "\(.*\)"/\1/' | tr -d '"')
 # Le token est souvent sur plusieurs lignes ou complexe, on prend la ligne brute
-TOKEN=$(echo "$SECRETS_CONTENT" | grep "token:" | head -1 | sed "s/.*token: '\(.*\)'/\1/")
+TOKEN=$(echo "$SECRETS_CONTENT" | grep "token:" | head -1 | sed "s/.*token: '\(.*\)'/\1/") 
 if [[ -z "$TOKEN" ]]; then
      # Tentative format double quotes
      TOKEN=$(echo "$SECRETS_CONTENT" | grep "token:" | head -1 | sed 's/.*token: "\(.*\)"/\1/')
@@ -62,7 +69,7 @@ fi
 FOLDER_ID=$(echo "$SECRETS_CONTENT" | grep "folder_id:" | head -1 | sed 's/.*: "\(.*\)"/\1/' | tr -d '"')
 
 # Création config rclone
-cat > "$TEMP_DIR/rclone.conf" <<'EOF_RCLONE'
+cat > "$TEMP_DIR/rclone.conf" <<EOF
 [gdrive]
 type = drive
 scope = drive
@@ -70,7 +77,7 @@ client_id = $CLIENT_ID
 client_secret = $CLIENT_SECRET
 token = $TOKEN
 root_folder_id = $FOLDER_ID
-EOF_RCLONE
+EOF
 
 # 3. Listing et Sélection (FZF)
 log "☁️  Récupération de la liste des backups..."
@@ -160,9 +167,6 @@ rm -rf "${RESTORE_PATH:?}/"*
 rm -rf "${RESTORE_PATH:?}/".* 2>/dev/null || true
 
 # Extraction des données
-# L'archive n8n_data_real.tar.gz contient le dossier "n8n" ou directement les fichiers selon comment tar a été fait.
-# Dans ton n8n-backup.nix : tar czf n8n_data_real.tar.gz -C "$(dirname $N8N_DATA_PATH)" "$(basename $N8N_DATA_PATH)"
-# Donc elle contient un dossier 'n8n' à la racine.
 tar -xzf "$EXTRACTED_DIR/n8n_data_real.tar.gz" -C "/var/lib"
 
 # 9. Permissions
