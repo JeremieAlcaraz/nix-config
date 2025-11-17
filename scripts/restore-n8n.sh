@@ -4,8 +4,8 @@ set -euo pipefail
 # ==============================================================================
 # 🔄 restore-n8n.sh - Script de restauration interactif pour Whitelily
 # ==============================================================================
-# Prérequis : sops, rclone, fzf, jq, postgresql, podman
-# Usage : sudo nix-shell -p sops rclone fzf jq --run ./scripts/restore-n8n.sh
+# Prérequis : sops, rclone, fzf, jq, yq-go, postgresql, podman
+# Usage : sudo nix-shell -p sops rclone fzf jq yq-go --run ./scripts/restore-n8n.sh
 # ==============================================================================
 
 # Couleurs
@@ -24,7 +24,6 @@ DB_USER="n8n"
 SERVICE_NAME="podman-n8n"
 
 # Indiquer à sops où est la clé age du système sur Whitelily
-# Indispensable car root ne l'a pas dans son $HOME par défaut
 export SOPS_AGE_KEY_FILE="/var/lib/sops-nix/key.txt"
 
 log() { echo -e "${BLUE}[RESTORE]${NC} $1"; }
@@ -57,17 +56,17 @@ log "🔓 Déchiffrement des accès Google Drive..."
 mkdir -p "$TEMP_DIR"
 trap "rm -rf $TEMP_DIR" EXIT
 
-# Extraction des secrets (fallback awk si yq manquant)
+# Extraction propre avec yq (nécessite le package yq-go)
 SECRETS_CONTENT=$(sops -d "$SECRETS_FILE")
-CLIENT_ID=$(echo "$SECRETS_CONTENT" | grep "client_id:" | head -1 | sed 's/.*: "\(.*\)"/\1/' | tr -d '"')
-CLIENT_SECRET=$(echo "$SECRETS_CONTENT" | grep "client_secret:" | head -1 | sed 's/.*: "\(.*\)"/\1/' | tr -d '"')
-# Le token est souvent sur plusieurs lignes ou complexe, on prend la ligne brute
-TOKEN=$(echo "$SECRETS_CONTENT" | grep "token:" | head -1 | sed "s/.*token: '\(.*\)'/\1/") 
-if [[ -z "$TOKEN" ]]; then
-     # Tentative format double quotes
-     TOKEN=$(echo "$SECRETS_CONTENT" | grep "token:" | head -1 | sed 's/.*token: "\(.*\)"/\1/')
+CLIENT_ID=$(echo "$SECRETS_CONTENT" | yq '.google_drive.client_id // ""' -r)
+CLIENT_SECRET=$(echo "$SECRETS_CONTENT" | yq '.google_drive.client_secret // ""' -r)
+TOKEN=$(echo "$SECRETS_CONTENT" | yq '.google_drive.token // ""' -r)
+FOLDER_ID=$(echo "$SECRETS_CONTENT" | yq '.google_drive.folder_id // ""' -r)
+
+# Vérification que les secrets sont bien là
+if [[ -z "$CLIENT_ID" ]] || [[ -z "$TOKEN" ]]; then
+    error "Impossible d'extraire les identifiants Google Drive (client_id ou token vide)."
 fi
-FOLDER_ID=$(echo "$SECRETS_CONTENT" | grep "folder_id:" | head -1 | sed 's/.*: "\(.*\)"/\1/' | tr -d '"')
 
 # Création config rclone
 cat > "$TEMP_DIR/rclone.conf" <<EOF
