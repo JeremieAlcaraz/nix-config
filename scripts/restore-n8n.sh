@@ -24,6 +24,7 @@ DB_USER="n8n"
 SERVICE_NAME="podman-n8n"
 
 # Indiquer à sops où est la clé age du système sur Whitelily
+# Indispensable car root ne l'a pas dans son $HOME par défaut
 export SOPS_AGE_KEY_FILE="/var/lib/sops-nix/key.txt"
 
 log() { echo -e "${BLUE}[RESTORE]${NC} $1"; }
@@ -82,20 +83,20 @@ EOF
 # 3. Listing et Sélection (FZF)
 log "☁️  Récupération de la liste des backups..."
 
-# Liste les 5 derniers fichiers .tar.gz, triés par date (plus récent en haut)
-# format: path, size, modification time
+# On récupère "Temps;Nom" (--format "tp"), on trie du plus récent au plus vieux, et on garde le nom
+# Utilisation de 'sort' car 'rclone lsf' ne supporte pas le tri natif
 SELECTED_FILE=$(rclone --config "$TEMP_DIR/rclone.conf" lsf gdrive:backups/n8n \
     --files-only \
     --include "*.tar.gz" \
-    --sort-by t \
-    --format "pt" \
+    --format "tp" \
+    | sort -r \
     | head -n 5 \
+    | cut -d';' -f2 \
     | fzf --header="🔽 SÉLECTIONNEZ LE BACKUP À RESTAURER (Enter)" \
           --prompt="Backup > " \
           --height=40% \
           --layout=reverse \
-          --border \
-    | awk '{print $1}')
+          --border)
 
 if [[ -z "$SELECTED_FILE" ]]; then
     error "Aucun backup sélectionné. Annulation."
