@@ -41,23 +41,28 @@ let
 
     # === APPEL API POUR CRÉER UNE CLÉ D'AUTHENTIFICATION ===
     log "🛠️  Création d'une auth key Tailscale via l'API (avec tags obligatoires)"
+    AUTH_PAYLOAD=$(cat <<'EOF'
+{
+  "capabilities": {
+    "devices": {
+      "create": {
+        "reusable": false,
+        "ephemeral": false,
+        "tags": ["tag:server", "tag:nixos"],
+        "preauthorized": true
+      }
+    }
+  },
+  "expirySeconds": 3600
+}
+EOF
+    )
+
     AUTH_RESPONSE=$(${pkgs.curl}/bin/curl -sf --max-time 30 \
       -H "Authorization: Bearer $ACCESS_TOKEN" \
       -H "Content-Type: application/json" \
       -X POST "https://api.tailscale.com/api/v2/tailnet/$TAILNET/keys" \
-      -d '{
-        "capabilities": {
-          "devices": {
-            "create": {
-              "reusable": false,      # Clé à usage unique (plus sécurisé)
-              "ephemeral": false,     # La machine reste dans le réseau après déconnexion
-              "tags": ["tag:server", "tag:nixos"],  # Tags requis pour tailnet-owned keys
-              "preauthorized": true   # Pas besoin d'approuver manuellement dans l'interface
-            }
-          }
-        },
-        "expirySeconds": 3600  # La clé expire après 1h (suffisant pour s'authentifier)
-      }')
+      -d "$AUTH_PAYLOAD")
 
     AUTH_KEY=$(printf '%s' "$AUTH_RESPONSE" | ${pkgs.jq}/bin/jq -r '.key // empty')
 
