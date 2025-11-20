@@ -69,5 +69,8 @@
     enable = osConfig.networking.hostName == "mimosa";
     userName = "JeremieAlcaraz";
     userEmail = "hello@jeremiealcaraz.com";
+    extraConfig = {
+      safe.directory = "/etc/nixos";
+    };
   };
 }
