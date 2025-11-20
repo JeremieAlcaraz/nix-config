@@ -130,8 +130,8 @@ in
   # sops-nix les déchiffre automatiquement au boot et les rend accessibles
   # sous /run/secrets/<nom-du-secret>
   sops.secrets = {
-    tailscale_oauth_client_id.sopsFile = ../../secrets/common.yaml;
-    tailscale_oauth_client_secret.sopsFile = ../../secrets/common.yaml;
-    tailscale_tailnet.sopsFile = ../../secrets/common.yaml;  # ← AJOUT
+    tailscale_oauth_client_id.sopsFile = ../secrets/common.yaml;
+    tailscale_oauth_client_secret.sopsFile = ../secrets/common.yaml;
+    tailscale_tailnet.sopsFile = ../secrets/common.yaml;  # ← AJOUT
   };
 })
