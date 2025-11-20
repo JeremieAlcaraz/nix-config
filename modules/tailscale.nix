@@ -48,7 +48,7 @@ let
       "create": {
         "reusable": false,
         "ephemeral": false,
-        "tags": ["newmachine"],
+        "tags": ["tag:server", "tag:nixos"],
         "preauthorized": true
       }
     }
@@ -58,17 +58,26 @@ let
 EOF
     )
 
-    AUTH_RESPONSE=$(${pkgs.curl}/bin/curl -sf --max-time 30 \
+    # Capturer à la fois le body ET le code HTTP
+    AUTH_RESPONSE=$(${pkgs.curl}/bin/curl -s -w "\n%{http_code}" --max-time 30 \
       -H "Authorization: Bearer $ACCESS_TOKEN" \
       -H "Content-Type: application/json" \
       -X POST "https://api.tailscale.com/api/v2/tailnet/$TAILNET/keys" \
       -d "$AUTH_PAYLOAD")
 
-    AUTH_KEY=$(printf '%s' "$AUTH_RESPONSE" | ${pkgs.jq}/bin/jq -r '.key // empty')
+    HTTP_CODE=$(printf '%s' "$AUTH_RESPONSE" | tail -n1)
+    BODY=$(printf '%s' "$AUTH_RESPONSE" | head -n-1)
+
+    if [ "$HTTP_CODE" != "200" ]; then
+      log "❌ Erreur API (HTTP $HTTP_CODE): $BODY" >&2
+      exit 22
+    fi
+
+    AUTH_KEY=$(printf '%s' "$BODY" | ${pkgs.jq}/bin/jq -r '.key // empty')
 
     # === VÉRIFICATION : La clé a-t-elle été générée ? ===
     if [ -z "$AUTH_KEY" ]; then
-      log "❌ Erreur: impossible de générer l'auth key. Réponse brute : $AUTH_RESPONSE" >&2
+      log "❌ Erreur: impossible de générer l'auth key. Réponse brute : $BODY" >&2
       exit 1
     fi
 
