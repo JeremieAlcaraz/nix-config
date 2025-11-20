@@ -48,7 +48,7 @@ let
       "create": {
         "reusable": false,
         "ephemeral": false,
-        "tags": ["tag:server", "tag:nixos"],
+        "tags": ["newmachine"],
         "preauthorized": true
       }
     }
