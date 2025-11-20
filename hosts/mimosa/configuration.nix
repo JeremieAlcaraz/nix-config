@@ -111,8 +111,8 @@
   users.users.jeremie.shell = pkgs.fish;
 
   # Paquets système essentiels
+  # Note: git est maintenant géré par modules/git.nix (importé via base.nix)
   environment.systemPackages = with pkgs; [
-    git
     curl
     wget
   ];
