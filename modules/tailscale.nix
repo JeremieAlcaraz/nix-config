@@ -86,11 +86,11 @@ EOF
     # === CONNEXION À TAILSCALE ===
     # --auth-key : utilise la clé qu'on vient de générer
     # --hostname : définit le nom de la machine dans le réseau Tailscale
-    # --accept-routes : accepte les routes du réseau (subnet routing)
+    # --accept-dns=false : n'accepte pas le DNS Tailscale pour éviter les conflits
     ${pkgs.tailscale}/bin/tailscale up \
       --auth-key="$AUTH_KEY" \
       --hostname="${config.networking.hostName}" \
-      --accept-routes
+      --accept-dns=false
 
     log "🎉 Machine ${config.networking.hostName} connectée à Tailscale !"
   '';

@@ -102,9 +102,9 @@
   # Tailscale
   services.tailscale = {
     enable = true;
-    useRoutingFeatures = "client";
-    # Port pour SSH via Tailscale (par défaut Tailscale gère SSH)
-    openFirewall = true;
+    useRoutingFeatures = "none";
+    # openFirewall géré par networking.firewall au-dessus
+    openFirewall = false;
   };
 
   # Fish activé au niveau système (requis pour users.users.jeremie.shell)
