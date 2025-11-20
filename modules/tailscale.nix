@@ -84,10 +84,12 @@ EOF
     log "✅ Auth key générée, connexion à Tailscale..."
 
     # === CONNEXION À TAILSCALE ===
+    # --reset : réinitialise tous les paramètres à leurs valeurs par défaut
     # --auth-key : utilise la clé qu'on vient de générer
     # --hostname : définit le nom de la machine dans le réseau Tailscale
     # --accept-dns=false : n'accepte pas le DNS Tailscale pour éviter les conflits
     ${pkgs.tailscale}/bin/tailscale up \
+      --reset \
       --auth-key="$AUTH_KEY" \
       --hostname="${config.networking.hostName}" \
       --accept-dns=false
