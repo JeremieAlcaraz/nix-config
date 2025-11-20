@@ -46,14 +46,15 @@ let
   "capabilities": {
     "devices": {
       "create": {
-        "reusable": false,
+        "reusable": true,
         "ephemeral": false,
-        "tags": ["tag:server", "tag:nixos"],
-        "preauthorized": true
+        "tags": [
+          "tag:newmachine"
+        ]
+
       }
     }
-  },
-  "expirySeconds": 3600
+  }
 }
 EOF
     )
