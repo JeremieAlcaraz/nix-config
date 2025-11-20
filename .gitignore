@@ -1,1 +1,12 @@
 .claude/settings.local.json
+# 1. On ignore tous les fichiers sensibles par défaut
+secrets/*
+*.yaml
+*.env
+
+# 2. On autorise explicitement les fichiers chiffrés SOPS qu'on veut versionner
+!secrets/*.yaml
+!secrets/*.json
+!.sops.yaml
+# 3. On autorise les fichiers d'exemple (documentation)
+!*.example
