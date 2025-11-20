@@ -51,6 +51,7 @@ let
         "tags": [
           "tag:newmachine"
         ]
+
       }
     }
   }
