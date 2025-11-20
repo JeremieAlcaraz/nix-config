@@ -1,7 +1,7 @@
 ({ config, pkgs, lib, ... }:
 let
   # Script qui gère l'authentification OAuth et la connexion à Tailscale
-  tailscaleAuthScript = pkgs.writeShellScript "tailscale-oauth-join" ''
+  tailscaleAuthScript = pkgs.writeShellScript "tailscale" ''
     set -euo pipefail  # Arrête le script dès la première erreur
 
     # === RÉCUPÉRATION DES SECRETS ===
@@ -70,7 +70,7 @@ in
 {
   # === SERVICE SYSTEMD ===
   # Ce service s'exécute automatiquement au démarrage de la machine
-  systemd.services.tailscale-oauth-join = {
+  systemd.services.tailscale = {
     description = "Tailscale OAuth Auto-Join";
     
     # === DÉPENDANCES : Quand démarrer le service ? ===
