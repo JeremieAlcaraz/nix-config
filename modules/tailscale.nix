@@ -51,7 +51,6 @@ let
         "tags": [
           "tag:newmachine"
         ]
-
       }
     }
   }
@@ -87,12 +86,10 @@ EOF
     # === CONNEXION À TAILSCALE ===
     # --auth-key : utilise la clé qu'on vient de générer
     # --hostname : définit le nom de la machine dans le réseau Tailscale
-    # --ssh : active le SSH via Tailscale (pratique pour l'admin à distance)
     # --accept-routes : accepte les routes du réseau (subnet routing)
     ${pkgs.tailscale}/bin/tailscale up \
       --auth-key="$AUTH_KEY" \
       --hostname="${config.networking.hostName}" \
-      --ssh \
       --accept-routes
 
     log "🎉 Machine ${config.networking.hostName} connectée à Tailscale !"
