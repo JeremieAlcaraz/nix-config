@@ -4,30 +4,45 @@ let
   tailscaleAuthScript = pkgs.writeShellScript "tailscale" ''
     set -euo pipefail  # Arrête le script dès la première erreur
 
+    log() {
+      printf '%s\n' "$@"
+    }
+
     # === RÉCUPÉRATION DES SECRETS ===
-    # Tous les secrets (credentials OAuth + tailnet) sont stockés dans sops
+    log "📦 Lecture des secrets SOPS (client_id, client_secret, tailnet)"
     CLIENT_ID=$(cat ${config.sops.secrets.tailscale_oauth_client_id.path})
     CLIENT_SECRET=$(cat ${config.sops.secrets.tailscale_oauth_client_secret.path})
     TAILNET=$(cat ${config.sops.secrets.tailscale_tailnet.path})
 
     # === VÉRIFICATION : Est-on déjà connecté ? ===
-    # Évite de régénérer une clé si Tailscale fonctionne déjà
-    # `tailscale status --json` retourne l'état de la connexion
-    # `jq -e '.BackendState == "Running"'` vérifie si le statut est "Running"
+    log "🔍 Vérification de l'état actuel de Tailscale"
     if ${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null | ${pkgs.jq}/bin/jq -e '.BackendState == "Running"' > /dev/null; then
-      echo "✅ Déjà connecté à Tailscale"
+      log "✅ Déjà connecté à Tailscale"
       exit 0  # On quitte proprement, pas d'erreur
     fi
 
-    echo "🔑 Génération d'une auth key Tailscale via OAuth..."
+    # === RÉCUPÉRATION D'UN ACCESS TOKEN OAUTH ===
+    log "🔑 Demande d'un access token OAuth (grant_type=client_credentials)"
+    OAUTH_RESPONSE=$(${pkgs.curl}/bin/curl -sf --max-time 30 \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -X POST "https://api.tailscale.com/api/v2/oauth/token" \
+      -d "client_id=$CLIENT_ID" \
+      -d "client_secret=$CLIENT_SECRET" \
+      -d "grant_type=client_credentials")
+
+    ACCESS_TOKEN=$(printf '%s' "$OAUTH_RESPONSE" | ${pkgs.jq}/bin/jq -r '.access_token // empty')
+
+    if [ -z "$ACCESS_TOKEN" ]; then
+      log "❌ Échec lors de la récupération de l'access token. Réponse brute : $OAUTH_RESPONSE" >&2
+      exit 1
+    fi
+
+    log "✅ Access token obtenu"
 
     # === APPEL API POUR CRÉER UNE CLÉ D'AUTHENTIFICATION ===
-    # -sf : silent + fail (pas de barre de progression, erreur si HTTP != 2xx)
-    # --max-time 30 : timeout après 30 secondes (évite de bloquer indéfiniment)
-    # -u "$CLIENT_ID:$CLIENT_SECRET" : authentification Basic Auth avec OAuth credentials
-    # La clé générée est extraite avec jq (champ .key de la réponse JSON)
-    AUTH_KEY=$(${pkgs.curl}/bin/curl -sf --max-time 30 \
-      -u "$CLIENT_ID:$CLIENT_SECRET" \
+    log "🛠️  Création d'une auth key Tailscale via l'API (avec tags obligatoires)"
+    AUTH_RESPONSE=$(${pkgs.curl}/bin/curl -sf --max-time 30 \
+      -H "Authorization: Bearer $ACCESS_TOKEN" \
       -H "Content-Type: application/json" \
       -X POST "https://api.tailscale.com/api/v2/tailnet/$TAILNET/keys" \
       -d '{
@@ -36,22 +51,23 @@ let
             "create": {
               "reusable": false,      # Clé à usage unique (plus sécurisé)
               "ephemeral": false,     # La machine reste dans le réseau après déconnexion
-              "tags": ["tag:server", "tag:nixos"],  # Tags pour organiser tes machines
+              "tags": ["tag:server", "tag:nixos"],  # Tags requis pour tailnet-owned keys
               "preauthorized": true   # Pas besoin d'approuver manuellement dans l'interface
             }
           }
         },
         "expirySeconds": 3600  # La clé expire après 1h (suffisant pour s'authentifier)
-      }' | ${pkgs.jq}/bin/jq -r '.key')
+      }')
+
+    AUTH_KEY=$(printf '%s' "$AUTH_RESPONSE" | ${pkgs.jq}/bin/jq -r '.key // empty')
 
     # === VÉRIFICATION : La clé a-t-elle été générée ? ===
-    # Si l'API échoue, AUTH_KEY sera vide ou "null"
-    if [ -z "$AUTH_KEY" ] || [ "$AUTH_KEY" = "null" ]; then
-      echo "❌ Erreur: impossible de générer l'auth key" >&2  # >&2 = erreur standard
+    if [ -z "$AUTH_KEY" ]; then
+      log "❌ Erreur: impossible de générer l'auth key. Réponse brute : $AUTH_RESPONSE" >&2
       exit 1
     fi
 
-    echo "✅ Auth key générée, connexion à Tailscale..."
+    log "✅ Auth key générée, connexion à Tailscale..."
 
     # === CONNEXION À TAILSCALE ===
     # --auth-key : utilise la clé qu'on vient de générer
@@ -64,7 +80,7 @@ let
       --ssh \
       --accept-routes
 
-    echo "🎉 Machine ${config.networking.hostName} connectée à Tailscale !"
+    log "🎉 Machine ${config.networking.hostName} connectée à Tailscale !"
   '';
 in
 {
