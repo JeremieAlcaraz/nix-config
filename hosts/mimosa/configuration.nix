@@ -1,7 +1,11 @@
 { config, pkgs, ... }:
 
 {
-  imports = [ ./hardware-configuration.nix ];
+ imports = [
+    ./hardware-configuration.nix
+    ../../modules/tailscale.nix  # <--- AJOUTE ÇA
+    # ... tes autres imports
+  ];
 
   # Boot
   boot.loader.systemd-boot.enable = true;
