@@ -26,6 +26,7 @@
         magnolia = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
+            ./modules/base.nix
             ./hosts/magnolia/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -42,6 +43,7 @@
         mimosa-minimal = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
+            ./modules/base.nix
             ./hosts/mimosa/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -59,6 +61,7 @@
         mimosa = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
+            ./modules/base.nix
             ./hosts/mimosa/configuration.nix
             ./hosts/mimosa/webserver.nix  # Configuration du serveur web
             j12z-site.nixosModules.j12z-webserver
@@ -76,6 +79,7 @@
         whitelily = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
+            ./modules/base.nix
             ./hosts/whitelily/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -91,6 +95,7 @@
         demo = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
+            ./modules/base.nix
             ./hosts/demo/configuration.nix
           ];
         };
