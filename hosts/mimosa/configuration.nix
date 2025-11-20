@@ -92,6 +92,8 @@
   # Ce fichier est importé uniquement dans la configuration "mimosa" complète (via flake.nix)
   # La configuration "mimosa-minimal" n'importe PAS ce fichier pour éviter
   # les téléchargements npm pendant l'installation initiale
+  # Activer/désactiver facilement le serveur web pour éviter les builds durant le boot
+  mimosa.webserver.enable = false; # Passer à true pour réactiver le déploiement web
 
   # Tailscale
   services.tailscale = {
