@@ -138,21 +138,6 @@ in
   # Active le daemon Tailscale (tailscaled.service)
   services.tailscale.enable = true;
 
-  # === CONFIGURATION FIREWALL ===
-  networking.firewall = {
-    # checkReversePath = "loose" : nécessaire pour que Tailscale fonctionne correctement
-    # Sinon le noyau Linux peut rejeter les paquets venant de Tailscale
-    checkReversePath = "loose";
-    
-    # tailscale0 : l'interface réseau virtuelle créée par Tailscale
-    # En la déclarant "trusted", on autorise tout le trafic qui passe par elle
-    trustedInterfaces = [ "tailscale0" ];
-    
-    # Ouvre le port UDP utilisé par Tailscale (par défaut 41641)
-    # config.services.tailscale.port récupère automatiquement le bon port
-    allowedUDPPorts = [ config.services.tailscale.port ];
-  };
-
   # === DÉCLARATION DES SECRETS SOPS ===
   # Ces secrets sont chiffrés dans secrets/common.yaml
   # sops-nix les déchiffre automatiquement au boot et les rend accessibles

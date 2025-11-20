@@ -25,8 +25,12 @@
   # Réseau
   networking.hostName = "mimosa";  # Serveur web
   networking.useDHCP = true;
-  # Le firewall sera configuré automatiquement par le module j12z-webserver (ports 80, 443)
-  networking.firewall.enable = true;
+  # Firewall : SSH + Tailscale + Web (ports gérés par j12z-webserver)
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 22 ];  # SSH
+    # Les autres ports (80, 443) seront ouverts par j12z-webserver
+  };
 
   # SSH
   services.openssh.enable = true;
