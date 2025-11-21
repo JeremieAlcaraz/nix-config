@@ -97,6 +97,7 @@
           modules = [
             ./modules/base.nix
             ./hosts/demo/configuration.nix
+            sops-nix.nixosModules.sops
           ];
         };
 
