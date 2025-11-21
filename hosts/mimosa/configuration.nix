@@ -28,8 +28,17 @@
   # Ce fichier est importé uniquement dans la configuration "mimosa" complète (via flake.nix)
   # La configuration "mimosa-minimal" n'importe PAS ce fichier pour éviter
   # les téléchargements npm pendant l'installation initiale
-  # Activer/désactiver facilement le serveur web pour éviter les builds durant le boot
-  mimosa.webserver.enable = false; # Passer à true pour réactiver le déploiement web
+  # Note: mimosa.webserver.enable est activé dans flake.nix pour la config "mimosa"
+
+  # Nix build settings - Permettre aux fixed-output derivations d'accéder au DNS
+  # Nécessaire pour pnpm.fetchDeps dans le flake j12zdotcom
+  nix.settings = {
+    sandbox = true;  # Garder la sandbox activée (sécurité)
+    extra-sandbox-paths = [
+      "/etc/resolv.conf"  # Accès DNS pour fetcher les dépendances npm
+      "/etc/ssl/certs"    # Certificats SSL pour https://registry.npmjs.org
+    ];
+  };
 
   # Tailscale
   services.tailscale = {
