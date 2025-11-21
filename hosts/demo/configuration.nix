@@ -61,5 +61,6 @@
   users.users.jeremie.shell = pkgs.zsh;
 
   # Paquets système essentiels
-  environment.systemPackages = with pkgs; [ git curl wget ];
+  # Note: git est maintenant géré par modules/git.nix (importé via base.nix)
+  environment.systemPackages = with pkgs; [ curl wget ];
 }
