@@ -1,8 +1,9 @@
 { config, pkgs, ... }:
 
 {
- imports = [
+  imports = [
     ./hardware-configuration.nix
+    ../../modules/sops.nix
     ../../modules/tailscale.nix  # <--- AJOUTE ÇA
     # ... tes autres imports
   ];
@@ -60,9 +61,6 @@
     createHome = true;
     home = "/home/jeremie";
     extraGroups = [ "wheel" ];
-    # Hash du mot de passe stocké de manière sécurisée dans sops
-    # Le fichier de secrets est chiffré et ne peut être déchiffré que par l'hôte
-    hashedPasswordFile = config.sops.secrets.jeremie-password-hash.path;
   };
 
   # Root sans mot de passe (SSH root déjà interdit)
@@ -74,22 +72,6 @@
 
   # QEMU Guest Agent pour Proxmox
   services.qemuGuest.enable = true;
-
-  # Configuration sops-nix pour la gestion des secrets
-  sops = {
-    defaultSopsFile = ../../secrets/mimosa.yaml;
-    age = {
-      keyFile = "/var/lib/sops-nix/key.txt";
-    };
-    secrets = {
-      # Hash du mot de passe de l'utilisateur jeremie
-      jeremie-password-hash = {
-        neededForUsers = true;
-      };
-      # Note: Le secret cloudflare-tunnel-token est défini dans webserver.nix
-      # qui est importé uniquement dans la configuration "mimosa" complète
-    };
-  };
 
   # Configuration du site j12zdotcom
   # La configuration du serveur web est dans ./webserver.nix

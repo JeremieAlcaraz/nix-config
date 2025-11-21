@@ -25,8 +25,10 @@
         # Magnolia - Infrastructure Proxmox
         magnolia = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { defaultSopsFile = ./secrets/magnolia.yaml; };
           modules = [
             ./modules/base.nix
+            ./modules/sops.nix
             ./hosts/magnolia/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -42,8 +44,10 @@
         # Utilisé par le script d'installation pour éviter les problèmes réseau
         mimosa-minimal = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { defaultSopsFile = ./secrets/mimosa.yaml; };
           modules = [
             ./modules/base.nix
+            ./modules/sops.nix
             ./hosts/mimosa/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -60,8 +64,10 @@
         # Mimosa - Serveur web complet (configuration de production)
         mimosa = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { defaultSopsFile = ./secrets/mimosa.yaml; };
           modules = [
             ./modules/base.nix
+            ./modules/sops.nix
             ./hosts/mimosa/configuration.nix
             ./hosts/mimosa/webserver.nix  # Configuration du serveur web
             j12z-site.nixosModules.j12z-webserver
@@ -78,8 +84,10 @@
         # Whitelily - VM n8n automation
         whitelily = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { defaultSopsFile = ./secrets/whitelily.yaml; };
           modules = [
             ./modules/base.nix
+            ./modules/sops.nix
             ./hosts/whitelily/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -94,8 +102,10 @@
         # Demo - VM de démonstration minimale
         demo = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { defaultSopsFile = ./secrets/common.yaml; };
           modules = [
             ./modules/base.nix
+            ./modules/sops.nix
             ./hosts/demo/configuration.nix
             sops-nix.nixosModules.sops
           ];

@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ../../modules/sops.nix
     ../../modules/tailscale.nix
   ];
 
@@ -56,9 +57,6 @@
     createHome = true;
     home = "/home/jeremie";
     extraGroups = [ "wheel" ];
-    # Hash du mot de passe stocké de manière sécurisée dans sops
-    # Le fichier de secrets est chiffré et ne peut être déchiffré que par l'hôte
-    hashedPasswordFile = config.sops.secrets.jeremie-password-hash.path;
   };
 
   # Root sans mot de passe (SSH root déjà interdit)
@@ -75,20 +73,6 @@
     enable = true;
     useRoutingFeatures = "none";
     openFirewall = false;
-  };
-
-  # Configuration sops-nix pour la gestion des secrets
-  sops = {
-    defaultSopsFile = ../../secrets/magnolia.yaml;
-    age = {
-      keyFile = "/var/lib/sops-nix/key.txt";
-    };
-    secrets = {
-      # Hash du mot de passe de l'utilisateur jeremie
-      jeremie-password-hash = {
-        neededForUsers = true;
-      };
-    };
   };
 
   # Fish activé au niveau système (requis pour users.users.jeremie.shell)

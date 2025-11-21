@@ -4,6 +4,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ../../modules/sops.nix
     ../../modules/tailscale.nix
   ];
 
@@ -67,6 +68,9 @@
   security.sudo.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
+  # Ne pas gérer de hash de mot de passe via sops sur cette VM de démo
+  jeremiePasswordHash.enable = false;
+
   # QEMU Guest Agent
   services.qemuGuest.enable = true;
 
@@ -74,12 +78,6 @@
     enable = true;
     useRoutingFeatures = "none";
     openFirewall = false;
-  };
-
-  # Configuration sops-nix pour la gestion des secrets communs (Tailscale)
-  sops = {
-    defaultSopsFile = ../../secrets/common.yaml;
-    age.keyFile = "/var/lib/sops-nix/key.txt";
   };
 
   # Fish activé au niveau système (requis pour users.users.jeremie.shell)
