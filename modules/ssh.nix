@@ -27,6 +27,8 @@
       KbdInteractiveAuthentication = false;
       PubkeyAuthentication = true;
       PermitRootLogin = "no";
+      # Permet le forwarding de l'agent SSH pour utiliser les clés du client
+      AllowAgentForwarding = true;
     };
     authorizedKeysFiles = [
       "/etc/ssh/authorized_keys.d/%u"
