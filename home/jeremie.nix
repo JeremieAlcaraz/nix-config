@@ -35,30 +35,41 @@
     };
   };
 
-  # ZSH - Shell pour magnolia et whitelily
-  programs.zsh = {
-    enable = (osConfig.networking.hostName == "magnolia" || osConfig.networking.hostName == "whitelily");
-    enableCompletion = true;
-    autosuggestion.enable = true;
-    syntaxHighlighting.enable = true;
-    initExtra = ''
+  # ZSH - Shell pour magnolia et whitelily (COMMENTÉ - remplacé par Fish)
+  # programs.zsh = {
+  #   enable = (osConfig.networking.hostName == "magnolia" || osConfig.networking.hostName == "whitelily");
+  #   enableCompletion = true;
+  #   autosuggestion.enable = true;
+  #   syntaxHighlighting.enable = true;
+  #   initExtra = ''
+  #     echo ""
+  #     ${if osConfig.networking.hostName == "magnolia" then ''
+  #       echo "🌸 Magnolia - Infrastructure Proxmox"
+  #     '' else if osConfig.networking.hostName == "whitelily" then ''
+  #       echo "🤍 Whitelily - n8n Automation"
+  #     '' else ""}
+  #     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  #     echo ""
+  #   '';
+  # };
+
+  # Fish - Shell pour toutes les VMs
+  programs.fish = {
+    enable = true;
+    shellInit = ''
+      # Changer automatiquement vers /etc/nixos
+      cd /etc/nixos 2>/dev/null; or cd ~
+
       echo ""
       ${if osConfig.networking.hostName == "magnolia" then ''
         echo "🌸 Magnolia - Infrastructure Proxmox"
       '' else if osConfig.networking.hostName == "whitelily" then ''
         echo "🤍 Whitelily - n8n Automation"
+      '' else if osConfig.networking.hostName == "mimosa" then ''
+        echo "🌼 Mimosa - Serveur web"
+      '' else if osConfig.networking.hostName == "demo" then ''
+        echo "🔧 Demo - VM de démonstration"
       '' else ""}
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      echo ""
-    '';
-  };
-
-  # Fish - Shell pour mimosa
-  programs.fish = {
-    enable = osConfig.networking.hostName == "mimosa";
-    shellInit = ''
-      echo ""
-      echo "🌼 Mimosa - Serveur web"
       echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       echo ""
     '';

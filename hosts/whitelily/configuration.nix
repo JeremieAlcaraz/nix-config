@@ -65,7 +65,7 @@
     extraGroups = [ "wheel" ];
     # Hash du mot de passe stocké de manière sécurisée dans sops
     hashedPasswordFile = config.sops.secrets.jeremie-password-hash.path;
-    shell = pkgs.zsh;
+    shell = pkgs.fish;
   };
 
   # Root sans mot de passe (SSH root déjà interdit)
@@ -149,9 +149,12 @@
     retentionGdrive = 30;
   };
 
-  # ZSH activé au niveau système (requis pour users.users.jeremie.shell)
-  # La configuration ZSH détaillée est gérée par Home Manager
-  programs.zsh.enable = true;
+  # Fish activé au niveau système (requis pour users.users.jeremie.shell)
+  # La configuration Fish détaillée est gérée par Home Manager
+  programs.fish.enable = true;
+
+  # ZSH - Commenté (remplacé par Fish)
+  # programs.zsh.enable = true;
 
   # Tmux au niveau système
   programs.tmux.enable = true;
