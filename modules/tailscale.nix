@@ -10,9 +10,9 @@ let
 
     # === RÉCUPÉRATION DES SECRETS ===
     log "📦 Lecture des secrets SOPS (client_id, client_secret, tailnet)"
-    CLIENT_ID=$(cat ${config.sops.secrets.tailscale_oauth_client_id.path})
-    CLIENT_SECRET=$(cat ${config.sops.secrets.tailscale_oauth_client_secret.path})
-    TAILNET=$(cat ${config.sops.secrets.tailscale_tailnet.path})
+    CLIENT_ID=$(cat ${config.sops.secrets.tailscale_oauth_client_id.path} | tr -d '\n')
+    CLIENT_SECRET=$(cat ${config.sops.secrets.tailscale_oauth_client_secret.path} | tr -d '\n')
+    TAILNET=$(cat ${config.sops.secrets.tailscale_tailnet.path} | tr -d '\n')
 
     # === VÉRIFICATION : Est-on déjà connecté ? ===
     log "🔍 Vérification de l'état actuel de Tailscale"
