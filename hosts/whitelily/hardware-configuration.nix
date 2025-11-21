@@ -22,10 +22,7 @@
     fsType = "ext4";
   };
 
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-label/boot";
-    fsType = "vfat";
-  };
+  # Note: /boot mount removed - GRUB doesn't need a separate EFI partition
 
   swapDevices = [ ];
 

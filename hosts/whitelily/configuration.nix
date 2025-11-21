@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   imports = [
@@ -9,6 +9,13 @@
     ../../modules/tailscale.nix
 
   ];
+
+  # Override systemd-boot from ssh.nix module - Use GRUB instead for this VM
+  boot.loader.systemd-boot.enable = lib.mkForce false;
+  boot.loader.grub = {
+    enable = true;
+    device = "/dev/sda";  # Adjust if your disk is different (vda, sdb, etc.)
+  };
 
   system.stateVersion = "25.05";
 
