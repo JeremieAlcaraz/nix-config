@@ -102,34 +102,42 @@ in
   # Ce service s'exécute automatiquement au démarrage de la machine
   systemd.services.tailscale = {
     description = "Tailscale OAuth Auto-Join";
-    
+
     # === DÉPENDANCES : Quand démarrer le service ? ===
     # after : attend que ces services soient démarrés avant de lancer le nôtre
     # - network-online.target : le réseau doit être complètement opérationnel
     # - tailscaled.service : le daemon Tailscale doit être actif
-    after = [ "network-online.target" "tailscaled.service" ];
-    
+    # - run-secrets.d.mount : les secrets SOPS doivent être montés dans /run/secrets/
+    after = [ "network-online.target" "tailscaled.service" "run-secrets.d.mount" ];
+
     # wants : souhaite que ces services soient démarrés (mais pas bloquant si absent)
-    wants = [ "network-online.target" ];
-    
+    wants = [ "network-online.target" "run-secrets.d.mount" ];
+
     # requires : EXIGE que ce service soit actif (bloque si tailscaled plante)
     requires = [ "tailscaled.service" ];
-    
+
     # wantedBy : ce service est démarré par la cible multi-user (boot normal)
     wantedBy = [ "multi-user.target" ];
+
+    # === CONFIGURATION DE L'UNITÉ ===
+    # RequiresMountsFor : attend que le système de fichiers /run/secrets soit monté
+    # Ceci garantit que les secrets sont accessibles avant que le service démarre
+    unitConfig = {
+      RequiresMountsFor = [ "/run/secrets" ];
+    };
 
     # === CONFIGURATION DU SERVICE ===
     serviceConfig = {
       # Type oneshot : le service s'exécute une fois puis se termine
       Type = "oneshot";
-      
+
       # La commande à exécuter (notre script)
       ExecStart = tailscaleAuthScript;
-      
+
       # RemainAfterExit : systemd considère le service comme "actif" même après qu'il se termine
       # Utile pour savoir que l'initialisation a déjà eu lieu
       RemainAfterExit = true;
-      
+
       # Logs : envoie stdout et stderr vers journalctl
       StandardOutput = "journal";
       StandardError = "journal";
