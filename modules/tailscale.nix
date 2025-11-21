@@ -16,10 +16,12 @@ let
 
     # === VÉRIFICATION : Est-on déjà connecté ? ===
     log "🔍 Vérification de l'état actuel de Tailscale"
-    if ${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null | ${pkgs.jq}/bin/jq -e '.BackendState == "Running"' > /dev/null; then
+    if ${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null | ${pkgs.jq}/bin/jq -e '.BackendState == "Running" and .Self.Online == true' > /dev/null; then
       log "✅ Déjà connecté à Tailscale"
       exit 0  # On quitte proprement, pas d'erreur
     fi
+
+    log "ℹ️  Déconnexion détectée, tentative de reconnexion"
 
     # === RÉCUPÉRATION D'UN ACCESS TOKEN OAUTH ===
     log "🔑 Demande d'un access token OAuth (grant_type=client_credentials)"
