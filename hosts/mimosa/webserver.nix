@@ -24,6 +24,48 @@ in
       cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
     };
 
+    # Override Caddy config pour accepter HTTP du tunnel Cloudflare sans redirection
+    # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
+    # On doit remplacer la config par défaut qui utilise HTTPS automatique
+    services.caddy.virtualHosts = lib.mkForce {
+      "http://jeremiealcaraz.com" = {
+        extraConfig = ''
+          root * ${toString config.services.j12z-webserver.siteRoot}
+          file_server
+
+          handle_errors {
+            @404 {
+              expression {http.error.status_code} == 404
+            }
+            rewrite @404 /404.html
+            file_server
+          }
+
+          encode gzip zstd
+
+          header {
+            X-Frame-Options "SAMEORIGIN"
+            X-Content-Type-Options "nosniff"
+            X-XSS-Protection "1; mode=block"
+            Referrer-Policy "strict-origin-when-cross-origin"
+            Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https:; connect-src 'self' https:;"
+            Permissions-Policy "geolocation=(), microphone=(), camera=()"
+            -Server
+          }
+
+          log {
+            output file /var/log/caddy/jeremiealcaraz.com.log {
+              roll_size 100mb
+              roll_keep 10
+              roll_keep_for 720h
+            }
+            format json
+            level INFO
+          }
+        '';
+      };
+    };
+
     # Secret Cloudflare Tunnel (uniquement nécessaire pour la config complète)
     # Note: mode 0444 (world-readable) requis pour que le service cloudflared avec DynamicUser puisse lire le fichier
     # Le service cloudflared utilise DynamicUser qui crée un utilisateur temporaire sans privilèges
