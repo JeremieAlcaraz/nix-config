@@ -14,20 +14,12 @@ let
     CLIENT_SECRET=$(cat ${config.sops.secrets.tailscale_oauth_client_secret.path})
     TAILNET=$(cat ${config.sops.secrets.tailscale_tailnet.path})
 
-    # === VÉRIFICATION : Est-on vraiment connecté ET en ligne ? ===
+    # === VÉRIFICATION : Est-on déjà connecté ? ===
     log "🔍 Vérification de l'état actuel de Tailscale"
-    STATUS_JSON=$(${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null || echo '{}')
-    BACKEND_STATE=$(printf '%s' "$STATUS_JSON" | ${pkgs.jq}/bin/jq -r '.BackendState // "NeedsLogin"')
-    
-    # Vérifier si on a une IP Tailscale valide (signe qu'on est vraiment connecté)
-    SELF_IP=$(printf '%s' "$STATUS_JSON" | ${pkgs.jq}/bin/jq -r '.Self.TailscaleIPs[0] // empty')
-    
-    if [ "$BACKEND_STATE" = "Running" ] && [ -n "$SELF_IP" ]; then
-      log "✅ Déjà connecté à Tailscale avec IP $SELF_IP"
-      exit 0
+    if ${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null | ${pkgs.jq}/bin/jq -e '.BackendState == "Running"' > /dev/null; then
+      log "✅ Déjà connecté à Tailscale"
+      exit 0  # On quitte proprement, pas d'erreur
     fi
-    
-    log "⚠️  Backend: $BACKEND_STATE, IP: ${SELF_IP:-aucune} - Reconnexion nécessaire"
 
     # === RÉCUPÉRATION D'UN ACCESS TOKEN OAUTH ===
     log "🔑 Demande d'un access token OAuth (grant_type=client_credentials)"
@@ -95,7 +87,7 @@ EOF
     # --reset : réinitialise tous les paramètres à leurs valeurs par défaut
     # --auth-key : utilise la clé qu'on vient de générer
     # --hostname : définit le nom de la machine dans le réseau Tailscale
-    # --accept-dns=true : accepte le DNS Tailscale
+    # --accept-dns=false : n'accepte pas le DNS Tailscale pour éviter les conflits
     ${pkgs.tailscale}/bin/tailscale up \
       --reset \
       --auth-key="$AUTH_KEY" \
@@ -163,6 +155,6 @@ in
   sops.secrets = {
     tailscale_oauth_client_id.sopsFile = ../secrets/common.yaml;
     tailscale_oauth_client_secret.sopsFile = ../secrets/common.yaml;
-    tailscale_tailnet.sopsFile = ../secrets/common.yaml;
+    tailscale_tailnet.sopsFile = ../secrets/common.yaml;  # ← AJOUT
   };
 })
