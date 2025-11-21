@@ -1,0 +1,58 @@
+# ============================================================================
+# Module commun "ssh.nix"
+# ---------------------------------------------------------------------------
+# Centralise la configuration d'accès (boot/SSH/utilisateurs) utilisée sur
+# l'ensemble des hôtes. Les hôtes peuvent surcharger les attributs définis ici
+# si nécessaire (mot de passe, règles de firewall supplémentaires, etc.).
+# ============================================================================
+
+{ config, lib, pkgs, ... }:
+{
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+  boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty1" ];
+  console.earlySetup = true;
+
+  services.qemuGuest.enable = true;
+
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = lib.mkDefault [ 22 ];
+  };
+
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PubkeyAuthentication = true;
+      PermitRootLogin = "no";
+    };
+    authorizedKeysFiles = [
+      "/etc/ssh/authorized_keys.d/%u"
+      "~/.ssh/authorized_keys"
+    ];
+  };
+
+  environment.etc."ssh/authorized_keys.d/jeremie" = {
+    text = ''
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac
+    '';
+    mode = "0644";
+  };
+
+  users.mutableUsers = lib.mkDefault false;
+
+  users.users.jeremie = {
+    isNormalUser = true;
+    createHome = true;
+    home = "/home/jeremie";
+    extraGroups = [ "wheel" ];
+    shell = pkgs.fish;
+  };
+
+  users.users.root.password = lib.mkDefault null;
+
+  security.sudo.enable = true;
+  security.sudo.wheelNeedsPassword = false;
+}
