@@ -5,6 +5,7 @@
     ./hardware-configuration.nix
     ./n8n.nix
     ./n8n-backup.nix
+    (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/whitelily.yaml; })
     ../../modules/tailscale.nix
 
   ];
@@ -16,11 +17,6 @@
   networking.useDHCP = true;
   # Configuration DNS (resolvconf désactivé, donc configuration manuelle)
   networking.nameservers = [ "8.8.8.8" "1.1.1.1" ];
-  users.users.jeremie = {
-    # Hash du mot de passe stocké de manière sécurisée dans sops
-    hashedPasswordFile = config.sops.secrets.jeremie-password-hash.path;
-  };
-
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "none";
@@ -29,7 +25,6 @@
 
   # Configuration sops-nix pour la gestion des secrets
   sops = {
-    defaultSopsFile = ../../secrets/whitelily.yaml;
     age = {
       # Utiliser UNIQUEMENT la clé age partagée (copiée depuis le Mac)
       keyFile = "/var/lib/sops-nix/key.txt";
@@ -37,10 +32,6 @@
       sshKeyPaths = [];
     };
     secrets = {
-      # Hash du mot de passe de l'utilisateur jeremie
-      jeremie-password-hash = {
-        neededForUsers = true;
-      };
       # Secrets n8n (utilisés dans n8n.nix)
       "n8n/encryption_key" = { owner = "root"; group = "root"; mode = "0400"; };
       "n8n/basic_user" = { owner = "root"; group = "root"; mode = "0400"; };
