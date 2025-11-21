@@ -1,6 +1,10 @@
 { config, pkgs, osConfig, ... }:
 
 {
+  imports = [
+    ../modules/aliases.nix
+  ];
+
   # Version de Home Manager (doit correspondre à la version NixOS)
   home.stateVersion = "24.11";
 
