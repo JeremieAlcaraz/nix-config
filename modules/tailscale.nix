@@ -92,7 +92,7 @@ EOF
       --reset \
       --auth-key="$AUTH_KEY" \
       --hostname="${config.networking.hostName}" \
-      --accept-dns=false
+      --accept-dns=true
 
     log "🎉 Machine ${config.networking.hostName} connectée à Tailscale !"
   '';
