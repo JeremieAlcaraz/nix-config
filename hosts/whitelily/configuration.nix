@@ -4,7 +4,8 @@
   imports = [
     ./hardware-configuration.nix
     ./n8n.nix
-    ./n8n-backup.nix 
+    ./n8n-backup.nix
+    ../../modules/tailscale.nix
 
   ];
 
@@ -27,8 +28,10 @@
   # Configuration DNS (resolvconf désactivé, donc configuration manuelle)
   networking.nameservers = [ "8.8.8.8" "1.1.1.1" ];
   # Firewall activé (Cloudflare Tunnel = trafic sortant uniquement)
-  networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ ]; # Aucun port public ouvert
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 22 ]; # SSH uniquement (Cloudflare Tunnel = trafic sortant)
+  };
 
   # SSH
   services.openssh.enable = true;
@@ -39,11 +42,12 @@
     PermitRootLogin = "no";
   };
 
-  # Clés SSH autorisées
   services.openssh.authorizedKeysFiles = [
     "/etc/ssh/authorized_keys.d/%u"
     "~/.ssh/authorized_keys"
   ];
+
+  # Clés SSH autorisées
   environment.etc."ssh/authorized_keys.d/jeremie" = {
     text = ''
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac
@@ -73,6 +77,12 @@
 
   # QEMU Guest Agent
   services.qemuGuest.enable = true;
+
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "none";
+    openFirewall = false;
+  };
 
   # Configuration sops-nix pour la gestion des secrets
   sops = {

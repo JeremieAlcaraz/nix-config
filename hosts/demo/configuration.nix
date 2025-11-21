@@ -2,7 +2,10 @@
 { config, pkgs, ... }:
 
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [
+    ./hardware-configuration.nix
+    ../../modules/tailscale.nix
+  ];
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -20,7 +23,10 @@
   # Réseau
   networking.hostName = "demo";
   networking.useDHCP = true;
-  networking.firewall.enable = false;
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 22 ];
+  };
   networking.resolvconf.enable = false;
 
   # SSH
@@ -32,8 +38,21 @@
     PermitRootLogin = "no";
   };
 
+  services.openssh.authorizedKeysFiles = [
+    "/etc/ssh/authorized_keys.d/%u"
+    "~/.ssh/authorized_keys"
+  ];
+
   # Utilisateurs immuables
   users.mutableUsers = false;
+
+  # Clés SSH autorisées pour jeremie
+  environment.etc."ssh/authorized_keys.d/jeremie" = {
+    text = ''
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac
+    '';
+    mode = "0644";
+  };
 
   # Utilisateur jeremie (pas de mot de passe, SSH uniquement)
   users.users.jeremie = {
@@ -41,9 +60,7 @@
     createHome = true;
     home = "/home/jeremie";
     extraGroups = [ "wheel" ];
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac"
-    ];
+    password = null;
   };
 
   # Sudo sans mot de passe (sécurisé car SSH par clé uniquement)
@@ -52,6 +69,18 @@
 
   # QEMU Guest Agent
   services.qemuGuest.enable = true;
+
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "none";
+    openFirewall = false;
+  };
+
+  # Configuration sops-nix pour la gestion des secrets communs (Tailscale)
+  sops = {
+    defaultSopsFile = ../../secrets/common.yaml;
+    age.keyFile = "/var/lib/sops-nix/key.txt";
+  };
 
   # ZSH activé au niveau système
   programs.zsh.enable = true;

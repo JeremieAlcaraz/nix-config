@@ -1,7 +1,10 @@
 { config, pkgs, ... }:
 
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [
+    ./hardware-configuration.nix
+    ../../modules/tailscale.nix
+  ];
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -19,7 +22,10 @@
   # Réseau
   networking.hostName = "magnolia";  # Infrastructure Proxmox
   networking.useDHCP = true;
-  networking.firewall.enable = false;
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 22 ];
+  };
   # Désactiver resolvconf (DHCP gère déjà le DNS)
   networking.resolvconf.enable = false;
 
@@ -32,13 +38,11 @@
     PermitRootLogin = "no";
   };
 
-  # 👉 Choisis UNE des 2 options ci-dessous (A ou B). Laisse l’autre commentée.
-
-  ## === Option A: /etc/ssh/authorized_keys.d/jeremie (recommandée) ===
   services.openssh.authorizedKeysFiles = [
     "/etc/ssh/authorized_keys.d/%u"
     "~/.ssh/authorized_keys"
   ];
+
   environment.etc."ssh/authorized_keys.d/jeremie" = {
     text = ''
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac
@@ -47,20 +51,6 @@
   };
 
   users.mutableUsers = false;
-
-  ## === Option B: ~/.ssh/authorized_keys (alternative classique) ===
-  # users.users.jeremie = {
-  #   isNormalUser = true;
-  #   createHome = true;
-  #   home = "/home/jeremie";
-  #   extraGroups = [ "wheel" ];
-  #   password = null;
-  #   openssh.authorizedKeys.keys = [
-  #     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac"
-  #   ];
-  # };
-
-  # Si tu utilises l'Option A, définis tout de même l'utilisateur :
   users.users.jeremie = {
     isNormalUser = true;
     createHome = true;
@@ -80,6 +70,12 @@
 
   # QEMU Guest Agent
   services.qemuGuest.enable = true;
+
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "none";
+    openFirewall = false;
+  };
 
   # Configuration sops-nix pour la gestion des secrets
   sops = {
