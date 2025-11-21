@@ -23,8 +23,8 @@ in
   options = {
     nixConfig = {
       repoPath = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = null;
+        type = lib.types.str;
+        default = "/etc/nixos";
         description = ''
           Chemin du dépôt nix-config à gérer.
           Par défaut: /etc/nixos (emplacement standard NixOS)
