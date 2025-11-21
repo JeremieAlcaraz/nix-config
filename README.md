@@ -22,23 +22,22 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 
 | Hôte | Type | Description |
 |------|------|-------------|
-| **magnolia** 🌸 | Hyperviseur | Infrastructure Proxmox avec console série, QEMU Guest Agent, SSH par clés et ZSH. |
-| **mimosa** 🌼 | Serveur Web | Serveur web complet avec j12zdotcom, Caddy, Cloudflare Tunnel, ports 80/443 automatiques et Fish shell. |
-| **whitelily** 🤍 | Automation | Service d'orchestration n8n avec Podman, PostgreSQL 16, Cloudflare Tunnel, backups automatiques et ZSH. Architecture production-ready ! |
-| **demo** 🎬 | Démonstration | Hôte de démonstration minimal pour tests et expérimentations. |
+| **magnolia** 🌸 | Hyperviseur | Infrastructure Proxmox avec console série, QEMU Guest Agent, SSH par clés et Fish shell. Auto-navigation vers /etc/nixos lors de la connexion SSH. |
+| **mimosa** 🌼 | Serveur Web | Serveur web complet avec j12zdotcom, Caddy, Cloudflare Tunnel, ports 80/443 automatiques et Fish shell. Auto-navigation vers /etc/nixos lors de la connexion SSH. |
+| **whitelily** 🤍 | Automation | Service d'orchestration n8n avec Podman, PostgreSQL 16, Cloudflare Tunnel, backups automatiques et Fish shell. Architecture production-ready avec auto-navigation vers /etc/nixos. |
+| **demo** 🎬 | Démonstration | Hôte de démonstration minimal avec Fish shell pour tests et expérimentations. Auto-navigation vers /etc/nixos lors de la connexion SSH. |
 
 ### 🏠 Gestion de l'environnement utilisateur avec Home Manager
 
-Tous les hôtes (sauf demo) utilisent **Home Manager** pour gérer de manière déclarative l'environnement utilisateur :
+Tous les hôtes utilisent **Home Manager** pour gérer de manière déclarative l'environnement utilisateur :
 
-- **Shells personnalisés par hôte** :
-  - 🌸 **magnolia** et 🤍 **whitelily** : ZSH avec autosuggestions et syntax highlighting
-  - 🌼 **mimosa** : Fish shell friendly
+- **Shell unifié** : Fish shell déployé sur tous les hôtes pour une expérience cohérente
+- **Auto-navigation SSH** : Changement automatique vers `/etc/nixos` lors de la connexion SSH
+- **Messages personnalisés** : Banner de bienvenue adapté par hôte dans Fish shellInit
 - **Prompt moderne** : Starship configuré pour tous les hôtes
 - **Éditeur** : Vim comme éditeur par défaut
-- **Message de bienvenue** : Banner personnalisé par hôte au login
 
-Configuration centralisée dans `home/jeremie.nix` avec logique conditionnelle par hostname.
+Configuration centralisée dans `home/jeremie.nix` avec logique conditionnelle par hostname. L'ancienne configuration ZSH est conservée en commentaire pour réutilisation future.
 
 ### ✨ WhiteLily - Architecture production-ready
 
@@ -223,8 +222,7 @@ Voir [docs/SECRETS.md](docs/SECRETS.md) pour le guide complet.
 
 ### Outils de développement
 - **Git** - Contrôle de version et infrastructure as code
-- **ZSH + Starship** - Shell moderne pour magnolia et whitelily
-- **Fish** - Shell friendly pour mimosa
+- **Fish + Starship** - Shell moderne et friendly déployé sur tous les hôtes
 - **Vim** - Éditeur de texte par défaut
 
 ## 📝 Conventions
