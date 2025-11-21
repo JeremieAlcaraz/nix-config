@@ -82,12 +82,17 @@
     age.keyFile = "/var/lib/sops-nix/key.txt";
   };
 
-  # ZSH activé au niveau système
-  programs.zsh.enable = true;
+  # Fish activé au niveau système (requis pour users.users.jeremie.shell)
+  # La configuration Fish détaillée est gérée par Home Manager
+  programs.fish.enable = true;
+
+  # ZSH - Commenté (remplacé par Fish)
+  # programs.zsh.enable = true;
+
   programs.tmux.enable = true;
 
   # Shell par défaut pour jeremie
-  users.users.jeremie.shell = pkgs.zsh;
+  users.users.jeremie.shell = pkgs.fish;
 
   # Paquets système essentiels
   # Note: git est maintenant géré par modules/git.nix (importé via base.nix)
