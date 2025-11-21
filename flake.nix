@@ -27,6 +27,7 @@
           inherit system;
           modules = [
             ./modules/base.nix
+            ./modules/ssh.nix
             ./hosts/magnolia/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -44,6 +45,7 @@
           inherit system;
           modules = [
             ./modules/base.nix
+            ./modules/ssh.nix
             ./hosts/mimosa/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -62,6 +64,7 @@
           inherit system;
           modules = [
             ./modules/base.nix
+            ./modules/ssh.nix
             ./hosts/mimosa/configuration.nix
             ./hosts/mimosa/webserver.nix  # Configuration du serveur web
             j12z-site.nixosModules.j12z-webserver
@@ -80,6 +83,7 @@
           inherit system;
           modules = [
             ./modules/base.nix
+            ./modules/ssh.nix
             ./hosts/whitelily/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -96,6 +100,7 @@
           inherit system;
           modules = [
             ./modules/base.nix
+            ./modules/ssh.nix
             ./hosts/demo/configuration.nix
             sops-nix.nixosModules.sops
           ];
