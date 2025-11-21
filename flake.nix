@@ -75,6 +75,10 @@
               home-manager.useUserPackages = true;
               home-manager.users.jeremie = import ./home/jeremie.nix;
             }
+            # Activer le webserver pour mimosa
+            {
+              mimosa.webserver.enable = true;
+            }
           ];
         };
 
