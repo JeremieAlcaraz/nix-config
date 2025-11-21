@@ -1,0 +1,205 @@
+name: Deploy j12zdotcom to Mimosa
+
+# Ce workflow déploie automatiquement le site j12zdotcom sur le serveur mimosa
+# Déclenché manuellement ou via webhook depuis le repo j12zdotcom
+
+on:
+  # Déclenchement manuel depuis l'interface GitHub
+  workflow_dispatch:
+    inputs:
+      skip_nix_rebuild:
+        description: 'Skip NixOS rebuild (only update site files)'
+        required: false
+        default: 'false'
+        type: boolean
+
+  # Déclenchement via webhook (depuis le repo j12zdotcom)
+  repository_dispatch:
+    types: [deploy-site]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout j12zdotcom repository
+        uses: actions/checkout@v4
+        with:
+          repository: JeremieAlcaraz/j12zdotcom
+          ref: main  # ou 'master' selon ta branche par défaut
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: 📚 Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: 🗄️ Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build site
+        run: pnpm build
+        env:
+          NODE_ENV: production
+
+      - name: 📊 Build info
+        run: |
+          echo "Build completed successfully!"
+          echo "Files built: $(find dist -type f | wc -l)"
+          echo "Total size: $(du -sh dist | cut -f1)"
+          echo "Commit: $(git rev-parse --short HEAD)"
+
+      - name: 📦 Create deployment archive
+        run: |
+          tar -czf site.tar.gz -C dist .
+          echo "Archive size: $(du -sh site.tar.gz | cut -f1)"
+
+      - name: 📤 Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: j12zdotcom-dist
+          path: site.tar.gz
+          retention-days: 7
+          compression-level: 0  # Already compressed
+
+      - name: 🔐 Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.MIMOSA_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy to Mimosa
+        env:
+          MIMOSA_HOST: ${{ secrets.MIMOSA_HOST }}
+          SKIP_NIX: ${{ inputs.skip_nix_rebuild || 'false' }}
+        run: |
+          set -euo pipefail
+
+          echo "🌐 Deploying to $MIMOSA_HOST..."
+
+          # Upload archive
+          echo "📤 Uploading site archive..."
+          scp site.tar.gz "$MIMOSA_HOST:/tmp/j12zdotcom-deploy.tar.gz"
+
+          # Extract and deploy on remote
+          echo "📦 Extracting and deploying..."
+          ssh "$MIMOSA_HOST" << 'ENDSSH'
+            set -euo pipefail
+
+            # Backup current site
+            if [ -d /var/www/j12zdotcom ]; then
+              BACKUP="/var/www/j12zdotcom.backup.$(date +%Y%m%d-%H%M%S)"
+              echo "💾 Backing up to $BACKUP"
+              sudo cp -r /var/www/j12zdotcom "$BACKUP"
+              # Keep only last 3 backups
+              ls -dt /var/www/j12zdotcom.backup.* 2>/dev/null | tail -n +4 | xargs -r sudo rm -rf
+            fi
+
+            # Deploy new site
+            echo "🔄 Deploying new version..."
+            sudo mkdir -p /var/www/j12zdotcom
+            sudo rm -rf /var/www/j12zdotcom/*
+
+            # Extract
+            cd /var/www/j12zdotcom
+            sudo tar -xzf /tmp/j12zdotcom-deploy.tar.gz
+
+            # Set permissions
+            sudo chown -R root:root /var/www/j12zdotcom
+            sudo chmod -R 755 /var/www/j12zdotcom
+
+            # Cleanup
+            rm /tmp/j12zdotcom-deploy.tar.gz
+
+            echo "✅ Site deployed successfully"
+            echo "📊 Files deployed: $(find /var/www/j12zdotcom -type f | wc -l)"
+          ENDSSH
+
+          # Rebuild NixOS if requested
+          if [ "$SKIP_NIX" = "false" ]; then
+            echo "🔄 Rebuilding NixOS configuration..."
+            ssh "$MIMOSA_HOST" "cd /etc/nixos && sudo nixos-rebuild switch --flake '.#mimosa' --impure"
+            echo "✅ NixOS rebuild complete"
+          else
+            echo "⏭️  Skipping NixOS rebuild"
+          fi
+
+      - name: 🔍 Health checks
+        env:
+          MIMOSA_HOST: ${{ secrets.MIMOSA_HOST }}
+        run: |
+          echo "🏥 Running health checks..."
+
+          # Check services
+          ssh "$MIMOSA_HOST" << 'ENDSSH'
+            if systemctl is-active --quiet caddy; then
+              echo "✅ Caddy is running"
+            else
+              echo "❌ Caddy is not running!"
+              exit 1
+            fi
+
+            if systemctl is-active --quiet cloudflared; then
+              echo "✅ Cloudflared is running"
+            else
+              echo "❌ Cloudflared is not running!"
+              exit 1
+            fi
+
+            # Test HTTP endpoint
+            if curl -sf http://localhost > /dev/null; then
+              echo "✅ HTTP endpoint responding"
+            else
+              echo "❌ HTTP endpoint not responding!"
+              exit 1
+            fi
+          ENDSSH
+
+          # Test public HTTPS
+          if curl -sf https://jeremiealcaraz.com > /dev/null; then
+            echo "✅ Public HTTPS site responding"
+          else
+            echo "⚠️  Public site not responding (may take a few seconds)"
+          fi
+
+      - name: 📝 Deployment summary
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 Deployment Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📦 Repository: JeremieAlcaraz/j12zdotcom"
+          echo "🔖 Commit: $(git rev-parse --short HEAD)"
+          echo "🌐 Public URL: https://jeremiealcaraz.com"
+          echo "⏰ Deployed at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: 💬 Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check the logs above for details."
+          exit 1
