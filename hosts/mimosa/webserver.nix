@@ -25,9 +25,10 @@ in
     };
 
     # Secret Cloudflare Tunnel (uniquement nécessaire pour la config complète)
+    # Note: owner/group = root car cloudflared utilise DynamicUser (créé au runtime)
     sops.secrets.cloudflare-tunnel-token = {
-      owner = "cloudflared";
-      group = "cloudflared";
+      owner = "root";
+      group = "root";
       mode = "0400";
     };
   };
