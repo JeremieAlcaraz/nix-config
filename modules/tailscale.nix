@@ -108,12 +108,13 @@ in
     # === DÉPENDANCES : Quand démarrer le service ? ===
     # after : attend que ces services soient démarrés avant de lancer le nôtre
     # - network-online.target : le réseau doit être complètement opérationnel
+    # - nss-lookup.target : la résolution DNS doit être fonctionnelle
     # - tailscaled.service : le daemon Tailscale doit être actif
     # - run-secrets.d.mount : les secrets SOPS doivent être montés dans /run/secrets/
-    after = [ "network-online.target" "tailscaled.service" "run-secrets.d.mount" ];
+    after = [ "network-online.target" "nss-lookup.target" "tailscaled.service" "run-secrets.d.mount" ];
 
     # wants : souhaite que ces services soient démarrés (mais pas bloquant si absent)
-    wants = [ "network-online.target" "run-secrets.d.mount" ];
+    wants = [ "network-online.target" "nss-lookup.target" "run-secrets.d.mount" ];
 
     # requires : EXIGE que ce service soit actif (bloque si tailscaled plante)
     requires = [ "tailscaled.service" ];
