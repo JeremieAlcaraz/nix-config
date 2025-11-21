@@ -127,6 +127,24 @@ sudo nixos-rebuild switch --flake .#demo            # VM de démonstration
 
 **Note** : Pour whitelily, consultez le guide complet [docs/WHITELILY-N8N-SETUP.md](docs/WHITELILY-N8N-SETUP.md) qui détaille la configuration des secrets SOPS et du Cloudflare Tunnel.
 
+## 🔑 Push GitHub depuis magnolia
+
+Pour pusher sur GitHub depuis magnolia en utilisant les clés SSH de ton Mac :
+
+**1. Config SSH sur ton Mac** (`~/.ssh/config`) :
+```
+Host magnolia
+    ForwardAgent yes
+    IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+```
+
+**2. Connecte-toi** :
+```bash
+ssh magnolia  # L'agent SSH est automatiquement forwardé
+```
+
+**3. C'est tout !** Git sur magnolia est configuré pour utiliser SSH automatiquement.
+
 ## 📁 Structure du repository
 
 ```

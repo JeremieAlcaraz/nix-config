@@ -79,13 +79,19 @@
     '';
   };
 
-  # Git - Configuration pour mimosa uniquement
+  # Git - Configuration globale
   programs.git = {
-    enable = osConfig.networking.hostName == "mimosa";
+    enable = true;
     userName = "JeremieAlcaraz";
     userEmail = "hello@jeremiealcaraz.com";
     extraConfig = {
       safe.directory = "/etc/nixos";
-    };
+    } // (if osConfig.networking.hostName == "magnolia" then {
+      # Réécrire automatiquement les URLs HTTPS en SSH pour GitHub (magnolia uniquement)
+      url."git@github.com:".insteadOf = [
+        "https://github.com/"
+        "http://local_proxy@127.0.0.1:16900/git/"
+      ];
+    } else {});
   };
 }
