@@ -2,7 +2,7 @@
 # Ce fichier est importé uniquement dans la configuration "mimosa" complète
 # Pour éviter les erreurs, il n'est PAS importé dans "mimosa-minimal"
 
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   cfg = config.mimosa.webserver;
@@ -32,6 +32,17 @@ in
       owner = "root";
       group = "root";
       mode = "0444";  # Lisible par tous (nécessaire pour DynamicUser)
+    };
+
+    # Fix: systemd n'évalue pas $(cat ...) dans ExecStart par défaut
+    # On doit passer le token via un fichier de credentials systemd au lieu de substitution shell
+    systemd.services.cloudflared = {
+      serviceConfig = {
+        # Charger le token comme credential systemd (accessible via $CREDENTIALS_DIRECTORY/tunnel-token)
+        LoadCredential = "tunnel-token:${config.sops.secrets.cloudflare-tunnel-token.path}";
+        # Modifier ExecStart pour utiliser bash et évaluer la substitution de commande
+        ExecStart = lib.mkForce "${pkgs.bash}/bin/bash -c 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $(cat $CREDENTIALS_DIRECTORY/tunnel-token)'";
+      };
     };
   };
 }
