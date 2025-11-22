@@ -43,19 +43,18 @@ jobs:
           # Obtenir un token d'authentification Docker Hub
           TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" | jq -r .token)
 
-          # Récupérer le manifest de l'image next
-          MANIFEST=$(curl -s -H "Authorization: Bearer $TOKEN" \
+          # Récupérer le digest depuis le header Docker-Content-Digest
+          # Cette méthode est plus fiable que de parser le manifest JSON
+          LATEST_DIGEST=$(curl -sI -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-            "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next")
-
-          # Extraire le digest du manifest
-          LATEST_DIGEST=$(echo "$MANIFEST" | jq -r '.config.digest' | cut -d: -f2)
+            "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next" \
+            | grep -i "docker-content-digest:" \
+            | cut -d' ' -f2 \
+            | tr -d '\r' \
+            | cut -d: -f2)
 
           echo "digest=$LATEST_DIGEST" >> $GITHUB_OUTPUT
           echo "Latest n8n:next digest: sha256:$LATEST_DIGEST"
-
-          # Afficher également quelques infos sur le manifest
-          echo "Manifest size: $(echo "$MANIFEST" | jq -r '.config.size') bytes"
 
       - name: Check if update needed
         id: check
