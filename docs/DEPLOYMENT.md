@@ -284,11 +284,30 @@ git push
 
 ### Depuis la VM (déploiement)
 
+**Pour les nœuds follower (whitelily, mimosa, etc.)** :
+
 ```bash
 # 1. Se connecter à la VM
 ssh jeremie@<IP_DE_LA_VM>
 
-# 2. Pull les changements
+# 2. Mise à jour forcée (écrase les modifications locales)
+cd /etc/nixos
+gu  # Alias pour: git fetch --all; and git reset --hard origin/main
+
+# 3. Tester la config avant de l'appliquer (optionnel)
+sudo nixos-rebuild test --flake .#<hostname>
+
+# 4. Appliquer définitivement
+sudo nixos-rebuild switch --flake .#<hostname>
+```
+
+**Pour le nœud de développement (magnolia uniquement)** :
+
+```bash
+# 1. Se connecter à la VM
+ssh jeremie@<IP_DE_LA_VM>
+
+# 2. Pull les changements (avec gestion des conflits)
 cd /etc/nixos
 git pull
 
@@ -820,7 +839,18 @@ sudo reboot
 
 **Cause** : Modifications locales ou branche différente.
 
-**Solution** :
+**Solution pour nœuds follower (whitelily, etc.)** :
+
+Les nœuds follower ne doivent jamais modifier la configuration localement. Utilisez la mise à jour forcée :
+
+```bash
+cd /etc/nixos
+gu  # Alias pour: git fetch --all; and git reset --hard origin/main
+```
+
+Cela écrase toutes les modifications locales et synchronise avec le serveur, sans jamais demander de résoudre des conflits.
+
+**Solution pour développement (magnolia uniquement)** :
 ```bash
 cd /etc/nixos
 git status
