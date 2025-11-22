@@ -2,16 +2,6 @@
 
 Configuration NixOS personnelle basée sur les flakes pour la gestion d'infrastructure Proxmox.
 
-## 🎉 Statut: Mimosa Webserver v1.0.0 Déployé! ✅
-
-**Le serveur web Mimosa est maintenant pleinement opérationnel!**
-
-🌐 **Site en production:** https://jeremiealcaraz.com
-
-✅ **Tag:** `v1.0.0-mimosa-webserver` (2025-11-21)
-
-Voir [`docs/DEPLOYMENT_SUCCESS.md`](docs/DEPLOYMENT_SUCCESS.md) pour les détails complets.
-
 ---
 
 ## 📋 Vue d'ensemble
