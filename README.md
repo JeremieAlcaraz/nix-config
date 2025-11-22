@@ -260,7 +260,8 @@ Ce repository est un projet personnel d'apprentissage, mais les suggestions et c
 
 ## 📄 Licence
 
-Ce projet est personnel et à usage pédagogique. Libre d'utilisation pour inspiration.
+Ce projet est personnel et à usage pédagogique. 
+Vous pouvez néanmoins le récupérer et l'utiliser à votre guise 💜
 
 ---
 
