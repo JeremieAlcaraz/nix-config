@@ -15,9 +15,13 @@
       url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    darwin = {
+      url = "github:lnl7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, j12z-site, sops-nix, home-manager, ... }:
+  outputs = { self, nixpkgs, j12z-site, sops-nix, home-manager, darwin, ... }:
     let
       system = "x86_64-linux";
     in {
@@ -116,6 +120,15 @@
           inherit system;
           modules = [
             ./iso/custom-installer.nix
+          ];
+        };
+      };
+
+      darwinConfigurations = {
+        Marigold = darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          modules = [
+            ./hosts/Marigold/configuration.nix
           ];
         };
       };
