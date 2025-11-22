@@ -74,6 +74,9 @@
       gl = "git log --oneline --graph --decorate -10";
       gla = "git log --oneline --graph --decorate --all -20";
 
+      # Mise à jour forcée pour nœuds follower (écrase les modifications locales)
+      gu = "git fetch --all; and git reset --hard origin/main";
+
       # ═══════════════════════════════════════════════════
       # 🛠️ SYSTEMD - Gestion des services
       # ═══════════════════════════════════════════════════
