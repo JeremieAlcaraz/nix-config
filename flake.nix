@@ -125,10 +125,10 @@
       };
 
       darwinConfigurations = {
-        Marigold = darwin.lib.darwinSystem {
+        marigold = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
           modules = [
-            ./hosts/Marigold/configuration.nix
+            ./hosts/marigold/configuration.nix
           ];
         };
       };
