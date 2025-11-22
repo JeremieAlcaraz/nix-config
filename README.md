@@ -2,6 +2,18 @@
 
 Configuration NixOS personnelle basée sur les flakes pour la gestion d'infrastructure Proxmox.
 
+## 🎉 Statut: Mimosa Webserver v1.0.0 Déployé! ✅
+
+**Le serveur web Mimosa est maintenant pleinement opérationnel!**
+
+🌐 **Site en production:** https://jeremiealcaraz.com
+
+✅ **Tag:** `v1.0.0-mimosa-webserver` (2025-11-21)
+
+Voir [`docs/DEPLOYMENT_SUCCESS.md`](docs/DEPLOYMENT_SUCCESS.md) pour les détails complets.
+
+---
+
 ## 📋 Vue d'ensemble
 
 Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs hôtes virtuels sur Proxmox. Il s'agit d'un projet en développement (pour mise en production) qui met l'accent sur la sécurité, la reproductibilité et les bonnes pratiques modernes de NixOS.
@@ -23,7 +35,7 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 | Hôte | Type | Description |
 |------|------|-------------|
 | **magnolia** 🌸 | Hyperviseur | Infrastructure Proxmox avec console série, QEMU Guest Agent, SSH par clés et Fish shell. Auto-navigation vers /etc/nixos lors de la connexion SSH. |
-| **mimosa** 🌼 | Serveur Web | Serveur web complet avec j12zdotcom, Caddy, Cloudflare Tunnel, ports 80/443 automatiques et Fish shell. Auto-navigation vers /etc/nixos lors de la connexion SSH. |
+| **mimosa** 🌼 | Serveur Web | ✅ **Production** - Serveur web j12zdotcom avec Caddy, Cloudflare Tunnel, SOPS secrets, déploiement automatisé. Site: https://jeremiealcaraz.com |
 | **whitelily** 🤍 | Automation | Service d'orchestration n8n avec Podman, PostgreSQL 16, Cloudflare Tunnel, backups automatiques et Fish shell. Architecture production-ready avec auto-navigation vers /etc/nixos. |
 | **demo** 🎬 | Démonstration | Hôte de démonstration minimal avec Fish shell pour tests et expérimentations. Auto-navigation vers /etc/nixos lors de la connexion SSH. |
 
