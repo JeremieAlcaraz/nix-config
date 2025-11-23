@@ -11,6 +11,11 @@
   # Système
   system.stateVersion = "24.05";
 
+  # Packages système requis pour les builds Nix
+  environment.systemPackages = with pkgs; [
+    cacert  # Certificats CA requis pour pnpm.fetchDeps et autres FODs
+  ];
+
   # Réseau
   networking.hostName = "mimosa";  # Serveur web
   networking.useDHCP = true;
@@ -30,14 +35,11 @@
   # les téléchargements npm pendant l'installation initiale
   # Note: mimosa.webserver.enable est activé dans flake.nix pour la config "mimosa"
 
-  # Nix build settings - Permettre aux fixed-output derivations d'accéder au DNS
-  # Nécessaire pour pnpm.fetchDeps dans le flake j12zdotcom
+  # Nix build settings
   nix.settings = {
     sandbox = true;  # Garder la sandbox activée (sécurité)
-    extra-sandbox-paths = [
-      "/etc/resolv.conf"  # Accès DNS pour fetcher les dépendances npm
-      "/etc/ssl/certs"    # Certificats SSL pour https://registry.npmjs.org
-    ];
+    # Note: Les Fixed Output Derivations (FOD) comme pnpm.fetchDeps ont accès au réseau
+    # Les certificats SSL viennent de cacert dans systemPackages et nativeBuildInputs de fetchDeps
   };
 
   # Tailscale
