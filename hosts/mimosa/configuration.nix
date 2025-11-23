@@ -41,8 +41,6 @@
     # Certificats SSL pour toutes les Fixed Output Derivations (FOD)
     # Permet à pnpm.fetchDeps et autres FOD de valider les connexions HTTPS
     ssl-cert-file = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-    # Accès DNS pour les FOD (requis car mimosa utilise le DNS Tailscale)
-    extra-sandbox-paths = [ "/etc/resolv.conf" ];
   };
 
   # Tailscale
