@@ -65,10 +65,9 @@
               home-manager.useUserPackages = true;
               home-manager.users.jeremie = import ./home/jeremie.nix;
             }
-            # Webserver ACTIVÉ pour tester le cache
-            # Changez "false" en "true" pour activer le site j12zdotcom
+            # Webserver DÉSACTIVÉ temporairement (problème de build à résoudre)
             {
-              mimosa.webserver.enable = true;
+              mimosa.webserver.enable = false;
             }
           ];
         };
