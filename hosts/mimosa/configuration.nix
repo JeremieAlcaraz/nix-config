@@ -43,6 +43,19 @@
     ssl-cert-file = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
     # Accès DNS pour les FOD (requis car mimosa utilise le DNS Tailscale)
     extra-sandbox-paths = [ "/etc/resolv.conf" ];
+
+    # Binary caches : sources de packages pré-compilés
+    # Nix essaie chaque cache dans l'ordre jusqu'à trouver le package
+    substituters = [
+      "https://cache.nixos.org"  # Cache officiel NixOS (par défaut)
+      "http://magnolia:5000"     # Notre cache local via Tailscale
+    ];
+
+    # Clés publiques pour vérifier les signatures des packages téléchargés
+    trusted-public-keys = [
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "magnolia.cache:7MVdzDOzQsVItEh+ewmU4Ga8TOke40asmXY1p9nQhC0="
+    ];
   };
 
   # Tailscale
