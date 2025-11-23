@@ -43,27 +43,10 @@
           ];
         };
 
-        # Mimosa Minimal - Pour l'installation initiale (sans serveur web)
-        # Utilisé par le script d'installation pour éviter les problèmes réseau
-        mimosa-minimal = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            ./modules/base.nix
-            ./modules/ssh.nix
-            ./hosts/mimosa/configuration.nix
-            sops-nix.nixosModules.sops
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.jeremie = import ./home/jeremie.nix;
-            }
-            # Le module j12z-webserver n'est PAS importé ici
-            # pour éviter les téléchargements npm pendant l'installation
-          ];
-        };
-
-        # Mimosa - Serveur web complet (configuration de production)
+        # Mimosa - Serveur web (webserver désactivé par défaut lors de l'installation)
+        # Pour activer le webserver après l'installation :
+        #   1. Éditez ce fichier et changez enable = false → enable = true
+        #   2. sudo nixos-rebuild switch --flake .#mimosa
         mimosa = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
@@ -79,9 +62,10 @@
               home-manager.useUserPackages = true;
               home-manager.users.jeremie = import ./home/jeremie.nix;
             }
-            # Activer le webserver pour mimosa
+            # Webserver DÉSACTIVÉ par défaut (pour installation rapide)
+            # Changez "false" en "true" pour activer le site j12zdotcom
             {
-              mimosa.webserver.enable = true;
+              mimosa.webserver.enable = false;
             }
           ];
         };
