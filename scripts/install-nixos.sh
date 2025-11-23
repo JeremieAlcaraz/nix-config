@@ -324,8 +324,18 @@ step "Étape 7/7 : Installation de NixOS"
 
 cd /mnt/etc/nixos
 
+# Utiliser la config minimale pour mimosa lors de l'installation
+# (évite de builder j12zdotcom pendant l'installation)
+INSTALL_CONFIG="${HOST}"
+if [[ "${HOST}" == "mimosa" ]]; then
+    INSTALL_CONFIG="mimosa-minimal"
+    info "Installation de mimosa-minimal (sans serveur web)"
+    info "Après l'installation, vous pourrez activer le webserver avec:"
+    info "  sudo nixos-rebuild switch --flake .#mimosa"
+fi
+
 info "Installation en cours (cela peut prendre plusieurs minutes)..."
-nixos-install --flake ".#${HOST}" --no-root-passwd
+nixos-install --flake ".#${INSTALL_CONFIG}" --no-root-passwd
 
 # ========================================
 # Finalisation
