@@ -19,6 +19,10 @@
   # Réseau
   networking.hostName = "mimosa";  # Serveur web
   networking.useDHCP = true;
+  # DNS fallback pour les builds Nix (FOD)
+  # Tailscale MagicDNS (100.100.100.100) n'est pas accessible dans le sandbox
+  # Ajouter Google DNS comme fallback
+  networking.nameservers = [ "100.100.100.100" "8.8.8.8" "1.1.1.1" ];
 
   # Configuration sops-nix pour la gestion des secrets
   sops = {
