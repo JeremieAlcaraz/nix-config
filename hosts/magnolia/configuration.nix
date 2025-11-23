@@ -5,6 +5,7 @@
     ./hardware-configuration.nix
     (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/magnolia.yaml; })
     ../../modules/tailscale.nix
+    ../../modules/nix-serve.nix
   ];
 
   system.stateVersion = "25.05";
