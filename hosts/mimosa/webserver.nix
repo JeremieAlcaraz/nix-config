@@ -56,21 +56,25 @@ in
       };
     };
 
-    # Configuration Cloudflare Tunnel
-    services.cloudflared = {
-      enable = true;
-      tunnels = {
-        "j12z-tunnel" = {
-          credentialsFile = config.sops.secrets.cloudflare-tunnel-token.path;
-          default = "http://localhost:80";
-        };
-      };
+    # Secret Cloudflare Tunnel (uniquement nécessaire pour la config complète)
+    # Note: mode 0444 (world-readable) requis pour que le service cloudflared avec DynamicUser puisse lire le fichier
+    # Le service cloudflared utilise DynamicUser qui crée un utilisateur temporaire sans privilèges
+    # Ce utilisateur temporaire a besoin de pouvoir lire le token pour se connecter à Cloudflare
+    sops.secrets.cloudflare-tunnel-token = {
+      owner = "root";
+      group = "root";
+      mode = "0444";  # Lisible par tous (nécessaire pour DynamicUser)
     };
 
-    # Secret Cloudflare Tunnel
-    sops.secrets.cloudflare-tunnel-token = {
-      owner = "cloudflared";
-      mode = "0400";
+    # Fix: systemd n'évalue pas $(cat ...) dans ExecStart par défaut
+    # On doit passer le token via un fichier de credentials systemd au lieu de substitution shell
+    systemd.services.cloudflared = {
+      serviceConfig = {
+        # Charger le token comme credential systemd (accessible via $CREDENTIALS_DIRECTORY/tunnel-token)
+        LoadCredential = "tunnel-token:${config.sops.secrets.cloudflare-tunnel-token.path}";
+        # Modifier ExecStart pour utiliser bash et évaluer la substitution de commande
+        ExecStart = lib.mkForce "${pkgs.bash}/bin/bash -c 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $(cat $CREDENTIALS_DIRECTORY/tunnel-token)'";
+      };
     };
   };
 }
