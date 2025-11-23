@@ -2,34 +2,25 @@
 # Ce fichier est importé uniquement dans la configuration "mimosa" complète
 # Pour éviter les erreurs, il n'est PAS importé dans "mimosa-minimal"
 
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, j12z-site, ... }:
 
 let
   cfg = config.mimosa.webserver;
+  # Package pré-buildé depuis la flake (téléchargé depuis le cache magnolia)
+  sitePackage = j12z-site.packages.x86_64-linux.site;
 in
 {
   options.mimosa.webserver.enable = lib.mkEnableOption "the j12z webserver for mimosa";
 
   config = lib.mkIf cfg.enable {
-    # Configuration du service j12z-webserver
-    services.j12z-webserver = {
+    # Configuration Caddy directe (sans le module j12z-webserver qui rebuild)
+    services.caddy = {
       enable = true;
-      domain = "jeremiealcaraz.com";
-      email = "hello@jeremiealcaraz.com";
-      # Build Nix automatique activé (le problème SSL est résolu !)
-      # siteRoot utilise la valeur par défaut du module: le build Nix du site
-      # Cloudflare Tunnel activé avec sops
-      enableCloudflaredTunnel = true;
-      cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
-    };
-
-    # Override Caddy config pour accepter HTTP du tunnel Cloudflare sans redirection
-    # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
-    # On doit remplacer la config par défaut qui utilise HTTPS automatique
-    services.caddy.virtualHosts = lib.mkForce {
-      "http://jeremiealcaraz.com" = {
+      # Config pour accepter HTTP du tunnel Cloudflare sans redirection
+      # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
+      virtualHosts."http://jeremiealcaraz.com" = {
         extraConfig = ''
-          root * ${toString config.services.j12z-webserver.siteRoot}
+          root * ${sitePackage}
           file_server
 
           handle_errors {
@@ -65,25 +56,21 @@ in
       };
     };
 
-    # Secret Cloudflare Tunnel (uniquement nécessaire pour la config complète)
-    # Note: mode 0444 (world-readable) requis pour que le service cloudflared avec DynamicUser puisse lire le fichier
-    # Le service cloudflared utilise DynamicUser qui crée un utilisateur temporaire sans privilèges
-    # Ce utilisateur temporaire a besoin de pouvoir lire le token pour se connecter à Cloudflare
-    sops.secrets.cloudflare-tunnel-token = {
-      owner = "root";
-      group = "root";
-      mode = "0444";  # Lisible par tous (nécessaire pour DynamicUser)
+    # Configuration Cloudflare Tunnel
+    services.cloudflared = {
+      enable = true;
+      tunnels = {
+        "j12z-tunnel" = {
+          credentialsFile = config.sops.secrets.cloudflare-tunnel-token.path;
+          default = "http://localhost:80";
+        };
+      };
     };
 
-    # Fix: systemd n'évalue pas $(cat ...) dans ExecStart par défaut
-    # On doit passer le token via un fichier de credentials systemd au lieu de substitution shell
-    systemd.services.cloudflared = {
-      serviceConfig = {
-        # Charger le token comme credential systemd (accessible via $CREDENTIALS_DIRECTORY/tunnel-token)
-        LoadCredential = "tunnel-token:${config.sops.secrets.cloudflare-tunnel-token.path}";
-        # Modifier ExecStart pour utiliser bash et évaluer la substitution de commande
-        ExecStart = lib.mkForce "${pkgs.bash}/bin/bash -c 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $(cat $CREDENTIALS_DIRECTORY/tunnel-token)'";
-      };
+    # Secret Cloudflare Tunnel
+    sops.secrets.cloudflare-tunnel-token = {
+      owner = "cloudflared";
+      mode = "0400";
     };
   };
 }
