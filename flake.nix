@@ -5,7 +5,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     j12z-site = {
       url = "github:JeremieAlcaraz/j12zdotcom";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # Ne pas forcer nixpkgs - laisser j12zdotcom utiliser sa propre version
+      # inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-nix = {
       url = "github:Mic92/sops-nix";
@@ -65,8 +66,7 @@
               home-manager.useUserPackages = true;
               home-manager.users.jeremie = import ./home/jeremie.nix;
             }
-            # Webserver ACTIVÉ pour tester le cache
-            # Changez "false" en "true" pour activer le site j12zdotcom
+            # Webserver activé
             {
               mimosa.webserver.enable = true;
             }
