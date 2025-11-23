@@ -16,9 +16,8 @@ in
       enable = true;
       domain = "jeremiealcaraz.com";
       email = "hello@jeremiealcaraz.com";
-      # TEMPORAIRE: Utiliser un dossier local au lieu du build Nix
-      # TODO: Remettre le build Nix automatique une fois le problème sandbox résolu
-      siteRoot = /var/www/j12zdotcom;
+      # Build Nix automatique activé (le problème SSL est résolu !)
+      # siteRoot utilise la valeur par défaut du module: le build Nix du site
       # Cloudflare Tunnel activé avec sops
       enableCloudflaredTunnel = true;
       cloudflaredTokenFile = config.sops.secrets.cloudflare-tunnel-token.path;
