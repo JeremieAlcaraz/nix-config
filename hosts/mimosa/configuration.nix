@@ -38,8 +38,9 @@
   # Nix build settings
   nix.settings = {
     sandbox = true;  # Garder la sandbox activée (sécurité)
-    # Note: Les Fixed Output Derivations (FOD) comme pnpm.fetchDeps ont accès au réseau
-    # Les certificats SSL viennent de cacert dans systemPackages et nativeBuildInputs de fetchDeps
+    # Certificats SSL pour toutes les Fixed Output Derivations (FOD)
+    # Permet à pnpm.fetchDeps et autres FOD de valider les connexions HTTPS
+    ssl-cert-file = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
   };
 
   # Tailscale
