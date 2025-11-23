@@ -66,9 +66,9 @@
               home-manager.useUserPackages = true;
               home-manager.users.jeremie = import ./home/jeremie.nix;
             }
-            # Webserver DÉSACTIVÉ temporairement (problème de build à résoudre)
+            # Webserver activé
             {
-              mimosa.webserver.enable = false;
+              mimosa.webserver.enable = true;
             }
           ];
         };
