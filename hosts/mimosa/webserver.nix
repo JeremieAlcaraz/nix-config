@@ -16,6 +16,10 @@ in
     # Configuration Caddy directe (sans le module j12z-webserver qui rebuild)
     services.caddy = {
       enable = true;
+      # Désactiver HTTPS automatique - Cloudflare gère le TLS
+      globalConfig = ''
+        auto_https off
+      '';
       # Config pour accepter HTTP du tunnel Cloudflare sans redirection
       # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
       virtualHosts."http://jeremiealcaraz.com" = {
@@ -56,24 +60,38 @@ in
       };
     };
 
-    # Secret Cloudflare Tunnel (uniquement nécessaire pour la config complète)
-    # Note: mode 0444 (world-readable) requis pour que le service cloudflared avec DynamicUser puisse lire le fichier
-    # Le service cloudflared utilise DynamicUser qui crée un utilisateur temporaire sans privilèges
-    # Ce utilisateur temporaire a besoin de pouvoir lire le token pour se connecter à Cloudflare
+    # Secret Cloudflare Tunnel
+    # Mode 0444 permet au service cloudflared (avec DynamicUser) de lire le token
     sops.secrets.cloudflare-tunnel-token = {
       owner = "root";
       group = "root";
-      mode = "0444";  # Lisible par tous (nécessaire pour DynamicUser)
+      mode = "0444";
     };
 
-    # Fix: systemd n'évalue pas $(cat ...) dans ExecStart par défaut
-    # On doit passer le token via un fichier de credentials systemd au lieu de substitution shell
+    # Service cloudflared manuel avec systemd
+    # On n'utilise pas services.cloudflared car il ne supporte pas --token directement
     systemd.services.cloudflared = {
+      description = "Cloudflare Tunnel";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+
       serviceConfig = {
-        # Charger le token comme credential systemd (accessible via $CREDENTIALS_DIRECTORY/tunnel-token)
+        Type = "simple";
+        DynamicUser = true;
+        # Charger le token comme credential systemd
         LoadCredential = "tunnel-token:${config.sops.secrets.cloudflare-tunnel-token.path}";
-        # Modifier ExecStart pour utiliser bash et évaluer la substitution de commande
-        ExecStart = lib.mkForce "${pkgs.bash}/bin/bash -c 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $(cat $CREDENTIALS_DIRECTORY/tunnel-token)'";
+        # Utiliser bash pour lire le token depuis $CREDENTIALS_DIRECTORY
+        ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $(cat $CREDENTIALS_DIRECTORY/tunnel-token)'";
+        Restart = "on-failure";
+        RestartSec = "5s";
+
+        # Hardening
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [];
       };
     };
   };
