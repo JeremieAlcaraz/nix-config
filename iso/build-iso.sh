@@ -238,7 +238,7 @@ step "Étape 5/6 : Copier l'ISO"
 echo -e "${YELLOW}Où voulez-vous copier l'ISO ?${NC}"
 echo ""
 echo -e "${GREEN}1)${NC} Mac (~/Downloads/)"
-echo -e "${GREEN}2)${NC} Proxmox (jeremie@192.168.1.50:/tmp/)"
+echo -e "${GREEN}2)${NC} Proxmox (root@192.168.1.50:/tmp/)"
 echo -e "${GREEN}3)${NC} Les deux"
 echo -e "${GREEN}4)${NC} Ignorer (ne pas copier)"
 echo ""
@@ -256,8 +256,8 @@ case "$COPY_CHOICE" in
         ;;
     2)
         info "Copie vers Proxmox..."
-        scp result/iso/nixos-minimal-ttyS0.iso jeremie@192.168.1.50:/tmp/
-        info "✅ Copié vers jeremie@192.168.1.50:/tmp/nixos-minimal-ttyS0.iso"
+        scp result/iso/nixos-minimal-ttyS0.iso root@192.168.1.50:/tmp/
+        info "✅ Copié vers root@192.168.1.50:/tmp/nixos-minimal-ttyS0.iso"
         COPIED_TO_PROXMOX=true
         ;;
     3)
@@ -267,8 +267,8 @@ case "$COPY_CHOICE" in
         COPIED_TO_MAC=true
         echo ""
         info "Copie vers Proxmox..."
-        scp result/iso/nixos-minimal-ttyS0.iso jeremie@192.168.1.50:/tmp/
-        info "✅ Copié vers jeremie@192.168.1.50:/tmp/nixos-minimal-ttyS0.iso"
+        scp result/iso/nixos-minimal-ttyS0.iso root@192.168.1.50:/tmp/
+        info "✅ Copié vers root@192.168.1.50:/tmp/nixos-minimal-ttyS0.iso"
         COPIED_TO_PROXMOX=true
         ;;
     4)
@@ -314,8 +314,8 @@ if [[ "$COPIED_TO_PROXMOX" == true ]]; then
     info "Sur Proxmox:"
     echo ""
     echo -e "${YELLOW}1.${NC} Déplacer l'ISO vers le stockage:"
-    echo "   ${CYAN}ssh jeremie@192.168.1.50${NC}"
-    echo "   ${CYAN}sudo mv /tmp/nixos-minimal-ttyS0.iso /var/lib/vz/template/iso/${NC}"
+    echo "   ${CYAN}ssh root@192.168.1.50${NC}"
+    echo "   ${CYAN}mv /tmp/nixos-minimal-ttyS0.iso /var/lib/vz/template/iso/${NC}"
     echo ""
     echo -e "${YELLOW}2.${NC} Attacher à une VM:"
     echo "   ${CYAN}qm set <VMID> --ide2 local:iso/nixos-minimal-ttyS0.iso,media=cdrom${NC}"
