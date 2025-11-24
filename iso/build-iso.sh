@@ -182,32 +182,21 @@ if [[ -f result/iso/nixos-minimal-ttyS0.iso ]]; then
     echo -e "${CYAN}╚════════════════════════════════════════════════════╝${NC}"
     echo ""
 
-    info "Prochaines étapes:"
-    echo ""
-    echo -e "${YELLOW}1.${NC} Copier l'ISO vers Downloads:"
-    echo "   ${CYAN}cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/${NC}"
-    echo ""
-    echo -e "${YELLOW}2.${NC} Uploader sur Proxmox:"
-    echo "   ${CYAN}scp ~/Downloads/nixos-minimal-ttyS0.iso root@proxmox:/var/lib/vz/template/iso/${NC}"
-    echo ""
-    echo -e "${YELLOW}3.${NC} Attacher à une VM:"
-    echo "   ${CYAN}qm set <VMID> --ide2 local:iso/nixos-minimal-ttyS0.iso,media=cdrom${NC}"
-    echo ""
-    echo -e "${YELLOW}4.${NC} Installer minimal:"
-    echo "   ${CYAN}sudo ./scripts/install-nixos.sh minimal${NC}"
-    echo ""
-
     info "Temps d'installation attendu: ~2-3 minutes ✅"
 
 else
     error "ISO introuvable après le build"
 fi
 
+# ========================================
+# Commit des changements (si nécessaire)
+# ========================================
 # Si on a modifié le flake.lock, proposer de committer
 if git diff --quiet flake.lock 2>/dev/null; then
     info "Aucun changement à committer"
 else
     echo ""
+    step "Commit des changements"
     warning "flake.lock a été modifié"
     echo ""
     echo -e "${YELLOW}Voulez-vous committer les changements ? (oui/non)${NC}"
@@ -229,4 +218,118 @@ else
     else
         info "Changements non committés (vous pouvez le faire manuellement plus tard)"
     fi
+fi
+
+# Vérifier que l'ISO existe avant de continuer
+if [[ ! -f result/iso/nixos-minimal-ttyS0.iso ]]; then
+    error "ISO introuvable, impossible de continuer"
+fi
+
+ISO_SIZE=$(du -h result/iso/nixos-minimal-ttyS0.iso | cut -f1)
+ISO_PATH=$(realpath result/iso/nixos-minimal-ttyS0.iso)
+
+# ========================================
+# Étape 5 : Copier l'ISO
+# ========================================
+echo ""
+step "Étape 5/6 : Copier l'ISO"
+
+echo -e "${YELLOW}Où voulez-vous copier l'ISO ?${NC}"
+echo ""
+echo -e "${GREEN}1)${NC} Mac (~/Downloads/)"
+echo -e "${GREEN}2)${NC} Proxmox (jeremie@192.168.1.50:/tmp/)"
+echo -e "${GREEN}3)${NC} Les deux"
+echo -e "${GREEN}4)${NC} Ignorer (ne pas copier)"
+echo ""
+read -p "Choix (1-4): " COPY_CHOICE
+
+COPIED_TO_MAC=false
+COPIED_TO_PROXMOX=false
+
+case "$COPY_CHOICE" in
+    1)
+        info "Copie vers Mac..."
+        cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/
+        info "✅ Copié vers ~/Downloads/nixos-minimal-ttyS0.iso"
+        COPIED_TO_MAC=true
+        ;;
+    2)
+        info "Copie vers Proxmox..."
+        scp result/iso/nixos-minimal-ttyS0.iso jeremie@192.168.1.50:/tmp/
+        info "✅ Copié vers jeremie@192.168.1.50:/tmp/nixos-minimal-ttyS0.iso"
+        COPIED_TO_PROXMOX=true
+        ;;
+    3)
+        info "Copie vers Mac..."
+        cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/
+        info "✅ Copié vers ~/Downloads/nixos-minimal-ttyS0.iso"
+        COPIED_TO_MAC=true
+        echo ""
+        info "Copie vers Proxmox..."
+        scp result/iso/nixos-minimal-ttyS0.iso jeremie@192.168.1.50:/tmp/
+        info "✅ Copié vers jeremie@192.168.1.50:/tmp/nixos-minimal-ttyS0.iso"
+        COPIED_TO_PROXMOX=true
+        ;;
+    4)
+        info "Copie ignorée"
+        ;;
+    *)
+        warning "Choix invalide, copie ignorée"
+        ;;
+esac
+
+# ========================================
+# Étape 6 : Nettoyage
+# ========================================
+if [[ "$COPIED_TO_MAC" == true ]] || [[ "$COPIED_TO_PROXMOX" == true ]]; then
+    echo ""
+    step "Étape 6/6 : Nettoyage"
+
+    echo -e "${YELLOW}Voulez-vous supprimer l'ISO locale ? (oui/non)${NC}"
+    echo -e "${CYAN}Note: Le Nix store sera conservé pour les futurs builds${NC}"
+    read -r CLEANUP_CHOICE
+
+    if [[ "$CLEANUP_CHOICE" == "oui" ]]; then
+        info "Suppression de l'ISO locale..."
+        rm -rf result
+        info "✅ ISO supprimée (Nix store conservé)"
+        echo ""
+        info "Pour rebuilder plus tard, relancez simplement ./build-iso.sh"
+    else
+        info "ISO conservée dans: $ISO_PATH"
+    fi
+fi
+
+# ========================================
+# Prochaines étapes
+# ========================================
+echo ""
+echo -e "${CYAN}╔════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║     📝 Prochaines étapes                           ║${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+if [[ "$COPIED_TO_PROXMOX" == true ]]; then
+    info "Sur Proxmox:"
+    echo ""
+    echo -e "${YELLOW}1.${NC} Déplacer l'ISO vers le stockage:"
+    echo "   ${CYAN}ssh jeremie@192.168.1.50${NC}"
+    echo "   ${CYAN}sudo mv /tmp/nixos-minimal-ttyS0.iso /var/lib/vz/template/iso/${NC}"
+    echo ""
+    echo -e "${YELLOW}2.${NC} Attacher à une VM:"
+    echo "   ${CYAN}qm set <VMID> --ide2 local:iso/nixos-minimal-ttyS0.iso,media=cdrom${NC}"
+    echo ""
+    echo -e "${YELLOW}3.${NC} Démarrer et installer:"
+    echo "   ${CYAN}qm start <VMID>${NC}"
+    echo "   ${CYAN}sudo ./scripts/install-nixos.sh minimal${NC}"
+    echo ""
+fi
+
+if [[ "$COPIED_TO_MAC" == true ]]; then
+    info "Depuis le Mac:"
+    echo ""
+    echo -e "${YELLOW}1.${NC} Uploader sur Proxmox (Web UI):"
+    echo "   ${CYAN}Datacenter → Storage → local → Upload${NC}"
+    echo "   ${CYAN}Sélectionner ~/Downloads/nixos-minimal-ttyS0.iso${NC}"
+    echo ""
 fi
