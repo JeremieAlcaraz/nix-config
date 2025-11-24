@@ -44,24 +44,17 @@
           ];
         };
 
-        # Mimosa - Serveur web
-        # Le webserver est désactivé par défaut pour faciliter l'installation initiale
-        # (évite les téléchargements npm et builds du site web)
-        #
-        # Pour activer le webserver après l'installation :
-        #   1. Éditez ce fichier et changez mimosa.webserver.enable = false → true
-        #   2. sudo nixos-rebuild switch --flake .#mimosa
+        # Mimosa - Configuration de base (webserver désactivé)
+        # Pour l'installation initiale : évite les téléchargements npm
+        # Usage: sudo nixos-rebuild switch --flake .#mimosa
         mimosa = nixpkgs.lib.nixosSystem {
           inherit system;
-          # Passer j12z-site en argument pour accéder au package pré-buildé
           specialArgs = { inherit j12z-site; };
           modules = [
             ./modules/base.nix
             ./modules/ssh.nix
             ./hosts/mimosa/configuration.nix
-            ./hosts/mimosa/webserver.nix  # Configuration du serveur web
-            # Retrait de j12z-site.nixosModules.j12z-webserver qui rebuild le site
-            # On utilise maintenant directement le package via specialArgs
+            ./hosts/mimosa/webserver.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
             {
@@ -69,10 +62,29 @@
               home-manager.useUserPackages = true;
               home-manager.users.jeremie = import ./home/jeremie.nix;
             }
-            # Toggle du webserver (false par défaut, à activer manuellement après l'installation)
+            { mimosa.webserver.enable = false; }
+          ];
+        };
+
+        # Mimosa-web - Configuration complète avec serveur web
+        # Pour activer le webserver après l'installation
+        # Usage: sudo nixos-rebuild switch --flake .#mimosa-web
+        mimosa-web = nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit j12z-site; };
+          modules = [
+            ./modules/base.nix
+            ./modules/ssh.nix
+            ./hosts/mimosa/configuration.nix
+            ./hosts/mimosa/webserver.nix
+            sops-nix.nixosModules.sops
+            home-manager.nixosModules.home-manager
             {
-              mimosa.webserver.enable = false;
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremie = import ./home/jeremie.nix;
             }
+            { mimosa.webserver.enable = true; }
           ];
         };
 

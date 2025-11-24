@@ -1,6 +1,9 @@
 # Configuration du serveur web j12zdotcom
-# Ce module est toujours importé, mais désactivé par défaut (mimosa.webserver.enable = false)
-# Pour activer : éditez flake.nix et changez mimosa.webserver.enable = false → true
+# Ce module est toujours importé, mais peut être activé/désactivé via flake.nix
+#
+# Pour activer/désactiver le webserver :
+#   sudo nixos-rebuild switch --flake .#mimosa      # Désactivé
+#   sudo nixos-rebuild switch --flake .#mimosa-web  # Activé
 
 { config, lib, pkgs, j12z-site, ... }:
 

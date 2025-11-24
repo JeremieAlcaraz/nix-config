@@ -30,10 +30,14 @@
 
   # Configuration du site j12zdotcom
   # La configuration du serveur web est dans ./webserver.nix
-  # Le webserver est désactivé par défaut (mimosa.webserver.enable = false dans flake.nix)
-  # Pour l'activer après l'installation initiale :
-  #   1. Éditez flake.nix et changez mimosa.webserver.enable = false → true
-  #   2. sudo nixos-rebuild switch --flake .#mimosa
+  #
+  # Deux configurations disponibles dans flake.nix :
+  #   - mimosa      : webserver désactivé (pour installation initiale)
+  #   - mimosa-web  : webserver activé (pour production)
+  #
+  # Basculer entre les deux :
+  #   sudo nixos-rebuild switch --flake .#mimosa      # Désactiver le webserver
+  #   sudo nixos-rebuild switch --flake .#mimosa-web  # Activer le webserver
 
   # Nix build settings
   nix.settings = {
