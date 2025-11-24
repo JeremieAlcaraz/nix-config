@@ -1,88 +1,199 @@
-# ISO NixOS personnalisée
+# 🏗️ ISO Builder - NixOS Custom
 
-ISO d'installation NixOS optimisée pour ce projet, avec :
-- ✅ Flakes activés par défaut
-- ✅ DNS publics (1.1.1.1, 8.8.8.8) configurés automatiquement
-- ✅ Outils de diagnostic réseau inclus (bind, dnsutils, etc.)
-- ✅ Scripts d'installation pré-installés
+ISO personnalisée NixOS optimisée pour Proxmox avec console série (ttyS0) et environnement d'installation ergonomique.
 
-## 🏗️ Builder l'ISO
-
-Depuis la racine du projet :
+## 🚀 Quick Start
 
 ```bash
-# Builder l'ISO (prend ~10-15 minutes)
-nix build .#nixosConfigurations.installer.config.system.build.isoImage
+# Builder l'ISO (synchronisée avec le flake principal)
+./build-iso.sh
 
-# L'ISO sera dans result/iso/
+# Ou mettre à jour vers la dernière version nixpkgs
+./build-iso.sh --update
+
+# Aide
+./build-iso.sh --help
+```
+
+**Résultat** : `result/iso/nixos-minimal-ttyS0.iso` (~600-900 MB)
+
+## 📋 Pourquoi rebuilder l'ISO ?
+
+### ❌ Sans ISO à jour
+```
+ISO ancienne (novembre 2024)
+     ↓
+Installation minimal (janvier 2025)
+     ↓
+Gap de 2+ mois = Télécharge TOUS les packages mis à jour
+     ↓
+Temps: 5-8 minutes ⚠️
+```
+
+### ✅ Avec ISO à jour
+```
+ISO récente (même version que le flake)
+     ↓
+Installation minimal
+     ↓
+Pas de gap = Télécharge uniquement les nouveaux packages
+     ↓
+Temps: 2-3 minutes ✅
+```
+
+**Gain** : 3-5 minutes par installation ! 🚀
+
+## 🔧 Configuration de l'ISO
+
+Cette ISO contient :
+
+- ✅ **Console série (ttyS0)** : Compatible Proxmox/NoVNC
+- ✅ **Environnement X11 minimal** : xterm + twm
+- ✅ **ZSH + Starship** : Shell moderne et ergonomique
+- ✅ **Autologin** : Utilisateur `nixos` (pas de mot de passe)
+- ✅ **SSH activé** : Port 22, login root avec mot de passe vide
+- ✅ **DHCP** : Configuration réseau automatique
+- ✅ **DNS publics** : 1.1.1.1 + 8.8.8.8 pré-configurés
+- ✅ **Scripts d'installation** : Accès direct au repo
+
+## 📦 Contenu
+
+```
+iso/
+├── flake.nix              # Configuration ISO
+├── custom-installer.nix   # Modules personnalisés
+├── build-iso.sh           # Script de build automatisé
+├── flake.lock             # Versions verrouillées
+└── README.md              # Ce fichier
+```
+
+## 🛠️ Build manuel (sans script)
+
+Si tu préfères faire le build à la main :
+
+```bash
+# Mettre à jour nixpkgs
+nix flake update
+
+# Ou synchroniser avec le flake principal
+MAIN_REV=$(cd .. && jq -r '.nodes.nixpkgs.locked.rev' flake.lock)
+nix flake lock --override-input nixpkgs "github:NixOS/nixpkgs/$MAIN_REV"
+
+# Builder l'ISO
+nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage
+
+# Résultat
 ls -lh result/iso/*.iso
 ```
 
-## 📤 Uploader l'ISO sur Proxmox
+## 📤 Upload sur Proxmox
 
-### Option 1 : Via SCP
+### Via SCP (recommandé)
 
 ```bash
-# Depuis votre machine où vous avez buildé l'ISO
-scp result/iso/nixos-*.iso root@proxmox:/var/lib/vz/template/iso/
+# Copier vers Downloads
+cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/
+
+# Upload vers Proxmox
+scp ~/Downloads/nixos-minimal-ttyS0.iso root@proxmox:/var/lib/vz/template/iso/
 ```
 
-### Option 2 : Via l'interface web Proxmox
+### Via Web UI
 
-1. Aller dans **Datacenter** > **Storage** > **local (pve)** > **ISO Images**
-2. Cliquer sur **Upload**
-3. Sélectionner l'ISO buildée
+1. Aller sur Proxmox Web UI
+2. Datacenter → Storage → local
+3. Upload → Sélectionner l'ISO
+4. Attendre la fin de l'upload
 
-## 🚀 Utiliser l'ISO
-
-### 1. Créer ou configurer la VM dans Proxmox
+## 🎬 Utiliser l'ISO
 
 ```bash
-# Attacher l'ISO à la VM
-qm set <VMID> --ide2 local:iso/nixos-nix-config-installer-*.iso,media=cdrom
+# Attacher à une VM (remplace 100 par ton VMID)
+qm set 100 --ide2 local:iso/nixos-minimal-ttyS0.iso,media=cdrom
 
 # Démarrer la VM
-qm start <VMID>
+qm start 100
+
+# Une fois dans l'ISO, installer minimal
+sudo ./scripts/install-nixos.sh minimal
 ```
 
-### 2. Une fois bootée dans l'ISO
+## ⏱️ Performances
 
-Les scripts sont déjà disponibles dans `/etc/installer/scripts/` !
+### Temps de build (première fois)
+
+| Machine | Temps |
+|---------|-------|
+| Mac M1/M2 | 8-12 min |
+| Magnolia (4 cores) | 10-15 min |
+
+### Temps de build (rebuild après update)
+
+| Machine | Temps |
+|---------|-------|
+| Mac M1/M2 | 3-5 min |
+| Magnolia (4 cores) | 5-8 min |
+
+### Temps d'installation avec ISO
+
+| Avec ISO | Temps |
+|----------|-------|
+| ISO à jour | 2-3 min ✅ |
+| ISO ancienne (2+ mois) | 5-8 min ⚠️ |
+
+## 🔍 Troubleshooting
+
+### Erreur "platform mismatch" sur macOS
+
+Si tu es sur macOS et que le build échoue :
 
 ```bash
-# Diagnostic réseau
-sudo /etc/installer/scripts/diagnose-network.sh
+# Option 1: Builder sur magnolia
+ssh magnolia
+cd /etc/nixos/iso
+./build-iso.sh
 
-# Installation
-sudo /etc/installer/scripts/install-nixos.sh mimosa
+# Option 2: Utiliser remote builder (avancé)
+# Voir docs/BUILD-OPTIMIZATION.md
 ```
 
-## ✨ Avantages de l'ISO personnalisée
-
-| Problème | ISO vanilla | ISO personnalisée |
-|----------|-------------|-------------------|
-| Flakes | ❌ Désactivés par défaut | ✅ Activés |
-| DNS | ⚠️ Via DHCP (peut être absent) | ✅ DNS publics configurés |
-| Outils diagnostic | ❌ À installer | ✅ Pré-installés |
-| Scripts | ❌ À télécharger | ✅ Inclus dans l'ISO |
-| Message d'aide | ❌ Generic | ✅ Personnalisé |
-
-## 🔄 Mettre à jour l'ISO
-
-Quand vous modifiez les scripts d'installation :
+### Build très lent
 
 ```bash
-# 1. Rebuild l'ISO avec les derniers scripts
-nix build .#nixosConfigurations.installer.config.system.build.isoImage
+# Vérifier que les caches sont utilisés
+nix build ... --print-build-logs 2>&1 | grep -E 'copying|building'
 
-# 2. Uploader la nouvelle version sur Proxmox
-scp result/iso/nixos-*.iso root@proxmox:/var/lib/vz/template/iso/
-
-# 3. Utiliser la nouvelle ISO pour les prochaines installations
+# Devrait voir beaucoup de "copying path" (téléchargement)
+# Peu de "building" (compilation)
 ```
 
-## 📝 Notes
+### Out of disk space
 
-- L'ISO fait environ 800MB-1GB (selon les packages inclus)
-- Le build nécessite ~2GB d'espace disque temporaire
-- Compatible x86_64 uniquement (modifiable dans flake.nix si besoin)
+```bash
+# Libérer de l'espace
+nix-collect-garbage -d
+
+# Vérifier l'espace disponible
+df -h
+```
+
+## 📅 Quand rebuilder ?
+
+- ✅ Tous les 1-2 mois (quand nixpkgs a avancé)
+- ✅ Avant une grosse session d'installation de VMs
+- ✅ Après une mise à jour majeure (24.11 → 25.05)
+- ❌ Pas besoin à chaque petit changement
+
+## 📚 Documentation complète
+
+Voir [docs/REBUILD-ISO.md](../docs/REBUILD-ISO.md) pour le guide détaillé avec toutes les étapes.
+
+## 🆘 Besoin d'aide ?
+
+- Guide complet : `docs/REBUILD-ISO.md`
+- Optimisation builds : `docs/BUILD-OPTIMIZATION.md`
+- Config ISO : `iso/custom-installer.nix`
+
+---
+
+**Astuce** : Lance `./build-iso.sh` une fois par mois pour garder une ISO à jour ! ⏰
