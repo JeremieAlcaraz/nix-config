@@ -44,32 +44,10 @@
           ];
         };
 
-        # Mimosa - Configuration de base (webserver désactivé)
-        # Pour l'installation initiale : évite les téléchargements npm
+        # Mimosa - Serveur web (configuration complète)
+        # Pour l'installation initiale, utiliser la config "minimal" à la place
         # Usage: sudo nixos-rebuild switch --flake .#mimosa
         mimosa = nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = { inherit j12z-site; };
-          modules = [
-            ./modules/base.nix
-            ./modules/ssh.nix
-            ./hosts/mimosa/configuration.nix
-            ./hosts/mimosa/webserver.nix
-            sops-nix.nixosModules.sops
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.jeremie = import ./home/jeremie.nix;
-            }
-            { mimosa.webserver.enable = false; }
-          ];
-        };
-
-        # Mimosa-web - Configuration complète avec serveur web
-        # Pour activer le webserver après l'installation
-        # Usage: sudo nixos-rebuild switch --flake .#mimosa-web
-        mimosa-web = nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = { inherit j12z-site; };
           modules = [
@@ -105,14 +83,22 @@
           ];
         };
 
-        # Demo - VM de démonstration minimale
-        demo = nixpkgs.lib.nixosSystem {
+        # Minimal - Configuration minimale pour installation initiale
+        # Usage pour install : nixos-install --flake .#minimal
+        # Puis switch vers la vraie config : sudo nixos-rebuild switch --flake .#<hostname>
+        minimal = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
             ./modules/base.nix
             ./modules/ssh.nix
-            ./hosts/demo/configuration.nix
+            ./hosts/minimal/configuration.nix
             sops-nix.nixosModules.sops
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremie = import ./home/jeremie.nix;
+            }
           ];
         };
 
