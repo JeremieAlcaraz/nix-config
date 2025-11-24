@@ -71,8 +71,8 @@
         echo "🤍 Whitelily - n8n Automation"
       '' else if osConfig.networking.hostName == "mimosa" then ''
         echo "🌼 Mimosa - Serveur web"
-      '' else if osConfig.networking.hostName == "demo" then ''
-        echo "🔧 Demo - VM de démonstration"
+      '' else if osConfig.networking.hostName == "minimal" then ''
+        echo "🔧 Minimal - VM de démonstration minimale"
       '' else ""}
       echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       echo ""

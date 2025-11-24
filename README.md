@@ -27,7 +27,7 @@ Ce repository contient ma configuration NixOS déclarative pour gérer plusieurs
 | **magnolia** 🌸 | Hyperviseur | Infrastructure Proxmox avec console série, QEMU Guest Agent, SSH par clés et Fish shell. Auto-navigation vers /etc/nixos lors de la connexion SSH. |
 | **mimosa** 🌼 | Serveur Web | ✅ **Production** - Serveur web j12zdotcom avec Caddy, Cloudflare Tunnel, SOPS secrets, déploiement automatisé. Site: https://jeremiealcaraz.com |
 | **whitelily** 🤍 | Automation | Service d'orchestration n8n avec Podman, PostgreSQL 16, Cloudflare Tunnel, backups automatiques et Fish shell. Architecture production-ready avec auto-navigation vers /etc/nixos. |
-| **demo** 🎬 | Démonstration | Hôte de démonstration minimal avec Fish shell pour tests et expérimentations. Auto-navigation vers /etc/nixos lors de la connexion SSH. |
+| **minimal** 🔧 | Démonstration | Hôte de démonstration minimal avec Fish shell pour tests et expérimentations. Auto-navigation vers /etc/nixos lors de la connexion SSH. |
 
 ### 🏠 Gestion de l'environnement utilisateur avec Home Manager
 
@@ -124,7 +124,7 @@ sudo nixos-rebuild switch --flake .#magnolia        # Infrastructure Proxmox
 sudo nixos-rebuild switch --flake .#mimosa-minimal  # Serveur web (minimal)
 sudo nixos-rebuild switch --flake .#mimosa          # Serveur web (complet)
 sudo nixos-rebuild switch --flake .#whitelily       # Automation n8n
-sudo nixos-rebuild switch --flake .#demo            # VM de démonstration
+sudo nixos-rebuild switch --flake .#minimal         # VM de démonstration
 ```
 
 **Note** : Pour whitelily, consultez le guide complet [docs/WHITELILY-N8N-SETUP.md](docs/WHITELILY-N8N-SETUP.md) qui détaille la configuration des secrets SOPS et du Cloudflare Tunnel.
@@ -166,7 +166,7 @@ nix-config/
 │   │   ├── configuration.nix    # Configuration système
 │   │   ├── n8n.nix              # Configuration n8n + Podman
 │   │   └── hardware-configuration.nix
-│   └── demo/                    # VM de démonstration
+│   └── minimal/                 # VM de démonstration
 │       ├── configuration.nix
 │       └── hardware-configuration.nix
 ├── home/                        # Configuration utilisateur Home Manager
