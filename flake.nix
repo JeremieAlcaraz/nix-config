@@ -90,13 +90,13 @@
           ];
         };
 
-        # Demo - VM de démonstration minimale
-        demo = nixpkgs.lib.nixosSystem {
+        # Minimal - VM de démonstration minimale
+        minimal = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
             ./modules/base.nix
             ./modules/ssh.nix
-            ./hosts/demo/configuration.nix
+            ./hosts/minimal/configuration.nix
             sops-nix.nixosModules.sops
           ];
         };

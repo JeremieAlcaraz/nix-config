@@ -1,4 +1,4 @@
-# hosts/demo/configuration.nix
+# hosts/minimal/configuration.nix
 { config, pkgs, ... }:
 
 {
@@ -11,7 +11,7 @@
   system.stateVersion = "25.05";
 
   # Réseau
-  networking.hostName = "demo";
+  networking.hostName = "minimal";
   networking.useDHCP = true;
   networking.resolvconf.enable = false;
 
