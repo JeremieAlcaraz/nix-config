@@ -2,13 +2,16 @@
 set -euo pipefail
 
 # Script d'installation NixOS all-in-one
-# Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily|demo]
+# Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily]
 #
-# Ce script installe NixOS :
+# Ce script installe NixOS avec la configuration "minimal" (rapide),
+# puis vous switcherez vers la vraie config de l'host après le reboot.
+#
+# Étapes :
 # - Partitionnement et formatage
 # - Génération du hardware-configuration.nix
 # - Clone du repo de configuration
-# - Installation de NixOS
+# - Installation de NixOS (config minimal)
 # - Arrêt automatique
 #
 # ⚠️  Les secrets ne sont PAS créés pendant l'installation
@@ -75,11 +78,7 @@ if [[ -z "$HOST" ]]; then
     echo -e "   🤍 n8n automation"
     echo -e "   → Stack complète : n8n + PostgreSQL + Caddy + Cloudflare Tunnel"
     echo ""
-    echo -e "${GREEN}4)${NC} ${YELLOW}demo${NC}"
-    echo -e "   🎯 VM de démonstration minimale"
-    echo -e "   → Configuration basique pour tests et démonstration"
-    echo ""
-    prompt "Choisissez un host (1-4) :"
+    prompt "Choisissez un host (1-3) :"
     read -r choice
 
     case "$choice" in
@@ -92,11 +91,8 @@ if [[ -z "$HOST" ]]; then
         3)
             HOST="whitelily"
             ;;
-        4)
-            HOST="demo"
-            ;;
         *)
-            error "Choix invalide. Utilisez 1, 2, 3 ou 4"
+            error "Choix invalide. Utilisez 1, 2 ou 3"
             ;;
     esac
 
@@ -105,8 +101,8 @@ if [[ -z "$HOST" ]]; then
 fi
 
 # Vérifier que l'host est valide
-if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "demo" ]]; then
-    error "Host invalide. Utilisez 'magnolia', 'mimosa', 'whitelily' ou 'demo'"
+if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" ]]; then
+    error "Host invalide. Utilisez 'magnolia', 'mimosa' ou 'whitelily'"
 fi
 
 # Configuration
@@ -320,21 +316,18 @@ fi
 # ========================================
 # Étape 7 : Installation de NixOS
 # ========================================
-step "Étape 7/7 : Installation de NixOS"
+step "Étape 7/7 : Installation de NixOS (config minimal)"
 
 cd /mnt/etc/nixos
 
-info "Installation en cours (cela peut prendre plusieurs minutes)..."
-nixos-install --flake ".#${HOST}" --no-root-passwd
+info "Installation avec la config 'minimal' pour un démarrage rapide..."
+info "Vous switcherez vers '${HOST}' après le premier boot"
+echo ""
+nixos-install --flake ".#minimal" --no-root-passwd
 
-if [[ "${HOST}" == "mimosa" ]]; then
-    echo ""
-    info "ℹ️  Le webserver j12zdotcom est DÉSACTIVÉ par défaut"
-    info "Pour l'activer après l'installation :"
-    info "  1. Éditez /etc/nixos/flake.nix"
-    info "  2. Changez: mimosa.webserver.enable = false → true"
-    info "  3. sudo nixos-rebuild switch --flake .#mimosa"
-fi
+echo ""
+info "✅ Installation minimale terminée"
+info "Hardware configuration sauvegardée dans hosts/${HOST}/"
 
 # ========================================
 # Finalisation
@@ -354,7 +347,8 @@ else
 fi
 
 echo ""
-warning "⚠️  IMPORTANT : Les secrets ne sont PAS encore configurés"
+warning "⚠️  IMPORTANT : Vous avez installé avec la config 'minimal'"
+warning "⚠️  Les secrets ne sont PAS encore configurés"
 echo ""
 info "Prochaines étapes :"
 echo ""
@@ -366,8 +360,9 @@ echo -e "${CYAN}4.${NC} Créer les secrets :"
 echo "   ${YELLOW}cd /etc/nixos${NC}"
 echo "   ${YELLOW}./scripts/manage-secrets.sh ${HOST}${NC}"
 echo ""
-echo -e "${CYAN}5.${NC} Déployer la configuration :"
-echo "   ${YELLOW}nixos-rebuild switch --flake .#${HOST}${NC}"
+echo -e "${CYAN}5.${NC} ${GREEN}Switch vers la config complète '${HOST}' :${NC}"
+echo "   ${YELLOW}sudo nixos-rebuild switch --flake .#${HOST}${NC}"
+echo "   ${GREEN}(Cette étape activera tous les services de ${HOST})${NC}"
 echo ""
 echo -e "${CYAN}6.${NC} Se reconnecter avec l'utilisateur normal :"
 echo "   ${YELLOW}ssh jeremie@<IP>${NC}"
