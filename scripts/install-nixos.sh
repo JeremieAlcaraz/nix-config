@@ -67,9 +67,9 @@ if [[ -z "$HOST" ]]; then
     echo -e "   🌸 Infrastructure Proxmox"
     echo -e "   → VM de base pour l'infrastructure"
     echo ""
-    echo -e "${GREEN}2)${NC} ${YELLOW}mimosa${NC}"
-    echo -e "   🌼 Serveur web (j12zdotcom)"
-    echo -e "   → Serveur web avec Cloudflare Tunnel"
+    echo -e "${GREEN}2)${NC} ${YELLOW}mimosa-bootstrap${NC}"
+    echo -e "   🌼 Serveur web - Installation (SANS webserver)"
+    echo -e "   → Installation légère, activer webserver après avec: nixos-rebuild switch --flake .#mimosa"
     echo ""
     echo -e "${GREEN}3)${NC} ${YELLOW}whitelily${NC}"
     echo -e "   🤍 n8n automation"
@@ -87,7 +87,7 @@ if [[ -z "$HOST" ]]; then
             HOST="magnolia"
             ;;
         2)
-            HOST="mimosa"
+            HOST="mimosa-bootstrap"
             ;;
         3)
             HOST="whitelily"
@@ -105,8 +105,8 @@ if [[ -z "$HOST" ]]; then
 fi
 
 # Vérifier que l'host est valide
-if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "minimal" ]]; then
-    error "Host invalide. Utilisez 'magnolia', 'mimosa', 'whitelily' ou 'minimal'"
+if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa-bootstrap" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "minimal" ]]; then
+    error "Host invalide. Utilisez 'magnolia', 'mimosa-bootstrap', 'mimosa', 'whitelily' ou 'minimal'"
 fi
 
 # Configuration
@@ -227,10 +227,16 @@ fi
 git clone --branch "$BRANCH" "$REPO_URL" /mnt/etc/nixos
 
 # Copier le hardware-configuration.nix au bon endroit
+# Note: mimosa-bootstrap utilise le même dossier que mimosa
+HOST_DIR="${HOST}"
+if [[ "${HOST}" == "mimosa-bootstrap" ]]; then
+    HOST_DIR="mimosa"
+fi
+
 info "Placement de hardware-configuration.nix pour ${HOST}..."
-mkdir -p "/mnt/etc/nixos/hosts/${HOST}"
-cp /tmp/hardware-configuration.nix "/mnt/etc/nixos/hosts/${HOST}/hardware-configuration.nix"
-info "Hardware configuration placée dans hosts/${HOST}/"
+mkdir -p "/mnt/etc/nixos/hosts/${HOST_DIR}"
+cp /tmp/hardware-configuration.nix "/mnt/etc/nixos/hosts/${HOST_DIR}/hardware-configuration.nix"
+info "Hardware configuration placée dans hosts/${HOST_DIR}/"
 
 # Vérifier et configurer la clé age pour sops
 if [[ ! -f /var/lib/sops-nix/key.txt ]]; then
@@ -302,17 +308,19 @@ if [[ -f /var/lib/sops-nix/key.txt ]]; then
 fi
 
 # Si des secrets existent déjà dans le repo, les utiliser
-SECRETS_PATH="/mnt/etc/nixos/secrets/${HOST}.yaml"
+# Note: mimosa-bootstrap utilise les secrets de mimosa
+SECRETS_HOST="${HOST_DIR}"
+SECRETS_PATH="/mnt/etc/nixos/secrets/${SECRETS_HOST}.yaml"
 if [[ -f "$SECRETS_PATH" ]] && grep -q "sops:" "$SECRETS_PATH" 2>/dev/null; then
     info "Secrets existants trouvés dans le repo (chiffrés)"
     info "Vous pourrez les mettre à jour plus tard avec manage-secrets.sh"
 else
     # Sinon, copier le fichier d'exemple comme placeholder
-    if [[ -f "/mnt/etc/nixos/secrets/${HOST}.yaml.example" ]]; then
-        cp "/mnt/etc/nixos/secrets/${HOST}.yaml.example" "$SECRETS_PATH"
+    if [[ -f "/mnt/etc/nixos/secrets/${SECRETS_HOST}.yaml.example" ]]; then
+        cp "/mnt/etc/nixos/secrets/${SECRETS_HOST}.yaml.example" "$SECRETS_PATH"
         info "Fichier d'exemple copié (contient des placeholders)"
     else
-        warning "Aucun fichier de secrets trouvé pour ${HOST}"
+        warning "Aucun fichier de secrets trouvé pour ${SECRETS_HOST}"
         warning "L'installation va continuer mais les secrets devront être créés après"
     fi
 fi
@@ -325,15 +333,18 @@ step "Étape 7/7 : Installation de NixOS"
 cd /mnt/etc/nixos
 
 info "Installation en cours (cela peut prendre plusieurs minutes)..."
-nixos-install --flake ".#${HOST}" --no-root-passwd
+info "Mode verbose activé pour voir les détails du téléchargement..."
+nixos-install --flake ".#${HOST}" --no-root-passwd -v -L --show-trace
 
-if [[ "${HOST}" == "mimosa" ]]; then
+if [[ "${HOST}" == "mimosa-bootstrap" ]]; then
     echo ""
-    info "ℹ️  Le webserver j12zdotcom est DÉSACTIVÉ par défaut"
-    info "Pour l'activer après l'installation :"
-    info "  1. Éditez /etc/nixos/flake.nix"
-    info "  2. Changez: mimosa.webserver.enable = false → true"
+    info "ℹ️  Installation bootstrap - Le webserver j12zdotcom n'est PAS installé"
+    info "Pour activer le webserver en mode production après l'installation :"
+    info "  1. Rebootez et connectez-vous"
+    info "  2. cd /etc/nixos"
     info "  3. sudo nixos-rebuild switch --flake .#mimosa"
+    echo ""
+    info "Note : L'activation du webserver téléchargera et compilera j12zdotcom (~8GB RAM requis)"
 fi
 
 # ========================================
@@ -364,10 +375,18 @@ echo -e "${CYAN}3.${NC} Se connecter en root : ${YELLOW}ssh root@<IP>${NC}"
 echo ""
 echo -e "${CYAN}4.${NC} Créer les secrets :"
 echo "   ${YELLOW}cd /etc/nixos${NC}"
-echo "   ${YELLOW}./scripts/manage-secrets.sh ${HOST}${NC}"
+echo "   ${YELLOW}./scripts/manage-secrets.sh ${SECRETS_HOST}${NC}"
 echo ""
 echo -e "${CYAN}5.${NC} Déployer la configuration :"
-echo "   ${YELLOW}nixos-rebuild switch --flake .#${HOST}${NC}"
+if [[ "${HOST}" == "mimosa-bootstrap" ]]; then
+    echo "   ${YELLOW}# Pour passer en production avec webserver :${NC}"
+    echo "   ${YELLOW}nixos-rebuild switch --flake .#mimosa${NC}"
+    echo ""
+    echo "   ${YELLOW}# OU pour rester en mode bootstrap :${NC}"
+    echo "   ${YELLOW}nixos-rebuild switch --flake .#${HOST}${NC}"
+else
+    echo "   ${YELLOW}nixos-rebuild switch --flake .#${HOST}${NC}"
+fi
 echo ""
 echo -e "${CYAN}6.${NC} Se reconnecter avec l'utilisateur normal :"
 echo "   ${YELLOW}ssh jeremie@<IP>${NC}"
