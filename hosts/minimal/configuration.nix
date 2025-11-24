@@ -4,7 +4,7 @@
 {
   imports = [
     ./hardware-configuration.nix
-    (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/common.yaml; })
+    (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/minimal.yaml; })
     ../../modules/tailscale.nix
   ];
 
