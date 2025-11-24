@@ -66,9 +66,10 @@
               home-manager.useUserPackages = true;
               home-manager.users.jeremie = import ./home/jeremie.nix;
             }
-            # Webserver activé
+            # Webserver DÉSACTIVÉ par défaut pour éviter la compilation pendant l'installation
+            # Après l'installation, éditez ce fichier et changez false → true
             {
-              mimosa.webserver.enable = true;
+              mimosa.webserver.enable = false;
             }
           ];
         };
