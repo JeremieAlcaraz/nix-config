@@ -30,10 +30,10 @@
 
   # Configuration du site j12zdotcom
   # La configuration du serveur web est dans ./webserver.nix
-  # Ce fichier est importé uniquement dans la configuration "mimosa" complète (via flake.nix)
-  # La configuration "mimosa-minimal" n'importe PAS ce fichier pour éviter
-  # les téléchargements npm pendant l'installation initiale
-  # Note: mimosa.webserver.enable est activé dans flake.nix pour la config "mimosa"
+  # Le webserver est désactivé par défaut (mimosa.webserver.enable = false dans flake.nix)
+  # Pour l'activer après l'installation initiale :
+  #   1. Éditez flake.nix et changez mimosa.webserver.enable = false → true
+  #   2. sudo nixos-rebuild switch --flake .#mimosa
 
   # Nix build settings
   nix.settings = {

@@ -44,9 +44,12 @@
           ];
         };
 
-        # Mimosa - Serveur web (webserver désactivé par défaut lors de l'installation)
+        # Mimosa - Serveur web
+        # Le webserver est désactivé par défaut pour faciliter l'installation initiale
+        # (évite les téléchargements npm et builds du site web)
+        #
         # Pour activer le webserver après l'installation :
-        #   1. Éditez ce fichier et changez enable = false → enable = true
+        #   1. Éditez ce fichier et changez mimosa.webserver.enable = false → true
         #   2. sudo nixos-rebuild switch --flake .#mimosa
         mimosa = nixpkgs.lib.nixosSystem {
           inherit system;
@@ -66,9 +69,9 @@
               home-manager.useUserPackages = true;
               home-manager.users.jeremie = import ./home/jeremie.nix;
             }
-            # Webserver activé
+            # Toggle du webserver (false par défaut, à activer manuellement après l'installation)
             {
-              mimosa.webserver.enable = true;
+              mimosa.webserver.enable = false;
             }
           ];
         };

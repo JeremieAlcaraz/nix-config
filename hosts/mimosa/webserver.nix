@@ -1,6 +1,6 @@
 # Configuration du serveur web j12zdotcom
-# Ce fichier est importé uniquement dans la configuration "mimosa" complète
-# Pour éviter les erreurs, il n'est PAS importé dans "mimosa-minimal"
+# Ce module est toujours importé, mais désactivé par défaut (mimosa.webserver.enable = false)
+# Pour activer : éditez flake.nix et changez mimosa.webserver.enable = false → true
 
 { config, lib, pkgs, j12z-site, ... }:
 
