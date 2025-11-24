@@ -233,12 +233,18 @@ ISO_PATH=$(realpath result/iso/nixos-minimal-ttyS0.iso)
 # Étape 5 : Copier l'ISO
 # ========================================
 echo ""
-step "Étape 5/6 : Copier l'ISO"
+step "Étape 5/7 : Copier l'ISO"
+
+# Générer un nom d'ISO avec la date
+BUILD_DATE=$(date '+%Y-%m-%d')
+ISO_NAME_DATED="nixos-minimal-ttyS0-${BUILD_DATE}.iso"
+
+info "Nom de l'ISO : $ISO_NAME_DATED"
 
 echo -e "${YELLOW}Où voulez-vous copier l'ISO ?${NC}"
 echo ""
-echo -e "${GREEN}1)${NC} Mac (~/Downloads/)"
-echo -e "${GREEN}2)${NC} Proxmox (root@192.168.1.50:/tmp/)"
+echo -e "${GREEN}1)${NC} Mac (~/Downloads/$ISO_NAME_DATED)"
+echo -e "${GREEN}2)${NC} Proxmox (root@192.168.1.50:/var/lib/vz/template/iso/)"
 echo -e "${GREEN}3)${NC} Les deux"
 echo -e "${GREEN}4)${NC} Ignorer (ne pas copier)"
 echo ""
@@ -250,25 +256,88 @@ COPIED_TO_PROXMOX=false
 case "$COPY_CHOICE" in
     1)
         info "Copie vers Mac..."
-        cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/
-        info "✅ Copié vers ~/Downloads/nixos-minimal-ttyS0.iso"
+        cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/$ISO_NAME_DATED
+        info "✅ Copié vers ~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
         ;;
     2)
+        # Scanner Proxmox pour les anciennes ISO avant de copier
+        info "Scan des ISO existantes sur Proxmox..."
+        EXISTING_ISOS=$(ssh root@192.168.1.50 "ls -1t /var/lib/vz/template/iso/nixos-minimal-ttyS0-*.iso 2>/dev/null" || echo "")
+
+        if [[ -n "$EXISTING_ISOS" ]]; then
+            ISO_COUNT=$(echo "$EXISTING_ISOS" | wc -l)
+            echo ""
+            warning "Trouvé $ISO_COUNT ISO(s) existante(s) :"
+            echo "$EXISTING_ISOS" | nl -w2 -s'. '
+            echo ""
+            echo -e "${YELLOW}Voulez-vous nettoyer les anciennes ISO ? (oui/non)${NC}"
+            echo -e "${CYAN}(Recommandé : garder les 2-3 plus récentes)${NC}"
+            read -r CLEANUP_OLD_ISOS
+
+            if [[ "$CLEANUP_OLD_ISOS" == "oui" ]]; then
+                echo ""
+                info "Nettoyage des anciennes ISO..."
+                # Garder les 2 plus récentes, supprimer les autres
+                OLD_ISOS=$(echo "$EXISTING_ISOS" | tail -n +3)
+                if [[ -n "$OLD_ISOS" ]]; then
+                    echo "$OLD_ISOS" | while read iso; do
+                        ssh root@192.168.1.50 "rm -f '$iso'" && info "Supprimé : $(basename $iso)"
+                    done
+                    info "✅ Anciennes ISO nettoyées (gardé les 2 plus récentes)"
+                else
+                    info "Seulement 2 ISO ou moins, pas de nettoyage nécessaire"
+                fi
+            fi
+        fi
+
+        echo ""
         info "Copie vers Proxmox..."
-        scp result/iso/nixos-minimal-ttyS0.iso root@192.168.1.50:/tmp/
-        info "✅ Copié vers root@192.168.1.50:/tmp/nixos-minimal-ttyS0.iso"
+        scp result/iso/nixos-minimal-ttyS0.iso root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
+        info "✅ Copié vers root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED"
         COPIED_TO_PROXMOX=true
         ;;
     3)
         info "Copie vers Mac..."
-        cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/
-        info "✅ Copié vers ~/Downloads/nixos-minimal-ttyS0.iso"
+        cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/$ISO_NAME_DATED
+        info "✅ Copié vers ~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
+
+        echo ""
+        # Scanner Proxmox pour les anciennes ISO
+        info "Scan des ISO existantes sur Proxmox..."
+        EXISTING_ISOS=$(ssh root@192.168.1.50 "ls -1t /var/lib/vz/template/iso/nixos-minimal-ttyS0-*.iso 2>/dev/null" || echo "")
+
+        if [[ -n "$EXISTING_ISOS" ]]; then
+            ISO_COUNT=$(echo "$EXISTING_ISOS" | wc -l)
+            echo ""
+            warning "Trouvé $ISO_COUNT ISO(s) existante(s) :"
+            echo "$EXISTING_ISOS" | nl -w2 -s'. '
+            echo ""
+            echo -e "${YELLOW}Voulez-vous nettoyer les anciennes ISO ? (oui/non)${NC}"
+            echo -e "${CYAN}(Recommandé : garder les 2-3 plus récentes)${NC}"
+            read -r CLEANUP_OLD_ISOS
+
+            if [[ "$CLEANUP_OLD_ISOS" == "oui" ]]; then
+                echo ""
+                info "Nettoyage des anciennes ISO..."
+                # Garder les 2 plus récentes, supprimer les autres
+                OLD_ISOS=$(echo "$EXISTING_ISOS" | tail -n +3)
+                if [[ -n "$OLD_ISOS" ]]; then
+                    echo "$OLD_ISOS" | while read iso; do
+                        ssh root@192.168.1.50 "rm -f '$iso'" && info "Supprimé : $(basename $iso)"
+                    done
+                    info "✅ Anciennes ISO nettoyées (gardé les 2 plus récentes)"
+                else
+                    info "Seulement 2 ISO ou moins, pas de nettoyage nécessaire"
+                fi
+            fi
+        fi
+
         echo ""
         info "Copie vers Proxmox..."
-        scp result/iso/nixos-minimal-ttyS0.iso root@192.168.1.50:/tmp/
-        info "✅ Copié vers root@192.168.1.50:/tmp/nixos-minimal-ttyS0.iso"
+        scp result/iso/nixos-minimal-ttyS0.iso root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
+        info "✅ Copié vers root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED"
         COPIED_TO_PROXMOX=true
         ;;
     4)
@@ -280,11 +349,11 @@ case "$COPY_CHOICE" in
 esac
 
 # ========================================
-# Étape 6 : Nettoyage
+# Étape 6 : Nettoyage local
 # ========================================
 if [[ "$COPIED_TO_MAC" == true ]] || [[ "$COPIED_TO_PROXMOX" == true ]]; then
     echo ""
-    step "Étape 6/6 : Nettoyage"
+    step "Étape 6/7 : Nettoyage local"
 
     echo -e "${YELLOW}Voulez-vous supprimer l'ISO locale ? (oui/non)${NC}"
     echo -e "${CYAN}Note: Le Nix store sera conservé pour les futurs builds${NC}"
@@ -302,6 +371,20 @@ if [[ "$COPIED_TO_MAC" == true ]] || [[ "$COPIED_TO_PROXMOX" == true ]]; then
 fi
 
 # ========================================
+# Étape 7 : Résumé final
+# ========================================
+echo ""
+step "Étape 7/7 : Résumé"
+
+if [[ "$COPIED_TO_MAC" == true ]]; then
+    info "📦 ISO disponible sur Mac : ~/Downloads/$ISO_NAME_DATED"
+fi
+
+if [[ "$COPIED_TO_PROXMOX" == true ]]; then
+    info "📦 ISO disponible sur Proxmox : /var/lib/vz/template/iso/$ISO_NAME_DATED"
+fi
+
+# ========================================
 # Prochaines étapes
 # ========================================
 echo ""
@@ -311,26 +394,27 @@ echo -e "${CYAN}╚════════════════════�
 echo ""
 
 if [[ "$COPIED_TO_PROXMOX" == true ]]; then
-    info "Sur Proxmox:"
+    info "Pour utiliser l'ISO sur Proxmox:"
     echo ""
-    echo -e "${YELLOW}1.${NC} Déplacer l'ISO vers le stockage:"
-    echo "   ${CYAN}ssh root@192.168.1.50${NC}"
-    echo "   ${CYAN}mv /tmp/nixos-minimal-ttyS0.iso /var/lib/vz/template/iso/${NC}"
+    echo -e "${YELLOW}1.${NC} Attacher à une VM:"
+    echo "   ${CYAN}qm set <VMID> --ide2 local:iso/$ISO_NAME_DATED,media=cdrom${NC}"
     echo ""
-    echo -e "${YELLOW}2.${NC} Attacher à une VM:"
-    echo "   ${CYAN}qm set <VMID> --ide2 local:iso/nixos-minimal-ttyS0.iso,media=cdrom${NC}"
-    echo ""
-    echo -e "${YELLOW}3.${NC} Démarrer et installer:"
+    echo -e "${YELLOW}2.${NC} Démarrer et installer:"
     echo "   ${CYAN}qm start <VMID>${NC}"
+    echo ""
+    echo -e "${YELLOW}3.${NC} Dans l'ISO, installer minimal:"
     echo "   ${CYAN}sudo ./scripts/install-nixos.sh minimal${NC}"
     echo ""
 fi
 
-if [[ "$COPIED_TO_MAC" == true ]]; then
-    info "Depuis le Mac:"
+if [[ "$COPIED_TO_MAC" == true ]] && [[ "$COPIED_TO_PROXMOX" == false ]]; then
+    info "Pour utiliser l'ISO :"
     echo ""
-    echo -e "${YELLOW}1.${NC} Uploader sur Proxmox (Web UI):"
+    echo -e "${YELLOW}Option 1 :${NC} Uploader sur Proxmox (Web UI)"
     echo "   ${CYAN}Datacenter → Storage → local → Upload${NC}"
-    echo "   ${CYAN}Sélectionner ~/Downloads/nixos-minimal-ttyS0.iso${NC}"
+    echo "   ${CYAN}Sélectionner ~/Downloads/$ISO_NAME_DATED${NC}"
+    echo ""
+    echo -e "${YELLOW}Option 2 :${NC} Copier en ligne de commande"
+    echo "   ${CYAN}scp ~/Downloads/$ISO_NAME_DATED root@192.168.1.50:/var/lib/vz/template/iso/${NC}"
     echo ""
 fi
