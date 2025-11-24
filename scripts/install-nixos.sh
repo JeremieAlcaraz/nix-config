@@ -325,7 +325,8 @@ step "Étape 7/7 : Installation de NixOS"
 cd /mnt/etc/nixos
 
 info "Installation en cours (cela peut prendre plusieurs minutes)..."
-nixos-install --flake ".#${HOST}" --no-root-passwd
+info "Mode verbose activé pour voir les détails du téléchargement..."
+nixos-install --flake ".#${HOST}" --no-root-passwd -v -L --show-trace
 
 if [[ "${HOST}" == "mimosa" ]]; then
     echo ""
