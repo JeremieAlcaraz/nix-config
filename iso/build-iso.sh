@@ -92,6 +92,7 @@ if [[ -f flake.lock ]]; then
     fi
 else
     warning "Pas de flake.lock trouvé, première initialisation"
+    CURRENT_REV="none"
 fi
 
 # Vérifier la version du flake principal si --sync
@@ -103,10 +104,10 @@ if [[ "$MODE" == "--sync" ]]; then
 
         info "Version flake principal: $MAIN_REV ($MAIN_DATE_READABLE)"
 
-        if [[ "$CURRENT_REV" == "$MAIN_REV" ]]; then
+        if [[ "$CURRENT_REV" != "none" ]] && [[ "$CURRENT_REV" == "$MAIN_REV" ]]; then
             info "ISO déjà synchronisée avec le flake principal ✅"
         else
-            warning "Gap détecté entre ISO et flake principal"
+            warning "Gap détecté entre ISO et flake principal (ou première initialisation)"
         fi
     else
         error "Flake principal introuvable (../flake.lock)"
