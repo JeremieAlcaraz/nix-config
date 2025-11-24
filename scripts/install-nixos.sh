@@ -2,10 +2,11 @@
 set -euo pipefail
 
 # Script d'installation NixOS all-in-one
-# Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily]
+# Usage: sudo ./install-nixos.sh [minimal|magnolia|mimosa|whitelily]
 #
-# Ce script installe NixOS avec la configuration "minimal" (rapide),
-# puis vous switcherez vers la vraie config de l'host après le reboot.
+# Ce script installe NixOS avec la configuration "minimal" (rapide).
+# Si vous choisissez magnolia/mimosa/whitelily, vous pourrez switch vers
+# la config complète après le reboot.
 #
 # Étapes :
 # - Partitionnement et formatage
@@ -66,6 +67,11 @@ if [[ -z "$HOST" ]]; then
     echo ""
     echo -e "${BLUE}Hosts disponibles :${NC}"
     echo ""
+    echo -e "${GREEN}0)${NC} ${YELLOW}minimal${NC} ${GREEN}(recommandé pour installation initiale)${NC}"
+    echo -e "   ⚡ Configuration minimale ultra-rapide"
+    echo -e "   → SSH + Fish + Tmux + Git + Tailscale + Cache magnolia"
+    echo -e "   → Pas de services lourds (webserver, n8n, etc.)"
+    echo ""
     echo -e "${GREEN}1)${NC} ${YELLOW}magnolia${NC}"
     echo -e "   🌸 Infrastructure Proxmox"
     echo -e "   → VM de base pour l'infrastructure"
@@ -78,10 +84,17 @@ if [[ -z "$HOST" ]]; then
     echo -e "   🤍 n8n automation"
     echo -e "   → Stack complète : n8n + PostgreSQL + Caddy + Cloudflare Tunnel"
     echo ""
-    prompt "Choisissez un host (1-3) :"
+    echo -e "${CYAN}ℹ️  Note:${NC} L'installation se fait toujours avec 'minimal' (rapide)"
+    echo -e "   Si vous choisissez 1-3, vous pourrez switch vers la config complète après le reboot"
+    echo ""
+    prompt "Choisissez un host (0-3, défaut: 0) :"
     read -r choice
+    choice="${choice:-0}"  # Défaut à 0 si entrée vide
 
     case "$choice" in
+        0)
+            HOST="minimal"
+            ;;
         1)
             HOST="magnolia"
             ;;
@@ -92,7 +105,7 @@ if [[ -z "$HOST" ]]; then
             HOST="whitelily"
             ;;
         *)
-            error "Choix invalide. Utilisez 1, 2 ou 3"
+            error "Choix invalide. Utilisez 0, 1, 2 ou 3"
             ;;
     esac
 
@@ -101,8 +114,8 @@ if [[ -z "$HOST" ]]; then
 fi
 
 # Vérifier que l'host est valide
-if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" ]]; then
-    error "Host invalide. Utilisez 'magnolia', 'mimosa' ou 'whitelily'"
+if [[ "$HOST" != "minimal" && "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" ]]; then
+    error "Host invalide. Utilisez 'minimal', 'magnolia', 'mimosa' ou 'whitelily'"
 fi
 
 # Configuration
@@ -348,25 +361,45 @@ fi
 
 echo ""
 warning "⚠️  IMPORTANT : Vous avez installé avec la config 'minimal'"
-warning "⚠️  Les secrets ne sont PAS encore configurés"
-echo ""
-info "Prochaines étapes :"
-echo ""
-echo -e "${CYAN}1.${NC} Détacher l'ISO : ${YELLOW}qm set <VMID> --ide2 none${NC}"
-echo -e "${CYAN}2.${NC} Redémarrer la VM : ${YELLOW}qm start <VMID>${NC}"
-echo -e "${CYAN}3.${NC} Se connecter en root : ${YELLOW}ssh root@<IP>${NC}"
-echo ""
-echo -e "${CYAN}4.${NC} Créer les secrets :"
-echo "   ${YELLOW}cd /etc/nixos${NC}"
-echo "   ${YELLOW}./scripts/manage-secrets.sh ${HOST}${NC}"
-echo ""
-echo -e "${CYAN}5.${NC} ${GREEN}Switch vers la config complète '${HOST}' :${NC}"
-echo "   ${YELLOW}sudo nixos-rebuild switch --flake .#${HOST}${NC}"
-echo "   ${GREEN}(Cette étape activera tous les services de ${HOST})${NC}"
-echo ""
-echo -e "${CYAN}6.${NC} Se reconnecter avec l'utilisateur normal :"
-echo "   ${YELLOW}ssh jeremie@<IP>${NC}"
-echo ""
+
+if [[ "$HOST" != "minimal" ]]; then
+    warning "⚠️  Les secrets ne sont PAS encore configurés"
+    echo ""
+    info "Prochaines étapes :"
+    echo ""
+    echo -e "${CYAN}1.${NC} Détacher l'ISO : ${YELLOW}qm set <VMID> --ide2 none${NC}"
+    echo -e "${CYAN}2.${NC} Redémarrer la VM : ${YELLOW}qm start <VMID>${NC}"
+    echo -e "${CYAN}3.${NC} Se connecter en root : ${YELLOW}ssh root@<IP>${NC}"
+    echo ""
+    echo -e "${CYAN}4.${NC} Créer les secrets :"
+    echo "   ${YELLOW}cd /etc/nixos${NC}"
+    echo "   ${YELLOW}./scripts/manage-secrets.sh ${HOST}${NC}"
+    echo ""
+    echo -e "${CYAN}5.${NC} ${GREEN}Switch vers la config complète '${HOST}' :${NC}"
+    echo "   ${YELLOW}sudo nixos-rebuild switch --flake .#${HOST}${NC}"
+    echo "   ${GREEN}(Cette étape activera tous les services de ${HOST})${NC}"
+    echo ""
+    echo -e "${CYAN}6.${NC} Se reconnecter avec l'utilisateur normal :"
+    echo "   ${YELLOW}ssh jeremie@<IP>${NC}"
+    echo ""
+else
+    echo ""
+    info "Prochaines étapes :"
+    echo ""
+    echo -e "${CYAN}1.${NC} Détacher l'ISO : ${YELLOW}qm set <VMID> --ide2 none${NC}"
+    echo -e "${CYAN}2.${NC} Redémarrer la VM : ${YELLOW}qm start <VMID>${NC}"
+    echo -e "${CYAN}3.${NC} Se connecter en root : ${YELLOW}ssh root@<IP>${NC}"
+    echo ""
+    echo -e "${CYAN}4.${NC} ${GREEN}(Optionnel)${NC} Pour switch vers une config complète :"
+    echo "   ${YELLOW}cd /etc/nixos${NC}"
+    echo "   ${YELLOW}./scripts/manage-secrets.sh <host>${NC}"
+    echo "   ${YELLOW}sudo nixos-rebuild switch --flake .#<host>${NC}"
+    echo "   ${CYAN}Où <host> = magnolia, mimosa ou whitelily${NC}"
+    echo ""
+    echo -e "${CYAN}5.${NC} Ou rester en mode minimal et se connecter :"
+    echo "   ${YELLOW}ssh jeremie@<IP>${NC}"
+    echo ""
+fi
 
 # Arrêt automatique
 info "La VM va s'éteindre dans 10 secondes..."
