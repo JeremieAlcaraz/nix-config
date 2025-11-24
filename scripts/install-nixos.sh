@@ -334,7 +334,7 @@ cd /mnt/etc/nixos
 
 info "Installation en cours (cela peut prendre plusieurs minutes)..."
 info "Mode verbose activé pour voir les détails du téléchargement..."
-nixos-install --flake ".#${HOST}" --no-root-passwd -v -L --show-trace
+nixos-install --flake ".#${HOST}" --no-root-passwd -v
 
 if [[ "${HOST}" == "mimosa-bootstrap" ]]; then
     echo ""
