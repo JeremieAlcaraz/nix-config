@@ -30,17 +30,6 @@
       # Permet le forwarding de l'agent SSH pour utiliser les clés du client
       AllowAgentForwarding = true;
     };
-    authorizedKeysFiles = [
-      "/etc/ssh/authorized_keys.d/%u"
-      "~/.ssh/authorized_keys"
-    ];
-  };
-
-  environment.etc."ssh/authorized_keys.d/jeremie" = {
-    text = ''
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac
-    '';
-    mode = "0644";
   };
 
   users.mutableUsers = lib.mkDefault false;
@@ -51,6 +40,10 @@
     home = "/home/jeremie";
     extraGroups = [ "wheel" ];
     shell = pkgs.fish;
+    openssh.authorizedKeys.keys = [
+      # Clé SSH du Mac de Jérémie
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac"
+    ];
   };
 
   users.users.root.password = lib.mkDefault null;
