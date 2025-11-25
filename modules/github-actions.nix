@@ -17,21 +17,16 @@
 { config, lib, ... }:
 
 {
-  # Clés SSH publiques pour GitHub Actions
-  # Générées dans 1Password et utilisées par le workflow de déploiement
+  # Clé SSH publique pour GitHub Actions
+  # Générée dans 1Password et utilisée par le workflow de déploiement
+  # Cette clé unique permet à GitHub Actions de se connecter à tous les serveurs
   environment.etc."ssh/authorized_keys.d/jeremie-github-actions" = {
     text = ''
-      # GitHub Actions - Magnolia Deploy Key
-      # Utilisée pour builder les configurations sur Magnolia
+      # GitHub Actions - Deploy Key
+      # Utilisée pour builder sur Magnolia ET déployer sur Mimosa
       # Générée le: 2025-11-25
       # Workflow: .github/workflows/deploy.yml (j12zdotcom)
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ5gpDmTT2rn0YEzfNc5/Em5ptIeQ6DktjfAVQvboX6F github-actions@magnolia
-
-      # GitHub Actions - Mimosa Deploy Key
-      # Utilisée pour déployer sur Mimosa
-      # Générée le: 2025-11-25
-      # Workflow: .github/workflows/deploy.yml (j12zdotcom)
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFtEzoTJZxux04Ex1em5erjDq1WPp9YtF7uoP9Sz+no/ github-actions@mimosa
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFtEzoTJZxux04Ex1em5erjDq1WPp9YtF7uoP9Sz+no/ github-actions
     '';
     mode = "0644";
   };
