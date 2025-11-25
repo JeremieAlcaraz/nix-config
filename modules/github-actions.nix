@@ -20,14 +20,12 @@
   # Clé SSH publique pour GitHub Actions
   # Générée dans 1Password et utilisée par le workflow de déploiement
   # Cette clé unique permet à GitHub Actions de se connecter à tous les serveurs
-  environment.etc."ssh/authorized_keys.d/jeremie-github-actions" = {
-    text = ''
-      # GitHub Actions - Deploy Key
-      # Utilisée pour builder sur Magnolia ET déployer sur Mimosa
-      # Générée le: 2025-11-25
-      # Workflow: .github/workflows/deploy.yml (j12zdotcom)
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFtEzoTJZxux04Ex1em5erjDq1WPp9YtF7uoP9Sz+no/ github-actions
-    '';
-    mode = "0644";
-  };
+  users.users.jeremie.openssh.authorizedKeys.keys = [
+    # GitHub Actions - Deploy Key
+    # Utilisée pour builder sur Magnolia ET déployer sur Mimosa
+    # Générée le: 2025-11-25
+    # Fingerprint: SHA256:X/I4DzZnBJH4FcXps08IGzE+4qfZvwCGxj3aPJgkaAE
+    # Workflow: .github/workflows/deploy.yml (j12zdotcom)
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFtEzoTJZxux04Ex1em5erjDq1WPp9YtF7uoP9Sz+no/ github-actions"
+  ];
 }
