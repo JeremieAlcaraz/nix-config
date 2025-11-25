@@ -4,8 +4,8 @@
   imports = [
     ./hardware-configuration.nix
     (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/mimosa.yaml; })
-    ../../modules/tailscale.nix  # <--- AJOUTE ÇA
-    # ... tes autres imports
+    ../../modules/tailscale.nix
+    ../../modules/github-actions.nix  # Clés SSH pour GitHub Actions
   ];
 
   # Système
