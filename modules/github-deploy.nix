@@ -20,15 +20,16 @@
   ];
 
   # Configuration de la Deploy Key SSH
+  # Le secret est déchiffré par sops-nix dans /run/secrets/
   sops.secrets."github-deploy-key" = {
-    sopsFile = ../../secrets/magnolia.yaml;
     mode = "0600";
     owner = "jeremie";
     group = "users";
-    path = "/home/jeremie/.ssh/github-deploy";
   };
 
   # Configuration SSH pour utiliser la Deploy Key avec GitHub
+  # Le secret est dans /run/secrets/ (géré par sops-nix)
+  # Un lien symbolique est créé dans ~/.ssh/ pour faciliter l'utilisation
   programs.ssh.extraConfig = ''
     Host github.com
       HostName github.com
@@ -54,7 +55,9 @@
   '';
 
   # Assure que le répertoire .ssh existe avec les bonnes permissions
+  # et crée un lien symbolique vers le secret déchiffré
   systemd.tmpfiles.rules = [
     "d /home/jeremie/.ssh 0700 jeremie users - -"
+    "L+ /home/jeremie/.ssh/github-deploy - jeremie users - /run/secrets/github-deploy-key"
   ];
 }
