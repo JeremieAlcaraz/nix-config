@@ -7,6 +7,7 @@
     ../../modules/tailscale.nix
     ../../modules/nix-serve.nix
     ../../modules/github-actions.nix  # Clés SSH pour GitHub Actions
+    ../../modules/github-deploy.nix   # Deploy Key pour pusher vers GitHub
   ];
 
   system.stateVersion = "25.05";
