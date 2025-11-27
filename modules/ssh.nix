@@ -43,6 +43,8 @@
     openssh.authorizedKeys.keys = [
       # Clé SSH du Mac de Jérémie
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmKLrSci3dXG3uHdfhGXCgOXj/ZP2wwQGi36mkbH/YM jeremie@mac"
+      # Clé de déploiement de Magnolia (pour déployer sur d'autres hôtes)
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL/86QE9e0ymSz67B8ShU9V5smHpdLKF+KH8tUaYudxi magnolia-deploy@github"
     ];
   };
 
