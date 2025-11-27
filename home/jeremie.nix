@@ -61,21 +61,23 @@
   programs.fish = {
     enable = true;
     shellInit = ''
-      # Changer automatiquement vers /etc/nixos
-      cd /etc/nixos 2>/dev/null; or cd ~
+      if status is-interactive
+        # Changer automatiquement vers /etc/nixos
+        cd /etc/nixos 2>/dev/null; or cd ~
 
-      echo ""
-      ${if osConfig.networking.hostName == "magnolia" then ''
-        echo "🌸 Magnolia - Infrastructure Proxmox"
-      '' else if osConfig.networking.hostName == "whitelily" then ''
-        echo "🤍 Whitelily - n8n Automation"
-      '' else if osConfig.networking.hostName == "mimosa" then ''
-        echo "🌼 Mimosa - Serveur web"
-      '' else if osConfig.networking.hostName == "minimal" then ''
-        echo "🔧 Minimal - VM de démonstration minimale"
-      '' else ""}
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      echo ""
+        echo ""
+        ${if osConfig.networking.hostName == "magnolia" then ''
+          echo "🌸 Magnolia - Infrastructure Proxmox"
+        '' else if osConfig.networking.hostName == "whitelily" then ''
+          echo "🤍 Whitelily - n8n Automation"
+        '' else if osConfig.networking.hostName == "mimosa" then ''
+          echo "🌼 Mimosa - Serveur web"
+        '' else if osConfig.networking.hostName == "minimal" then ''
+          echo "🔧 Minimal - VM de démonstration minimale"
+        '' else ""}
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+      end
     '';
   };
 
