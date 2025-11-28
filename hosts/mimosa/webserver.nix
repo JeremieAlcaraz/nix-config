@@ -6,13 +6,19 @@
 
 let
   cfg = config.mimosa.webserver;
-  # Package pré-buildé depuis la flake (téléchargé depuis le cache magnolia)
-  sitePackage = j12z-site.packages.x86_64-linux.site;
+  # Utilisation du dossier où GitHub Actions / scripts déploient le site
+  # (au lieu du package Nix pré-buildé pour permettre des déploiements rapides)
+  siteDir = "/var/www/j12zdotcom";
 in
 {
   options.mimosa.webserver.enable = lib.mkEnableOption "the j12z webserver for mimosa";
 
   config = lib.mkIf cfg.enable {
+    # Créer le dossier du site avec les bonnes permissions
+    systemd.tmpfiles.rules = [
+      "d ${siteDir} 0755 root root -"
+    ];
+
     # Configuration Caddy directe (sans le module j12z-webserver qui rebuild)
     services.caddy = {
       enable = true;
@@ -24,7 +30,7 @@ in
       # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
       virtualHosts."http://jeremiealcaraz.com" = {
         extraConfig = ''
-          root * ${sitePackage}
+          root * ${siteDir}
           file_server
 
           handle_errors {
