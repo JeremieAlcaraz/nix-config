@@ -66,11 +66,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1764276871,
-        "narHash": "sha256-eAcBBaJpfZyaZYy9Xy8maat3hnpNmoGJqWAZF9xz/7s=",
+        "lastModified": 1764327418,
+        "narHash": "sha256-MdD/N7pfVxURDRDXT/yXkXL4wJ0Hy5z5KrbOs22O66E=",
         "owner": "JeremieAlcaraz",
         "repo": "j12zdotcom",
-        "rev": "fe165a249a655925836999e3ca37645f15c2b205",
+        "rev": "5896d9a01085a230213f20ae0ec8e1c52b7c1203",
         "type": "github"
       },
       "original": {
