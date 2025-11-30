@@ -56,6 +56,34 @@ jobs:
           echo "digest=$LATEST_DIGEST" >> $GITHUB_OUTPUT
           echo "Latest n8n:next digest: sha256:$LATEST_DIGEST"
 
+      - name: Extract n8n version from image
+        id: version
+        run: |
+          echo "Extracting n8n version from image labels..."
+
+          # Obtenir un token d'authentification
+          TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" | jq -r .token)
+
+          # Récupérer le manifest complet
+          MANIFEST=$(curl -s -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+            "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next")
+
+          # Extraire le config digest
+          CONFIG_DIGEST=$(echo "$MANIFEST" | jq -r '.config.digest')
+          echo "Config digest: $CONFIG_DIGEST"
+
+          # Récupérer le config blob qui contient les labels
+          CONFIG=$(curl -s -H "Authorization: Bearer $TOKEN" \
+            "https://registry-1.docker.io/v2/n8nio/n8n/blobs/$CONFIG_DIGEST")
+
+          # Extraire la version depuis les labels (essayer différents labels possibles)
+          VERSION=$(echo "$CONFIG" | jq -r '.config.Labels["org.opencontainers.image.version"] // .config.Labels["version"] // "unknown"')
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "n8n version: $VERSION"
+
+
       - name: Check if update needed
         id: check
         run: |
@@ -96,16 +124,19 @@ jobs:
           commit-message: "⬆️ Update n8n to next@sha256:${{ steps.latest.outputs.digest }}"
           branch: update/n8n-next-${{ steps.latest.outputs.digest }}
           delete-branch: true
-          title: "⬆️ Update n8n:next to latest version"
+          title: "⬆️ Update n8n:next to latest version #${{ steps.version.outputs.version }}"
           body: |
             ## 🚀 Automated n8n Update
 
             A new version of `n8n:next` has been detected on Docker Hub.
 
+            ## 🎯 **Version n8n: `${{ steps.version.outputs.version }}`**
+
             ### 📊 Changes
 
             | Item | Value |
             |------|-------|
+            | **n8n Version** | **`${{ steps.version.outputs.version }}`** |
             | **Previous digest** | `${{ steps.current.outputs.digest }}` |
             | **New digest** | `${{ steps.latest.outputs.digest }}` |
             | **Tag** | `next` (beta releases) |
