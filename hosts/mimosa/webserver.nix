@@ -42,7 +42,7 @@ in
             X-Content-Type-Options "nosniff"
             X-XSS-Protection "1; mode=block"
             Referrer-Policy "strict-origin-when-cross-origin"
-            Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https:; connect-src 'self' https:;"
+            Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https:; connect-src 'self' https:; media-src 'self' https:;"
             Permissions-Policy "geolocation=(), microphone=(), camera=()"
             # Contrôle du cache - permet au navigateur de mettre en cache mais force la revalidation
             Cache-Control "public, must-revalidate, max-age=0"
