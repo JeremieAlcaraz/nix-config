@@ -77,8 +77,8 @@
       gl = "git log --oneline --graph --decorate -10";
       gla = "git log --oneline --graph --decorate --all -20";
 
-      # Mise à jour forcée pour nœuds follower (écrase les modifications locales)
-      gu = "git fetch --all; and git reset --hard origin/main";
+      # Note: 'gu' est maintenant une fonction (voir fish-functions.nix)
+      # Elle propose interactivement de rebuild magnolia après un git pull réussi
 
       # ═══════════════════════════════════════════════════
       # 🛠️ SYSTEMD - Gestion des services
