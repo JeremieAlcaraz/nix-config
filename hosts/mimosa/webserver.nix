@@ -20,9 +20,6 @@ in
       globalConfig = ''
         auto_https off
       '';
-      # Adapter pour désactiver le rechargement gracieux
-      # Cela force un restart complet au lieu d'un reload
-      adapter = null;
       # Config pour accepter HTTP du tunnel Cloudflare sans redirection
       # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
       virtualHosts."http://jeremiealcaraz.com" = {
