@@ -20,6 +20,9 @@ in
       globalConfig = ''
         auto_https off
       '';
+      # Adapter pour désactiver le rechargement gracieux
+      # Cela force un restart complet au lieu d'un reload
+      adapter = null;
       # Config pour accepter HTTP du tunnel Cloudflare sans redirection
       # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
       virtualHosts."http://jeremiealcaraz.com" = {
@@ -44,6 +47,8 @@ in
             Referrer-Policy "strict-origin-when-cross-origin"
             Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https:; connect-src 'self' https:;"
             Permissions-Policy "geolocation=(), microphone=(), camera=()"
+            # Contrôle du cache - permet au navigateur de mettre en cache mais force la revalidation
+            Cache-Control "public, must-revalidate, max-age=0"
             -Server
           }
 
@@ -58,6 +63,12 @@ in
           }
         '';
       };
+    };
+
+    # Forcer le redémarrage de Caddy quand le site change
+    # Cela résout le problème des styles perdus après déploiement
+    systemd.services.caddy = {
+      restartTriggers = [ sitePackage ];
     };
 
     # Secret Cloudflare Tunnel
