@@ -1,10 +1,27 @@
 # Scripts de déploiement
 
-Documentation pour les scripts de déploiement automatique du site j12zdotcom.
+Documentation pour les scripts de déploiement et maintenance de l'infrastructure.
 
 Voir le guide complet: [`../docs/MIMOSA_WEBSERVER_SETUP.md`](../docs/MIMOSA_WEBSERVER_SETUP.md)
 
 ## Quick start
+
+### Rebuild toutes les configurations (sur magnolia)
+
+```bash
+# Rebuild tout et met à jour j12z-site
+./scripts/rebuild-all.sh
+
+# Rebuild tout sans mettre à jour j12z-site
+./scripts/rebuild-all.sh --skip-site
+
+# Aide
+./scripts/rebuild-all.sh --help
+```
+
+Ce script construit toutes les configurations (mimosa, whitelily, minimal) et les rend disponibles via le cache binaire de magnolia. Les déploiements ultérieurs seront beaucoup plus rapides !
+
+### Déployer le site j12zdotcom
 
 ```bash
 # Déployer depuis n'importe où
