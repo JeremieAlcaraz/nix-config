@@ -23,6 +23,9 @@
       # Rebuild avec verbose (pour debug)
       rv = "sudo nixos-rebuild switch --flake .#(hostname) --show-trace";
 
+      # Rebuild ALL configurations (magnolia cache builder)
+      ra = "/etc/nixos/scripts/rebuild-all.sh";
+
       # ═══════════════════════════════════════════════════
       # 📦 GESTION DES GÉNÉRATIONS
       # ═══════════════════════════════════════════════════
