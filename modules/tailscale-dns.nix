@@ -26,6 +26,8 @@
   system.activationScripts.fixResolvConf = lib.stringAfter [ "etc" ] ''
     # Supprimer l'ancien resolv.conf s'il existe et n'est pas un symlink
     if [ -e /etc/resolv.conf ] && [ ! -L /etc/resolv.conf ]; then
+      # Retirer l'attribut immutable si présent (ignore les erreurs)
+      ${pkgs.e2fsprogs}/bin/chattr -i /etc/resolv.conf 2>/dev/null || true
       rm -f /etc/resolv.conf
     fi
     # Créer le symlink vers systemd-resolved stub resolver
