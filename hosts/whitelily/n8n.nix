@@ -176,8 +176,6 @@ EOF
     description = "Setup SSH key for n8n container from sops secrets";
     wantedBy = [ "multi-user.target" ];
     before = [ "podman-n8n.service" ];
-    after = [ "sops-nix.service" ];
-    requires = [ "sops-nix.service" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
