@@ -59,68 +59,46 @@ jobs:
       - name: Extract n8n version from image
         id: version
         run: |
-          echo "Extracting n8n version from image labels..."
+          echo "Extracting n8n version from image using docker inspect..."
 
-          # Obtenir un token d'authentification
-          TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" | jq -r .token)
+          # Utiliser docker pour inspecter l'image directement
+          # C'est plus fiable que de parser les manifests manuellement
+          FULL_IMAGE="docker.io/n8nio/n8n:next@sha256:${{ steps.latest.outputs.digest }}"
+          echo "Inspecting image: $FULL_IMAGE"
 
-          # Récupérer le manifest list (avec Accept header pour manifest list)
-          MANIFEST=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.v2+json" \
-            "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next")
+          # Pull seulement le manifest, pas l'image complète
+          docker pull --quiet "$FULL_IMAGE" > /dev/null 2>&1 || true
 
-          # Vérifier si c'est une manifest list (multi-arch)
-          MANIFEST_TYPE=$(echo "$MANIFEST" | jq -r '.mediaType // "unknown"')
-          echo "Manifest type: $MANIFEST_TYPE"
+          # Extraire la version depuis les labels Docker (essayer plusieurs labels)
+          VERSION=$(docker inspect "$FULL_IMAGE" 2>/dev/null | jq -r '.[0].Config.Labels["org.opencontainers.image.version"] // .[0].Config.Labels["version"] // .[0].Config.Labels["org.label-schema.version"] // empty')
 
-          # Si c'est une manifest list, récupérer le manifest pour linux/amd64
-          if echo "$MANIFEST" | jq -e '.manifests' > /dev/null 2>&1; then
-            echo "Multi-arch manifest detected, selecting linux/amd64..."
-            AMD64_DIGEST=$(echo "$MANIFEST" | jq -r '.manifests[] | select(.platform.architecture=="amd64" and .platform.os=="linux") | .digest')
-            echo "AMD64 manifest digest: $AMD64_DIGEST"
-
-            # Récupérer le manifest spécifique à amd64
-            MANIFEST=$(curl -s -H "Authorization: Bearer $TOKEN" \
-              -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-              "https://registry-1.docker.io/v2/n8nio/n8n/manifests/$AMD64_DIGEST")
-
-            echo "AMD64 manifest retrieved successfully"
+          # Si docker inspect ne marche pas, essayer avec l'image sans digest
+          if [ -z "$VERSION" ]; then
+            echo "Trying without digest..."
+            docker pull --quiet "docker.io/n8nio/n8n:next" > /dev/null 2>&1 || true
+            VERSION=$(docker inspect "docker.io/n8nio/n8n:next" 2>/dev/null | jq -r '.[0].Config.Labels["org.opencontainers.image.version"] // .[0].Config.Labels["version"] // .[0].Config.Labels["org.label-schema.version"] // empty')
           fi
 
-          # Extraire le config digest
-          CONFIG_DIGEST=$(echo "$MANIFEST" | jq -r '.config.digest // empty')
-          echo "Config digest: $CONFIG_DIGEST"
+          # Si toujours vide, extraire depuis les variables d'environnement (n8n expose N8N_VERSION)
+          if [ -z "$VERSION" ]; then
+            echo "Trying to extract from environment variables..."
+            VERSION=$(docker inspect "$FULL_IMAGE" 2>/dev/null | jq -r '.[0].Config.Env[] | select(startswith("N8N_VERSION=")) | sub("N8N_VERSION="; "")' || echo "")
+          fi
 
-          if [ -z "$CONFIG_DIGEST" ]; then
-            echo "Warning: Could not extract config digest, using fallback"
-            echo "Manifest content (first 500 chars): $(echo "$MANIFEST" | head -c 500)"
-            VERSION="next"
-          else
-            # Récupérer le config blob qui contient les labels
-            CONFIG=$(curl -s -H "Authorization: Bearer $TOKEN" \
-              "https://registry-1.docker.io/v2/n8nio/n8n/blobs/$CONFIG_DIGEST")
-
-            echo "Config retrieved, extracting version..."
-
-            # Extraire la version depuis les labels (essayer différents chemins possibles)
-            VERSION=$(echo "$CONFIG" | jq -r '
-              .config.Labels["org.opencontainers.image.version"] //
-              .config.Labels.version //
-              .config.Labels["org.label-schema.version"] //
-              .container_config.Labels["org.opencontainers.image.version"] //
-              empty
-            ')
-
-            # Si toujours vide, utiliser le fallback
-            if [ -z "$VERSION" ]; then
-              echo "Warning: Version label not found in config, using fallback"
-              echo "Available labels: $(echo "$CONFIG" | jq -r '.config.Labels | keys')"
-              VERSION="next"
-            fi
+          # Fallback final
+          if [ -z "$VERSION" ]; then
+            echo "Warning: Could not extract version, using fallback"
+            # Essayer d'obtenir au moins le short digest
+            SHORT_DIGEST=$(echo "${{ steps.latest.outputs.digest }}" | cut -c1-12)
+            VERSION="next-${SHORT_DIGEST}"
           fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "n8n version: $VERSION"
+
+          # Nettoyer l'image pour économiser de l'espace
+          docker rmi "$FULL_IMAGE" 2>/dev/null || true
+          docker rmi "docker.io/n8nio/n8n:next" 2>/dev/null || true
 
 
       - name: Check if update needed
