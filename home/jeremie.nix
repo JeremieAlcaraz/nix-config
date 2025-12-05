@@ -1,4 +1,4 @@
-{ config, pkgs, osConfig, ... }:
+{ config, pkgs, lib, osConfig, ... }:
 
 {
   imports = [
@@ -97,4 +97,33 @@
       ];
     } else {});
   };
+
+  # Génération automatique d'une clé SSH pour whitelily
+  # Permet à whitelily de se connecter à d'autres machines (comme le Mac) sans mot de passe
+  home.activation.generateSshKey = lib.mkIf (osConfig.networking.hostName == "whitelily") (
+    config.lib.dag.entryAfter ["writeBoundary"] ''
+      SSH_DIR="$HOME/.ssh"
+      SSH_KEY="$SSH_DIR/id_ed25519"
+
+      # Créer le répertoire .ssh s'il n'existe pas
+      if [ ! -d "$SSH_DIR" ]; then
+        $DRY_RUN_CMD mkdir -p "$SSH_DIR"
+        $DRY_RUN_CMD chmod 700 "$SSH_DIR"
+      fi
+
+      # Générer la clé SSH si elle n'existe pas déjà
+      if [ ! -f "$SSH_KEY" ]; then
+        echo "Génération de la clé SSH pour whitelily..."
+        $DRY_RUN_CMD ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -f "$SSH_KEY" -N "" -C "whitelily@nixos"
+        $DRY_RUN_CMD chmod 600 "$SSH_KEY"
+        $DRY_RUN_CMD chmod 644 "$SSH_KEY.pub"
+        echo "✅ Clé SSH générée : $SSH_KEY.pub"
+        echo ""
+        echo "🔑 Copie cette clé publique et ajoute-la à ~/.ssh/authorized_keys sur ton Mac :"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        cat "$SSH_KEY.pub"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      fi
+    ''
+  );
 }
