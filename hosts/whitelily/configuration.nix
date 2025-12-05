@@ -36,6 +36,8 @@
       "n8n/basic_user" = { owner = "root"; group = "root"; mode = "0400"; };
       "n8n/basic_pass" = { owner = "root"; group = "root"; mode = "0400"; };
       "n8n/db_password" = { owner = "root"; group = "root"; mode = "0400"; };
+      # Clé SSH pour le conteneur n8n (accès sans mot de passe à d'autres machines)
+      "n8n_ssh/private_key" = { owner = "root"; group = "root"; mode = "0400"; };
       # Cloudflare Tunnel token (simplifié)
       "cloudflared/token" = { owner = "cloudflared"; group = "cloudflared"; mode = "0400"; };
       # GitHub token pour auto-update workflow
