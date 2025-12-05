@@ -128,7 +128,8 @@ for host in "${HOSTS[@]}"; do
         echo -e "${BLUE}📦 Deploying to $host...${NC}"
 
         # Déploiement
-        if nixos-rebuild switch --flake ".#$host" --target-host "$host" --use-remote-sudo; then
+        # --use-substitutes : utilise le cache HTTP de magnolia au lieu de copier via SSH
+        if nixos-rebuild switch --flake ".#$host" --target-host "$host" --use-remote-sudo --use-substitutes; then
             log_success "$host deployed successfully!"
             DEPLOYED+=("$host")
         else
