@@ -5,6 +5,7 @@
     ./hardware-configuration.nix
     (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/magnolia.yaml; })
     ../../modules/tailscale.nix
+    ../../modules/tailscale-dns.nix   # Configuration DNS pour MagicDNS
     ../../modules/nix-serve.nix
     ../../modules/github-actions.nix  # Clés SSH pour GitHub Actions
 
@@ -16,8 +17,6 @@
   # Réseau
   networking.hostName = "magnolia";  # Infrastructure Proxmox
   networking.useDHCP = true;
-  # Désactiver resolvconf (DHCP gère déjà le DNS)
-  networking.resolvconf.enable = false;
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "none";

@@ -26,6 +26,9 @@
       # Rebuild ALL configurations (magnolia cache builder)
       ra = "/etc/nixos/scripts/rebuild-all.sh";
 
+      # Deploy ALL configurations to remote hosts
+      da = "/etc/nixos/scripts/deploy-all.sh";
+
       # ═══════════════════════════════════════════════════
       # 📦 GESTION DES GÉNÉRATIONS
       # ═══════════════════════════════════════════════════
