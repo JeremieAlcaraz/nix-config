@@ -64,13 +64,13 @@ jobs:
           # Obtenir un token d'authentification
           TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" | jq -r .token)
 
-          # Récupérer le manifest (peut être une liste de manifests)
+          # Récupérer le manifest list (avec Accept header pour manifest list)
           MANIFEST=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+            -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.v2+json" \
             "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next")
 
           # Vérifier si c'est une manifest list (multi-arch)
-          MANIFEST_TYPE=$(echo "$MANIFEST" | jq -r '.mediaType // .schemaVersion')
+          MANIFEST_TYPE=$(echo "$MANIFEST" | jq -r '.mediaType // "unknown"')
           echo "Manifest type: $MANIFEST_TYPE"
 
           # Si c'est une manifest list, récupérer le manifest pour linux/amd64
@@ -83,22 +83,40 @@ jobs:
             MANIFEST=$(curl -s -H "Authorization: Bearer $TOKEN" \
               -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
               "https://registry-1.docker.io/v2/n8nio/n8n/manifests/$AMD64_DIGEST")
+
+            echo "AMD64 manifest retrieved successfully"
           fi
 
           # Extraire le config digest
-          CONFIG_DIGEST=$(echo "$MANIFEST" | jq -r '.config.digest')
+          CONFIG_DIGEST=$(echo "$MANIFEST" | jq -r '.config.digest // empty')
           echo "Config digest: $CONFIG_DIGEST"
 
-          if [ "$CONFIG_DIGEST" == "null" ] || [ -z "$CONFIG_DIGEST" ]; then
+          if [ -z "$CONFIG_DIGEST" ]; then
             echo "Warning: Could not extract config digest, using fallback"
+            echo "Manifest content (first 500 chars): $(echo "$MANIFEST" | head -c 500)"
             VERSION="next"
           else
             # Récupérer le config blob qui contient les labels
             CONFIG=$(curl -s -H "Authorization: Bearer $TOKEN" \
               "https://registry-1.docker.io/v2/n8nio/n8n/blobs/$CONFIG_DIGEST")
 
-            # Extraire la version depuis les labels (essayer différents labels possibles)
-            VERSION=$(echo "$CONFIG" | jq -r '.config.Labels["org.opencontainers.image.version"] // .config.Labels["version"] // "next"')
+            echo "Config retrieved, extracting version..."
+
+            # Extraire la version depuis les labels (essayer différents chemins possibles)
+            VERSION=$(echo "$CONFIG" | jq -r '
+              .config.Labels["org.opencontainers.image.version"] //
+              .config.Labels.version //
+              .config.Labels["org.label-schema.version"] //
+              .container_config.Labels["org.opencontainers.image.version"] //
+              empty
+            ')
+
+            # Si toujours vide, utiliser le fallback
+            if [ -z "$VERSION" ]; then
+              echo "Warning: Version label not found in config, using fallback"
+              echo "Available labels: $(echo "$CONFIG" | jq -r '.config.Labels | keys')"
+              VERSION="next"
+            fi
           fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
