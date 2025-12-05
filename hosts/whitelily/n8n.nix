@@ -171,6 +171,37 @@ EOF
     '';
   };
 
+  # Service pour générer la clé SSH de n8n (une seule fois)
+  systemd.services."n8n-ssh-keygen" = {
+    description = "Generate SSH key for n8n container";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "podman-n8n.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      SSH_DIR="/var/lib/n8n-ssh"
+      SSH_KEY="$SSH_DIR/id_ed25519"
+
+      # Générer la clé SSH si elle n'existe pas déjà
+      if [ ! -f "$SSH_KEY" ]; then
+        echo "🔑 Génération de la clé SSH pour n8n..."
+        ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -f "$SSH_KEY" -N "" -C "n8n@whitelily"
+        chmod 600 "$SSH_KEY"
+        chmod 644 "$SSH_KEY.pub"
+        echo "✅ Clé SSH générée pour n8n"
+        echo ""
+        echo "📋 Ajoute cette clé publique à ~/.ssh/authorized_keys sur ton Mac :"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        cat "$SSH_KEY.pub"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      else
+        echo "✅ Clé SSH n8n déjà existante : $SSH_KEY.pub"
+      fi
+    '';
+  };
+
   # Container n8n
   virtualisation.oci-containers = {
     backend = "podman";
@@ -209,6 +240,8 @@ EOF
         "--network=host"
         # Volume pour les données persistantes
         "--volume=/var/lib/n8n:/home/node/.n8n"
+        # Volume pour la clé SSH (permet à n8n de se connecter à d'autres machines)
+        "--volume=/var/lib/n8n-ssh:/home/node/.ssh:ro"
         # Fichier d'environnement avec les secrets (contient les variables DB_*)
         # Déplacé de /run/secrets vers /run/n8n pour éviter que sops-nix le supprime
         "--env-file=/run/n8n/n8n.env"
@@ -220,8 +253,8 @@ EOF
 
   # Ajouter les dépendances au service généré par oci-containers
   systemd.services."podman-n8n" = {
-    after = [ "n8n-envfile.service" "postgresql-n8n-setup.service" ];
-    requires = [ "n8n-envfile.service" "postgresql-n8n-setup.service" ];
+    after = [ "n8n-envfile.service" "n8n-ssh-keygen.service" "postgresql-n8n-setup.service" ];
+    requires = [ "n8n-envfile.service" "n8n-ssh-keygen.service" "postgresql-n8n-setup.service" ];
   };
 
   # Répertoires de données et de backup
@@ -229,6 +262,7 @@ EOF
     # Données n8n, Caddy et Cloudflared
     # n8n tourne en tant qu'utilisateur node (UID 1000) dans le conteneur
     "d /var/lib/n8n 0750 1000 1000 -"
+    "d /var/lib/n8n-ssh 0700 root root -"  # Clés SSH pour n8n (créées par n8n-ssh-keygen.service)
     "d /run/n8n 0700 root root -"  # Pour le fichier n8n.env
     "d /var/log/caddy 0750 caddy caddy -"
     "d /var/lib/cloudflared 0750 cloudflared cloudflared -"
