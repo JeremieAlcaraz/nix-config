@@ -171,11 +171,13 @@ EOF
     '';
   };
 
-  # Service pour générer la clé SSH de n8n (une seule fois)
-  systemd.services."n8n-ssh-keygen" = {
-    description = "Generate SSH key for n8n container";
+  # Service pour déployer la clé SSH de n8n depuis sops
+  systemd.services."n8n-ssh-setup" = {
+    description = "Setup SSH key for n8n container from sops secrets";
     wantedBy = [ "multi-user.target" ];
     before = [ "podman-n8n.service" ];
+    after = [ "sops-nix.service" ];
+    requires = [ "sops-nix.service" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -183,23 +185,26 @@ EOF
     script = ''
       SSH_DIR="/var/lib/n8n-ssh"
       SSH_KEY="$SSH_DIR/id_ed25519"
+      SSH_PUB="$SSH_DIR/id_ed25519.pub"
 
-      # Générer la clé SSH si elle n'existe pas déjà
-      if [ ! -f "$SSH_KEY" ]; then
-        echo "🔑 Génération de la clé SSH pour n8n..."
-        ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -f "$SSH_KEY" -N "" -C "n8n@whitelily"
-        chmod 600 "$SSH_KEY"
-        chmod 644 "$SSH_KEY.pub"
-        chown 1000:1000 "$SSH_KEY" "$SSH_KEY.pub"
-        echo "✅ Clé SSH générée pour n8n"
-        echo ""
-        echo "📋 Ajoute cette clé publique à ~/.ssh/authorized_keys sur ton Mac :"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        cat "$SSH_KEY.pub"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      else
-        echo "✅ Clé SSH n8n déjà existante : $SSH_KEY.pub"
-      fi
+      echo "🔑 Déploiement de la clé SSH n8n depuis sops..."
+
+      # Copier la clé privée depuis le secret sops
+      cp ${config.sops.secrets."n8n_ssh/private_key".path} "$SSH_KEY"
+      chmod 600 "$SSH_KEY"
+      chown 1000:1000 "$SSH_KEY"
+
+      # Générer la clé publique à partir de la clé privée
+      ${pkgs.openssh}/bin/ssh-keygen -y -f "$SSH_KEY" > "$SSH_PUB"
+      chmod 644 "$SSH_PUB"
+      chown 1000:1000 "$SSH_PUB"
+
+      echo "✅ Clé SSH n8n déployée depuis sops"
+      echo ""
+      echo "📋 Clé publique (à ajouter sur le Mac si pas déjà fait) :"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      cat "$SSH_PUB"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     '';
   };
 
@@ -254,8 +259,8 @@ EOF
 
   # Ajouter les dépendances au service généré par oci-containers
   systemd.services."podman-n8n" = {
-    after = [ "n8n-envfile.service" "n8n-ssh-keygen.service" "postgresql-n8n-setup.service" ];
-    requires = [ "n8n-envfile.service" "n8n-ssh-keygen.service" "postgresql-n8n-setup.service" ];
+    after = [ "n8n-envfile.service" "n8n-ssh-setup.service" "postgresql-n8n-setup.service" ];
+    requires = [ "n8n-envfile.service" "n8n-ssh-setup.service" "postgresql-n8n-setup.service" ];
   };
 
   # Répertoires de données et de backup
