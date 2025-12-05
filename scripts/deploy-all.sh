@@ -128,8 +128,16 @@ for host in "${HOSTS[@]}"; do
         echo -e "${BLUE}📦 Deploying to $host...${NC}"
 
         # Déploiement
-        # --use-substitutes : utilise le cache HTTP de magnolia au lieu de copier via SSH
-        if nixos-rebuild switch --flake ".#$host" --target-host "$host" --use-remote-sudo --use-substitutes; then
+        # On SSH vers la machine cible et on rebuild localement
+        # Cela utilise automatiquement les substituters configurés (magnolia:5000)
+        if ssh "$host" bash << 'ENDSSH'
+set -euo pipefail
+cd /etc/nixos
+git fetch --all
+git reset --hard origin/main
+sudo nixos-rebuild switch --flake ".#$(hostname)"
+ENDSSH
+        then
             log_success "$host deployed successfully!"
             DEPLOYED+=("$host")
         else
