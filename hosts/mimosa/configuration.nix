@@ -5,6 +5,7 @@
     ./hardware-configuration.nix
     (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/mimosa.yaml; })
     ../../modules/tailscale.nix
+    ../../modules/tailscale-dns.nix   # Configuration DNS pour MagicDNS
     ../../modules/github-actions.nix  # Clés SSH pour GitHub Actions
   ];
 
