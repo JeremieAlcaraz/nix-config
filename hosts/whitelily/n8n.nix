@@ -190,6 +190,7 @@ EOF
         ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -f "$SSH_KEY" -N "" -C "n8n@whitelily"
         chmod 600 "$SSH_KEY"
         chmod 644 "$SSH_KEY.pub"
+        chown 1000:1000 "$SSH_KEY" "$SSH_KEY.pub"
         echo "✅ Clé SSH générée pour n8n"
         echo ""
         echo "📋 Ajoute cette clé publique à ~/.ssh/authorized_keys sur ton Mac :"
@@ -262,7 +263,7 @@ EOF
     # Données n8n, Caddy et Cloudflared
     # n8n tourne en tant qu'utilisateur node (UID 1000) dans le conteneur
     "d /var/lib/n8n 0750 1000 1000 -"
-    "d /var/lib/n8n-ssh 0700 root root -"  # Clés SSH pour n8n (créées par n8n-ssh-keygen.service)
+    "d /var/lib/n8n-ssh 0755 1000 1000 -"  # Clés SSH pour n8n (appartient à node UID 1000)
     "d /run/n8n 0700 root root -"  # Pour le fichier n8n.env
     "d /var/log/caddy 0750 caddy caddy -"
     "d /var/lib/cloudflared 0750 cloudflared cloudflared -"
