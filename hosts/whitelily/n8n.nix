@@ -197,7 +197,20 @@ EOF
       chmod 644 "$SSH_PUB"
       chown 1000:1000 "$SSH_PUB"
 
+      # Créer un fichier de configuration SSH pour simplifier les commandes
+      cat > "$SSH_DIR/config" <<EOF
+# Configuration SSH pour n8n
+# Désactive la vérification stricte des clés d'hôte (sécurisé sur Tailscale)
+Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    LogLevel ERROR
+EOF
+      chmod 644 "$SSH_DIR/config"
+      chown 1000:1000 "$SSH_DIR/config"
+
       echo "✅ Clé SSH n8n déployée depuis sops"
+      echo "✅ Configuration SSH créée (pas besoin d'options -o dans les commandes)"
       echo ""
       echo "📋 Clé publique (à ajouter sur le Mac si pas déjà fait) :"
       echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
