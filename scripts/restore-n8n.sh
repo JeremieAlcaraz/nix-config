@@ -84,7 +84,7 @@ log "☁️  Récupération de la liste des backups..."
 
 # On récupère "Temps;Nom" (--format "tp"), on trie du plus récent au plus vieux, et on garde le nom
 # Utilisation de 'sort' car 'rclone lsf' ne supporte pas le tri natif
-SELECTED_FILE=$(rclone --config "$TEMP_DIR/rclone.conf" lsf gdrive:backups/n8n \
+SELECTED_FILE=$(rclone --config "$TEMP_DIR/rclone.conf" lsf gdrive:n8n \
     --files-only \
     --include "*.tar.gz" \
     --format "tp" \
@@ -105,7 +105,7 @@ success "Backup sélectionné : $SELECTED_FILE"
 
 # 4. Téléchargement
 log "⬇️  Téléchargement de l'archive..."
-rclone --config "$TEMP_DIR/rclone.conf" copy "gdrive:backups/n8n/$SELECTED_FILE" "$TEMP_DIR/" --progress
+rclone --config "$TEMP_DIR/rclone.conf" copy "gdrive:n8n/$SELECTED_FILE" "$TEMP_DIR/" --progress
 
 ARCHIVE_PATH="$TEMP_DIR/$SELECTED_FILE"
 
