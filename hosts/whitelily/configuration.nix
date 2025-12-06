@@ -60,8 +60,8 @@
     logFile = "/var/log/n8n-backup.log";
     
     # Chemin dans Google Drive où stocker les backups
-    # Tu dois avoir créé ce dossier dans GDrive : backups/n8n
-    gdrivePath = "backups/n8n";
+    # Le folder_id pointe vers le dossier "backups", donc on spécifie juste "n8n"
+    gdrivePath = "n8n";
 
     # Note: L'ID du dossier Google Drive est lu depuis les secrets sops
     # (google_drive/folder_id) et n'a plus besoin d'être configuré ici
