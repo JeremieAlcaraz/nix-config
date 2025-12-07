@@ -1,6 +1,5 @@
 .claude/settings.local.json
 # 1. On ignore tous les fichiers sensibles par défaut
-secrets/*
 *.yaml
 *.env
 
