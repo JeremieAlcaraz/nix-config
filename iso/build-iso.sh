@@ -243,8 +243,8 @@ info "Nom de l'ISO : $ISO_NAME_DATED"
 
 echo -e "${YELLOW}Où voulez-vous copier l'ISO ?${NC}"
 echo ""
-echo -e "${GREEN}1)${NC} Mac (~/Downloads/$ISO_NAME_DATED)"
-echo -e "${GREEN}2)${NC} Proxmox (root@192.168.1.50:/var/lib/vz/template/iso/)"
+echo -e "${GREEN}1)${NC} Mac - marigold (~/Downloads/$ISO_NAME_DATED)"
+echo -e "${GREEN}2)${NC} Proxmox - muscari (root@192.168.1.50:/var/lib/vz/template/iso/)"
 echo -e "${GREEN}3)${NC} Les deux"
 echo -e "${GREEN}4)${NC} Ignorer (ne pas copier)"
 echo ""
@@ -255,9 +255,9 @@ COPIED_TO_PROXMOX=false
 
 case "$COPY_CHOICE" in
     1)
-        info "Copie vers Mac..."
-        cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/$ISO_NAME_DATED
-        info "✅ Copié vers ~/Downloads/$ISO_NAME_DATED"
+        info "Copie vers Mac (marigold)..."
+        scp result/iso/nixos-minimal-ttyS0.iso marigold:~/Downloads/$ISO_NAME_DATED
+        info "✅ Copié vers marigold:~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
         ;;
     2)
@@ -298,9 +298,9 @@ case "$COPY_CHOICE" in
         COPIED_TO_PROXMOX=true
         ;;
     3)
-        info "Copie vers Mac..."
-        cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/$ISO_NAME_DATED
-        info "✅ Copié vers ~/Downloads/$ISO_NAME_DATED"
+        info "Copie vers Mac (marigold)..."
+        scp result/iso/nixos-minimal-ttyS0.iso marigold:~/Downloads/$ISO_NAME_DATED
+        info "✅ Copié vers marigold:~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
 
         echo ""
@@ -377,7 +377,7 @@ echo ""
 step "Étape 7/7 : Résumé"
 
 if [[ "$COPIED_TO_MAC" == true ]]; then
-    info "📦 ISO disponible sur Mac : ~/Downloads/$ISO_NAME_DATED"
+    info "📦 ISO disponible sur Mac (marigold) : ~/Downloads/$ISO_NAME_DATED"
 fi
 
 if [[ "$COPIED_TO_PROXMOX" == true ]]; then
