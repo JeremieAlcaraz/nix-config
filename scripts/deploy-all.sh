@@ -9,7 +9,7 @@ set -euo pipefail
 
 # Configuration
 CONFIG_DIR="/etc/nixos"
-HOSTS=("mimosa" "whitelily")
+HOSTS=("mimosa" "whitelily" "dandelion")
 SSH_TIMEOUT=5
 
 # Couleurs pour les logs
@@ -54,7 +54,7 @@ Déploie toutes les configurations NixOS sur les machines distantes.
 
 Ce script va :
   1. Vérifier la connectivité de chaque machine
-  2. Déployer séquentiellement sur mimosa, whitelily
+  2. Déployer séquentiellement sur mimosa, whitelily, dandelion
   3. Skip les machines hors ligne avec un warning
   4. Fail si une machine est accessible mais le déploiement échoue
 

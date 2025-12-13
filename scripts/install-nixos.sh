@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Script d'installation NixOS all-in-one
-# Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily|minimal]
+# Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily|dandelion|minimal]
 #
 # Ce script installe NixOS :
 # - Partitionnement et formatage
@@ -75,11 +75,15 @@ if [[ -z "$HOST" ]]; then
     echo -e "   🤍 n8n automation"
     echo -e "   → Stack complète : n8n + PostgreSQL + Caddy + Cloudflare Tunnel"
     echo ""
-    echo -e "${GREEN}4)${NC} ${YELLOW}minimal${NC}"
+    echo -e "${GREEN}4)${NC} ${YELLOW}dandelion${NC}"
+    echo -e "   🌾 Serveur Git Gitea"
+    echo -e "   → Gitea + PostgreSQL 16 (accès via Tailscale)"
+    echo ""
+    echo -e "${GREEN}5)${NC} ${YELLOW}minimal${NC}"
     echo -e "   🔧 VM de démonstration minimale"
     echo -e "   → Configuration basique pour tests et démonstration"
     echo ""
-    prompt "Choisissez un host (1-4) :"
+    prompt "Choisissez un host (1-5) :"
     read -r choice
 
     case "$choice" in
@@ -93,10 +97,13 @@ if [[ -z "$HOST" ]]; then
             HOST="whitelily"
             ;;
         4)
+            HOST="dandelion"
+            ;;
+        5)
             HOST="minimal"
             ;;
         *)
-            error "Choix invalide. Utilisez 1, 2, 3 ou 4"
+            error "Choix invalide. Utilisez 1, 2, 3, 4 ou 5"
             ;;
     esac
 
@@ -105,8 +112,8 @@ if [[ -z "$HOST" ]]; then
 fi
 
 # Vérifier que l'host est valide
-if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa-bootstrap" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "minimal" ]]; then
-    error "Host invalide. Utilisez 'magnolia', 'mimosa-bootstrap', 'mimosa', 'whitelily' ou 'minimal'"
+if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa-bootstrap" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "dandelion" && "$HOST" != "minimal" ]]; then
+    error "Host invalide. Utilisez 'magnolia', 'mimosa-bootstrap', 'mimosa', 'whitelily', 'dandelion' ou 'minimal'"
 fi
 
 # Configuration

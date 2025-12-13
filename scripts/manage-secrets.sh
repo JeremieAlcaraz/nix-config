@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Script de gestion des secrets sops-nix
-# Usage: ./manage-secrets.sh [magnolia|mimosa|whitelily]
+# Usage: ./manage-secrets.sh [magnolia|mimosa|whitelily|dandelion]
 #
 # Ce script permet de :
 # - Créer des secrets pour un host
@@ -399,6 +399,98 @@ parse_existing_whitelily_secrets() {
     info "Secrets existants chargés avec succès"
 }
 
+# Parser tous les secrets existants pour dandelion
+parse_existing_dandelion_secrets() {
+    local secrets_file="$1"
+
+    # Déchiffrement du fichier
+    info "Déchiffrement des secrets existants..."
+    local decrypted
+    if ! decrypted=$(sops -d "$secrets_file" 2>&1); then
+        error "Impossible de déchiffrer $secrets_file. Erreur: $decrypted"
+    fi
+
+    # Extraire chaque secret
+    EXISTING_JEREMIE_HASH=$(echo "$decrypted" | grep "jeremie-password-hash:" | sed 's/jeremie-password-hash: //' || echo "")
+    EXISTING_GITEA_ADMIN_PASS=$(echo "$decrypted" | grep "admin_password:" | sed 's/.*admin_password: "//' | sed 's/".*//' || echo "")
+
+    info "Secrets existants chargés avec succès"
+}
+
+# Générer les secrets pour dandelion
+generate_dandelion_secrets() {
+    local secrets_file="$1"
+    local update_mode="${2:-full}"
+    local secret_to_update="${3:-}"
+
+    info "Configuration pour dandelion (serveur Git Gitea)"
+    echo ""
+
+    # Si mode selective, charger les secrets existants
+    if [[ "$update_mode" == "selective" ]]; then
+        parse_existing_dandelion_secrets "secrets/dandelion.yaml"
+    fi
+
+    # Mot de passe jeremie
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "jeremie_password" ]]; then
+        prompt "Entrez le mot de passe pour l'utilisateur 'jeremie' (SSH) :"
+        JEREMIE_HASH=$(generate_password_hash)
+    else
+        JEREMIE_HASH="$EXISTING_JEREMIE_HASH"
+        info "Réutilisation du mot de passe jeremie existant"
+    fi
+
+    # Mot de passe admin Gitea
+    if [[ "$update_mode" == "full" ]] || [[ "$secret_to_update" == "gitea_admin_password" ]]; then
+        echo ""
+        prompt "Voulez-vous créer un nouveau mot de passe pour l'admin Gitea ? (oui/non, défaut: oui):"
+        read -r create_new_password
+        create_new_password="${create_new_password:-oui}"
+
+        if [[ "$create_new_password" == "oui" ]]; then
+            info "Génération du mot de passe admin Gitea..."
+            GITEA_ADMIN_PASS=$(openssl rand -base64 24)
+            echo "Nouveau mot de passe admin Gitea: ${GITEA_ADMIN_PASS}"
+            warning "Sauvegardez ce mot de passe dans un gestionnaire de mots de passe !"
+            echo ""
+            read -p "Appuyez sur Entrée une fois sauvegardé..."
+        else
+            echo ""
+            info "Veuillez fournir votre mot de passe admin Gitea existant"
+            echo ""
+            prompt "Mot de passe admin Gitea :"
+            read -r GITEA_ADMIN_PASS
+
+            if [[ -z "$GITEA_ADMIN_PASS" ]]; then
+                error "Le mot de passe admin Gitea ne peut pas être vide"
+            fi
+
+            info "Mot de passe admin Gitea personnalisé configuré"
+        fi
+    else
+        GITEA_ADMIN_PASS="$EXISTING_GITEA_ADMIN_PASS"
+        info "Réutilisation du mot de passe admin Gitea existant"
+    fi
+
+    cat > "$secrets_file" <<EOF
+# Secrets pour dandelion (serveur Git Gitea)
+# Généré par manage-secrets.sh le $(date '+%Y-%m-%d %H:%M:%S')
+
+jeremie-password-hash: ${JEREMIE_HASH}
+
+gitea:
+  admin_password: "${GITEA_ADMIN_PASS}"
+EOF
+
+    info "Résumé de la configuration Gitea :"
+    echo "  • Utilisateur admin : admin"
+    echo "  • Mot de passe      : ${GITEA_ADMIN_PASS}"
+    echo ""
+    warning "Sauvegardez ces informations !"
+    echo ""
+    read -p "Appuyez sur Entrée pour continuer..."
+}
+
 # Générer les secrets pour whitelily
 generate_whitelily_secrets() {
     local secrets_file="$1"
@@ -728,18 +820,20 @@ main() {
     if [[ -z "$HOST" ]]; then
         echo -e "${BLUE}Hosts disponibles :${NC}"
         echo ""
-        echo -e "${GREEN}1)${NC} ${YELLOW}magnolia${NC} - Infrastructure Proxmox"
+        echo -e "${GREEN}1)${NC} ${YELLOW}magnolia${NC}  - Infrastructure Proxmox"
         echo -e "${GREEN}2)${NC} ${YELLOW}mimosa${NC}    - Serveur web (j12zdotcom)"
         echo -e "${GREEN}3)${NC} ${YELLOW}whitelily${NC} - n8n automation"
+        echo -e "${GREEN}4)${NC} ${YELLOW}dandelion${NC} - Serveur Git Gitea"
         echo ""
-        prompt "Choisissez un host (1-3) :"
+        prompt "Choisissez un host (1-4) :"
         read -r choice
 
         case "$choice" in
             1) HOST="magnolia" ;;
             2) HOST="mimosa" ;;
             3) HOST="whitelily" ;;
-            *) error "Choix invalide. Utilisez 1, 2 ou 3" ;;
+            4) HOST="dandelion" ;;
+            *) error "Choix invalide. Utilisez 1, 2, 3 ou 4" ;;
         esac
 
         info "Host sélectionné : ${HOST}"
@@ -747,8 +841,8 @@ main() {
     fi
 
     # Vérifier que l'host est valide
-    if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" ]]; then
-        error "Host invalide. Utilisez 'magnolia', 'mimosa' ou 'whitelily'"
+    if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "dandelion" ]]; then
+        error "Host invalide. Utilisez 'magnolia', 'mimosa', 'whitelily' ou 'dandelion'"
     fi
 
     # Définir le chemin du fichier de secrets
@@ -837,6 +931,18 @@ main() {
                         2) SECRET_TO_UPDATE="cloudflare_token" ;;
                         *) error "Choix invalide" ;;
                     esac
+                elif [[ "$HOST" == "dandelion" ]]; then
+                    echo -e "${GREEN}1)${NC} Mot de passe utilisateur jeremie (SSH)"
+                    echo -e "${GREEN}2)${NC} Mot de passe admin Gitea"
+                    echo ""
+                    prompt "Votre choix (1-2) :"
+                    read -r secret_choice
+
+                    case "$secret_choice" in
+                        1) SECRET_TO_UPDATE="jeremie_password" ;;
+                        2) SECRET_TO_UPDATE="gitea_admin_password" ;;
+                        *) error "Choix invalide" ;;
+                    esac
                 elif [[ "$HOST" == "magnolia" ]]; then
                     echo -e "${GREEN}1)${NC} Mot de passe utilisateur jeremie (SSH)"
                     echo ""
@@ -882,6 +988,9 @@ main() {
             ;;
         whitelily)
             generate_whitelily_secrets "$temp_file" "$UPDATE_MODE" "$SECRET_TO_UPDATE"
+            ;;
+        dandelion)
+            generate_dandelion_secrets "$temp_file" "$UPDATE_MODE" "$SECRET_TO_UPDATE"
             ;;
     esac
 

@@ -54,7 +54,7 @@ Rebuild toutes les configurations NixOS et remplit le cache binaire magnolia.
 Ce script va :
   1. Synchroniser le repo depuis GitHub
   2. Mettre à jour j12z-site (optionnel)
-  3. Builder mimosa, whitelily, minimal pour le cache
+  3. Builder mimosa, whitelily, dandelion, minimal pour le cache
   4. Builder et appliquer la config magnolia
   5. Commit et push le flake.lock (si modifié)
 
@@ -152,6 +152,15 @@ else
 fi
 
 echo ""
+echo -e "${BLUE}📦 Building dandelion...${NC}"
+if nix build .#nixosConfigurations.dandelion.config.system.build.toplevel; then
+    log_success "Dandelion built!"
+else
+    log_error "Dandelion build failed!"
+    exit 1
+fi
+
+echo ""
 echo -e "${BLUE}📦 Building minimal...${NC}"
 if nix build .#nixosConfigurations.minimal.config.system.build.toplevel; then
     log_success "Minimal built!"
@@ -193,10 +202,11 @@ fi
 log_header "✅ ALL DONE!"
 
 echo -e "${GREEN}📊 Cache Status:${NC}"
-echo "  • Magnolia: ${GREEN}✓${NC} Applied + Cached"
-echo "  • Mimosa:   ${GREEN}✓${NC} Cached"
+echo "  • Magnolia:  ${GREEN}✓${NC} Applied + Cached"
+echo "  • Mimosa:    ${GREEN}✓${NC} Cached"
 echo "  • Whitelily: ${GREEN}✓${NC} Cached"
-echo "  • Minimal:  ${GREEN}✓${NC} Cached"
+echo "  • Dandelion: ${GREEN}✓${NC} Cached"
+echo "  • Minimal:   ${GREEN}✓${NC} Cached"
 
 if ! $SKIP_SITE; then
     echo "  • j12z-site: ${GREEN}✓${NC} Latest version"

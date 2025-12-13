@@ -73,6 +73,8 @@
           echo "🤍 Whitelily - n8n Automation"
         '' else if osConfig.networking.hostName == "mimosa" then ''
           echo "🌼 Mimosa - Serveur web"
+        '' else if osConfig.networking.hostName == "dandelion" then ''
+          echo "🌾 Dandelion - Serveur Git Gitea"
         '' else if osConfig.networking.hostName == "minimal" then ''
           echo "🔧 Minimal - VM de démonstration minimale"
         '' else ""}
