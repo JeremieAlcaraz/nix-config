@@ -130,7 +130,7 @@
     script = ''
       set -euo pipefail
 
-      echo "[gitea-setup] Vérification de l'utilisateur admin"
+      echo "[gitea-setup] Configuration de l'utilisateur admin"
 
       # Attendre que Gitea soit prêt
       for i in {1..30}; do
@@ -142,25 +142,23 @@
         sleep 2
       done
 
-      # Vérifier si l'admin existe déjà
-      if ${pkgs.gitea}/bin/gitea admin user list --admin | ${pkgs.gnugrep}/bin/grep -q "^admin$" 2>/dev/null; then
-        echo "[gitea-setup] L'utilisateur admin existe déjà"
-      else
-        echo "[gitea-setup] Création de l'utilisateur admin"
+      # Lire le mot de passe depuis sops
+      ADMIN_PASSWORD=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."gitea/admin_password".path} | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs)
 
-        # Lire le mot de passe depuis sops
-        ADMIN_PASSWORD=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."gitea/admin_password".path} | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs)
+      # Créer l'utilisateur admin (ignore l'erreur s'il existe déjà)
+      ${pkgs.gitea}/bin/gitea admin user create \
+        --username admin \
+        --password "$ADMIN_PASSWORD" \
+        --email admin@dandelion.local \
+        --admin \
+        --must-change-password=false 2>/dev/null || echo "[gitea-setup] L'utilisateur admin existe déjà"
 
-        # Créer l'utilisateur admin
-        ${pkgs.gitea}/bin/gitea admin user create \
-          --username admin \
-          --password "$ADMIN_PASSWORD" \
-          --email admin@dandelion.local \
-          --admin \
-          --must-change-password=false
+      # Mettre à jour le mot de passe (toujours, pour rester synchronisé avec sops)
+      ${pkgs.gitea}/bin/gitea admin user change-password \
+        --username admin \
+        --password "$ADMIN_PASSWORD"
 
-        echo "[gitea-setup] Utilisateur admin créé avec succès !"
-      fi
+      echo "[gitea-setup] Configuration admin terminée !"
     '';
     path = [ pkgs.gitea ];
     environment = {
