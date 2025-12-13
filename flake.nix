@@ -111,6 +111,23 @@
           ];
         };
 
+        # Dandelion - VM Gitea (serveur Git auto-hébergé)
+        dandelion = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ./modules/base.nix
+            ./modules/ssh.nix
+            ./hosts/dandelion/configuration.nix
+            sops-nix.nixosModules.sops
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremie = import ./home/jeremie.nix;
+            }
+          ];
+        };
+
         # Minimal - VM de démonstration minimale
         minimal = nixpkgs.lib.nixosSystem {
           inherit system;
