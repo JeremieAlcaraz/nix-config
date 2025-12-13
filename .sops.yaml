@@ -36,6 +36,12 @@ creation_rules:
           # Même clé partagée
           - *shared
 
+    # Secrets pour l'hôte dandelion (VM gitea)
+  - path_regex: secrets/dandelion\.yaml$
+    key_groups:
+      - age:
+          # Même clé partagée
+          - *shared
   # Secrets communs (Tailscale OAuth, etc.)
   - path_regex: secrets/common\.yaml$
     key_groups:
