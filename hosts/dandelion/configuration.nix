@@ -28,8 +28,8 @@
       sshKeyPaths = [];
     };
     secrets = {
-      # Secrets Gitea
-      "gitea/admin_password" = { owner = "root"; group = "root"; mode = "0400"; };
+      # Secrets Gitea - accessible par l'utilisateur gitea
+      "gitea/admin_password" = { owner = "gitea"; group = "gitea"; mode = "0400"; };
     };
   };
 
