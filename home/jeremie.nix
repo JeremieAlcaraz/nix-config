@@ -2,8 +2,8 @@
 
 {
   imports = [
-    ../modules/aliases.nix
-    ../modules/fish-functions.nix
+    ../modules/home-manager/aliases.nix
+    ../modules/home-manager/fish-functions.nix
   ];
 
   # Version de Home Manager (doit correspondre à la version NixOS)

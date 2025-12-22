@@ -5,9 +5,9 @@
     ./hardware-configuration.nix
     ./n8n.nix
     ./n8n-backup.nix
-    (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/whitelily.yaml; })
-    ../../modules/tailscale.nix
-    ../../modules/tailscale-dns.nix   # Configuration DNS pour MagicDNS
+    (import ../../modules/home-manager/sops.nix { defaultSopsFile = ../../secrets/whitelily.yaml; })
+    ../../modules/home-manager/tailscale.nix
+    ../../modules/home-manager/tailscale-dns.nix   # Configuration DNS pour MagicDNS
 
   ];
 

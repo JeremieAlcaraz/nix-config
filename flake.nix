@@ -31,8 +31,8 @@
         magnolia = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            ./modules/base.nix
-            ./modules/ssh.nix
+            ./modules/home-manager/base.nix
+            ./modules/home-manager/ssh.nix
             ./hosts/magnolia/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -51,8 +51,8 @@
           inherit system;
           specialArgs = { inherit j12z-site; };
           modules = [
-            ./modules/base.nix
-            ./modules/ssh.nix
+            ./modules/home-manager/base.nix
+            ./modules/home-manager/ssh.nix
             ./hosts/mimosa/configuration.nix
             ./hosts/mimosa/webserver.nix
             sops-nix.nixosModules.sops
@@ -76,8 +76,8 @@
           inherit system;
           specialArgs = { inherit j12z-site; };
           modules = [
-            ./modules/base.nix
-            ./modules/ssh.nix
+            ./modules/home-manager/base.nix
+            ./modules/home-manager/ssh.nix
             ./hosts/mimosa/configuration.nix
             ./hosts/mimosa/webserver.nix
             sops-nix.nixosModules.sops
@@ -98,8 +98,8 @@
         whitelily = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            ./modules/base.nix
-            ./modules/ssh.nix
+            ./modules/home-manager/base.nix
+            ./modules/home-manager/ssh.nix
             ./hosts/whitelily/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -115,8 +115,8 @@
         dandelion = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            ./modules/base.nix
-            ./modules/ssh.nix
+            ./modules/home-manager/base.nix
+            ./modules/home-manager/ssh.nix
             ./hosts/dandelion/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
@@ -132,8 +132,8 @@
         minimal = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            ./modules/base.nix
-            ./modules/ssh.nix
+            ./modules/home-manager/base.nix
+            ./modules/home-manager/ssh.nix
             ./hosts/minimal/configuration.nix
             sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager

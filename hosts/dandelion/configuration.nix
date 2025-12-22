@@ -3,9 +3,9 @@
 {
   imports = [
     ./hardware-configuration.nix
-    (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/dandelion.yaml; })
-    ../../modules/tailscale.nix
-    ../../modules/tailscale-dns.nix   # Configuration DNS pour MagicDNS
+    (import ../../modules/home-manager/sops.nix { defaultSopsFile = ../../secrets/dandelion.yaml; })
+    ../../modules/home-manager/tailscale.nix
+    ../../modules/home-manager/tailscale-dns.nix   # Configuration DNS pour MagicDNS
   ];
 
   system.stateVersion = "25.05";

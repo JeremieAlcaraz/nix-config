@@ -3,10 +3,10 @@
 {
   imports = [
     ./hardware-configuration.nix
-    (import ../../modules/sops.nix { defaultSopsFile = ../../secrets/mimosa.yaml; })
-    ../../modules/tailscale.nix
-    ../../modules/tailscale-dns.nix   # Configuration DNS pour MagicDNS
-    ../../modules/github-actions.nix  # Clés SSH pour GitHub Actions
+    (import ../../modules/home-manager/sops.nix { defaultSopsFile = ../../secrets/mimosa.yaml; })
+    ../../modules/home-manager/tailscale.nix
+    ../../modules/home-manager/tailscale-dns.nix   # Configuration DNS pour MagicDNS
+    ../../modules/home-manager/github-actions.nix  # Clés SSH pour GitHub Actions
   ];
 
   # Système
