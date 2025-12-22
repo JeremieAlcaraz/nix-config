@@ -1,6 +1,12 @@
 # ~/.zshenv - Marigold (macOS) - Version minimaliste gérée par Nix
 # Variables d'environnement chargées pour TOUTES les sessions (interactives ou non)
 
+# === HOME MANAGER SESSION VARIABLES ===
+# Source Home Manager session variables (includes CLAUDE_CONFIG_DIR, CODEX_HOME, etc.)
+if [[ -f "$HOME/.local/state/nix/profiles/home-manager/home-path/etc/profile.d/hm-session-vars.sh" ]]; then
+  source "$HOME/.local/state/nix/profiles/home-manager/home-path/etc/profile.d/hm-session-vars.sh"
+fi
+
 # === XDG Base Directory ===
 export XDG_CONFIG_HOME="$HOME/.config"
 
