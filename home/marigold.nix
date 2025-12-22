@@ -13,8 +13,16 @@
     # Test smoke test
     cowsay
 
+    # Shells
+    nushell
+
     # Shell prompt
     starship
+
+    # Shell tools (zoxide, atuin, carapace for completions)
+    zoxide
+    atuin
+    carapace
 
     # ZSH plugins et outils (gérés par Nix au lieu de Homebrew/git)
     zsh-fzf-tab
@@ -69,5 +77,9 @@
 
     # Starship prompt configuration
     "starship.toml".source = ../modules/dotfiles/starship/starship.toml;
+
+    # Nushell configuration (XDG-compliant by default)
+    "nushell/env.nu".source = ../modules/dotfiles/nushell/env.marigold.nu;
+    "nushell/config.nu".source = ../modules/dotfiles/nushell/config.marigold.nu;
   };
 }

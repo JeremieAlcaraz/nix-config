@@ -10,3 +10,4 @@
 # 3. On autorise les fichiers d'exemple (documentation)
 !*.example
 .zcompdump*
+history.txt
