@@ -949,7 +949,7 @@ if ("~/.local/share/atuin/init.nu" | path exists) {
 }
 
 if ("~/.cache/starship/init.nu" | path exists) {
-    use ~/.cache/starship/init.nu
+    source ~/.cache/starship/init.nu
 }
 
 # Ruby gem configuration
