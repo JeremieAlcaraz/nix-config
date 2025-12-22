@@ -9,3 +9,4 @@
 !.sops.yaml
 # 3. On autorise les fichiers d'exemple (documentation)
 !*.example
+.zcompdump*

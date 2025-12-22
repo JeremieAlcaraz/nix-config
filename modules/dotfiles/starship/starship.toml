@@ -1,0 +1,88 @@
+# Configuration Starship avec module dotfiles
+format = """
+$username\
+$hostname\
+$shell\
+$directory\
+$git_branch\
+$git_state\
+${custom.gitstatus}\
+$package\
+$nodejs\
+$line_break\
+$character"""
+
+#[custom.dotfiles_version]
+#command = "cat ~/dotfiles/.current_version 2>/dev/null || echo 'aucune'"
+#when = "test -d ~/dotfiles"
+#format = "dotfiles:[$output]($style) "
+#style = "bold purple"
+
+
+
+# ~/.config/starship.toml
+
+[custom.gitstatus]
+command = """
+python3 - <<'PY'
+import subprocess, sys
+try:
+    out = subprocess.check_output(
+        ["git", "status", "--porcelain=2", "--branch"],
+        text=True,
+    )
+except subprocess.CalledProcessError:
+    sys.exit(1)
+ahead = behind = staged = modified = untracked = conflicted = 0
+for line in out.splitlines():
+    if line.startswith("# branch.ab"):
+        parts = line.split()
+        ahead = int(parts[2][1:]) if len(parts) > 2 else 0
+        behind = int(parts[3][1:]) if len(parts) > 3 else 0
+    elif line.startswith(("1 ", "2 ")):
+        x, y = line[2], line[3]
+        if x != ".": staged += 1
+        if y != ".": modified += 1
+    elif line.startswith("u "):
+        conflicted += 1
+    elif line.startswith("? "):
+        untracked += 1
+if all(v == 0 for v in (ahead, behind, staged, modified, untracked, conflicted)):
+    sys.exit(0)
+parts = []
+if ahead: parts.append(f"⇡{ahead}")
+if behind: parts.append(f"⇣{behind}")
+if staged: parts.append(f"●{staged}")
+if modified: parts.append(f"+{modified}")
+if untracked: parts.append(f"?{untracked}")
+if conflicted: parts.append(f"✖{conflicted}")
+print("[" + "".join(parts) + "]")
+PY
+"""
+when = "git rev-parse --is-inside-work-tree >/dev/null 2>&1"
+shell = ["bash"]
+format = "[$output](bold red)"
+description = "Git status via git CLI"
+
+# Config from Nix flake DX
+[character]
+success_symbol = "[🚀 DX ➜](bold green)"
+error_symbol = "[💀 DX ➜](bold red)"
+
+[directory]
+truncation_length = 3
+style = "bold yellow"
+
+[nodejs]
+symbol = "⬢ "
+
+# Shell indicator using built-in module (relies on cleaned env vars)
+[shell]
+format = "$indicator "
+style = ""
+bash_indicator = "[🐚 bash](bold green)"
+zsh_indicator = "[🐚 zsh](bold green)"
+fish_indicator = "[🐟 fish](bold blue)"
+nu_indicator = "[🚀 nu](bold purple)"
+unknown_indicator = "shell"
+disabled = false

@@ -1,0 +1,48 @@
+# ~/.zshrc - Marigold (macOS) - Version minimaliste gérée par Nix
+# Configuration ZSH spécifique pour le Mac, tous les outils sont gérés via Home Manager
+
+# Pour debug : ZSH_DEBUGRC=1 zsh
+if [[ -n "$ZSH_DEBUGRC" ]]; then
+  zmodload zsh/zprof
+fi
+
+# === CHARGEMENT DES MODULES ===
+ZSH_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+
+# 1. Modules principaux (dans l'ordre)
+for module in "$ZSH_CONFIG_DIR/modules"/*.zsh; do
+    [[ -r "$module" ]] && source "$module"
+done
+
+# 2. Fonctions utilitaires
+for func in "$ZSH_CONFIG_DIR/functions"/*.zsh; do
+    [[ -r "$func" ]] && source "$func"
+done
+
+# === CONFIGURATION SSH STRICTE ===
+# Interdit à Zsh de lire /etc/hosts
+zstyle ':completion:*:hosts' etc-hosts-files /dev/null
+zstyle ':completion:*:ssh:*' tag-order 'hosts:-host:host hosts:-domain:domain hosts:-ip:ip'
+zstyle ':completion:*:*:*' ignored-patterns 'broadcasthost' 'localhost' '127.0.0.1' 'gdmf.apple.com' 'mesu.apple.com'
+zstyle ':completion:*:*:*:users' ignored-patterns '_*' 'root' 'daemon' 'nobody' 'polkitd' 'jeremiealcaraz'
+
+# === HELPERS DE CHANGEMENT DE SHELL ===
+# Permet de lancer nu ou fish sans hériter des variables ZSH
+nu() { env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION command nu "$@"; }
+f() { env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION command fish "$@"; }
+
+# === LAZYGIT AVEC CD AUTOMATIQUE ===
+lg() {
+  local temp_file=$(mktemp)
+  lazygit -o "$temp_file" "$@"
+  local worktree_path=$(cat "$temp_file")
+  rm "$temp_file"
+  if [ -n "$worktree_path" ]; then
+    cd "$worktree_path" || exit
+  fi
+}
+
+# Debug: afficher le temps de chargement
+if [[ -n "$ZSH_DEBUGRC" ]]; then
+  zprof
+fi
