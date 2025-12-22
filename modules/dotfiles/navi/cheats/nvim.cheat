@@ -1,0 +1,37 @@
+% Neovim – Commandes utiles
+
+# Ouvre Neovim dans le dossier courant
+nvim .
+
+# Ouvre un fichier spécifique
+nvim {{fichier}}
+
+# Recherche dans tout le projet (avec Telescope + ripgrep)
+:Telescope live_grep
+
+# Fuzzy finder de fichiers (avec Telescope)
+:Telescope find_files
+
+# Sauvegarde le fichier
+:w
+
+# Quitter Neovim
+:q
+
+# Quitter sans sauvegarder
+:q!
+
+# Sauvegarder et quitter
+:wq
+
+# Split horizontal
+:split {{fichier}}
+
+# Split vertical
+:vsplit {{fichier}}
+
+# Changer de split (Ctrl + w suivi d’une flèche)
+<C-w> <arrow>
+
+# Ouvrir la configuration Neovim
+nvim ~/.config/nvim/init.lua

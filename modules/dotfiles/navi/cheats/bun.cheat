@@ -1,0 +1,31 @@
+% Bun – Outils modernes JS/TS
+
+# Initialiser un projet Bun
+bun init
+
+# Installer un paquet
+bun add <paquet>
+
+# Installer un paquet en dev
+bun add -d <paquet>
+
+# Supprimer un paquet
+bun remove <paquet>
+
+# Lancer un fichier JS/TS
+bun run <fichier.ts>
+
+# Lancer un script dans package.json
+bun run <script>
+
+# Créer un build (bundler intégré)
+bun build <entry.ts> --outfile=<bundle.js>
+
+# Démarrer un serveur Bun (ex: avec server.ts)
+bun run server.ts
+
+# Lancer des tests
+bun test
+
+# Mettre à jour tous les paquets
+bun upgrade

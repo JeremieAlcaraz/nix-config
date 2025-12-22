@@ -1,0 +1,32 @@
+% Git/Github – Commandes Remotes et URL
+
+# Lister tous les remotes avec leurs URLs
+git remote -v
+
+# Afficher uniquement l'URL du remote "origin"
+git remote get-url origin
+
+# (Alternative) Récupérer l'URL configurée pour "origin"
+git config --get remote.origin.url
+
+# Afficher les détails du remote "origin" (branches suivies, fetch/push, etc.)
+git remote show origin
+
+# Créer un nouveau repository avec template par défaut et description personnalisée
+mkrepo <repo_name> bare-minimum "<description>"
+
+
+# Download only one folder on the remote repository url give
+gh-dl
+
+
+# Récupérer une pull request spécifique depuis GitHub-Pro
+git fetch origin pull/<number>/head:test-pr-<number> && git checkout test-pr-<number>
+
+
+# Récupérer une pull request spécifique depuis GitHub-Perso
+git fetch github-perso pull/<number>/head:test-pr-<number> && git checkout test-pr-<number>
+
+# Repasser sur la dev et supprimer la branche de la PR
+git checkout dev && git branch -D test-pr-<number>
+

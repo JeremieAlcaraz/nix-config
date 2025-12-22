@@ -1,0 +1,50 @@
+% pnpm – Commandes courantes
+
+# Initialiser un nouveau projet Node
+pnpm init
+
+# Installer toutes les dépendances déclarées
+pnpm install
+
+# Installer un package localement
+pnpm add <package>
+
+# Installer un package globalement
+pnpm add -g <package>
+
+# Ajouter une dépendance de développement
+pnpm add -D <package>
+
+# Mettre à jour toutes les dépendances locales
+pnpm update
+
+# Mettre à jour les dépendances globales
+pnpm update -g
+
+# Désinstaller un package local
+pnpm remove <package>
+
+# Désinstaller un package global
+pnpm remove -g <package>
+
+# Lister les dépendances directes du projet
+pnpm list --depth 0
+
+# Lister toute l'arborescence des dépendances du projet
+pnpm list --depth Infinity
+
+# Lister les packages globaux
+pnpm list -g --depth 0
+
+# Exécuter un script défini dans package.json
+pnpm run <script>
+
+# Exécuter un binaire d’une dépendance sans installation globale
+pnpm exec <cmd>
+
+# Nettoyer le cache pnpm
+pnpm cache clean
+
+# Afficher la version de pnpm
+pnpm --version
+

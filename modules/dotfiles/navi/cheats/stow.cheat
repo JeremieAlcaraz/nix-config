@@ -1,0 +1,28 @@
+% Stow - cmd utiles
+
+# stow.cheat 
+
+% dotfiles, stow, dotfiles-create
+
+# Créer un package dotfiles de type config-dir
+# Exemple : nvim → crée ~/dotfiles/nvim/.config/nvim/*
+dotfiles-create <package> config-dir
+$ package: echo "test-app1 nvim alacritty" | tr ' ' '\n'
+
+# Créer un package dotfiles de type config-file
+# Exemple : starship.toml → ~/dotfiles/starship/.config/starship.toml
+dotfiles-create <package> config-file <destination>
+$ package: echo "test-app2 starship" | tr ' ' '\n'
+$ destination: echo "test-config.toml starship.toml" | tr ' ' '\n'
+
+# Créer un package dotfiles de type home
+# Exemple : .zshrc → ~/dotfiles/zsh/.zshrc
+dotfiles-create <package> home <destination>
+$ package: echo "test-app3 zsh" | tr ' ' '\n'
+$ destination: echo ".test-rc .zshrc" | tr ' ' '\n'
+
+# create the path for a config folder within ~/.config 
+mkdir -p ~/dotfiles/<namefolder>/.config/<namefolder>
+
+# stow a paquet en pointant le home explicitement ⚠️ important dans le cas de dossier plus depth
+stow -t ~ <paquet> 

@@ -7,7 +7,39 @@
 !secrets/*.yaml
 !secrets/*.json
 !.sops.yaml
+# 2.1. On autorise les fichiers de config Navi (pas de secrets)
+!modules/dotfiles/navi/*.yaml
 # 3. On autorise les fichiers d'exemple (documentation)
 !*.example
 .zcompdump*
 history.txt
+navi.log
+
+# Claude Code - Fichiers dynamiques (sessions, historique, stats)
+modules/dotfiles/claude/history.jsonl
+modules/dotfiles/claude/stats-cache.json
+modules/dotfiles/claude/.claude.json
+modules/dotfiles/claude/.claude.json.backup
+modules/dotfiles/claude/debug/
+modules/dotfiles/claude/file-history/
+modules/dotfiles/claude/plans/
+modules/dotfiles/claude/plugins/
+modules/dotfiles/claude/projects/
+modules/dotfiles/claude/session-env/
+modules/dotfiles/claude/shell-snapshots/
+modules/dotfiles/claude/statsig/
+modules/dotfiles/claude/telemetry/
+modules/dotfiles/claude/todos/
+modules/dotfiles/claude/ide/
+modules/dotfiles/claude/local/
+
+# Codex - Fichiers dynamiques (sessions, historique, auth)
+modules/dotfiles/codex/history.jsonl
+modules/dotfiles/codex/auth.json
+modules/dotfiles/codex/version.json
+modules/dotfiles/codex/archived_sessions/
+modules/dotfiles/codex/log/
+modules/dotfiles/codex/rules/
+modules/dotfiles/codex/sessions/
+modules/dotfiles/codex/shell_snapshots/
+modules/dotfiles/codex/skills/

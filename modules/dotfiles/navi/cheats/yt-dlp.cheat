@@ -1,0 +1,181 @@
+% yt-dlp, download, video, audio
+
+; =============================================================================
+; CHEATSHEET YT-DLP COMPLET - Utilise TOUTES les fonctionnalités de Navi
+; =============================================================================
+
+# Télécharger une vidéo simple
+yt-dlp "<url>"
+
+# Télécharger en qualité spécifique avec format personnalisé
+yt-dlp -f "<quality>" <url> -o "<output_template>"
+
+# Télécharger uniquement l'audio en MP3
+yt-dlp -x --audio-format mp3 --audio-quality <audio_quality> "<url>"
+
+# Télécharger une playlist avec filtres avancés
+yt-dlp --playlist-start <start> --playlist-end <end> "<playlist_url>"
+
+# Télécharger avec sous-titres dans une langue spécifique
+yt-dlp --write-subs --sub-langs <subtitle_lang> "<url>"
+
+# Commande multiline pour téléchargement avancé avec métadonnées
+yt-dlp "<url>" \
+  --write-info-json \
+  --write-thumbnail \
+  --embed-metadata \
+  -o "<advanced_output_template>"
+
+# Snippet en markdown pour téléchargement complet d'une chaîne
+```bash
+# Télécharge toute une chaîne avec organisation par date
+yt-dlp "<channel_url>" \
+  -o "<channel_template>" \
+  --write-description \
+  --write-info-json \
+  --embed-subs \
+  --all-subs
+```
+
+# Variables pré-définies avec options fzf avancées
+
+$ url: echo "https://www.youtube.com/watch?v=dQw4w9WgXcQ https://www.youtube.com/watch?v=9bZkp7q19f0" | tr ' ' '\n' --- --header "Exemples ou tapez votre URL" --fzf-overrides '--print-query'
+$ quality: echo "best worst best[height<=720] best[height<=480] worst[height>=720]" | tr ' ' '\n' --- --header-lines 0 --preview "echo 'Format: {}'"
+
+$ audio_quality: echo "0\n1\n2\n3\n4\n5\n6\n7\n8\n9" | tr '\n' '\n' --- --header "Qualité audio (0=meilleur, 9=pire)" --query "0"
+
+$ start: seq 1 50 --- --header "Index de début de playlist"
+
+$ end: seq <start> 100 --- --header "Index de fin de playlist (dépend du début)"
+
+$ playlist_url: echo "https://www.youtube.com/playlist?list=EXAMPLE" | tr ' ' '\n' --- --header "URL de la playlist"
+
+$ subtitle_lang: echo "fr\nen\nes\nde\nit\nja\nko\nzh\nru\nar" | tr '\n' '\n' --- --multi --header "Langues des sous-titres (multi-sélection)"
+
+$ output_template: echo "%(uploader)s/%(title)s.%(ext)s\n%(upload_date)s-%(title)s.%(ext)s\n~/Downloads/%(title)s.%(ext)s\n./videos/%(id)s.%(ext)s" | tr '\n' '\n' --- --header "Template de sortie"
+
+$ advanced_output_template: echo "$output_template" | tr '\n' '\n' --- --map "echo {} | sed 's/%(title)s/%(title).100s/g'"
+
+$ channel_url: echo "https://www.youtube.com/@example" | tr ' ' '\n' --- --header "URL de la chaîne"
+
+$ channel_template: echo "%(uploader)s/%(upload_date)s-%(title)s.%(ext)s" | tr ' ' '\n'
+
+% yt-dlp, download, advanced
+@ yt-dlp, download, video, audio
+
+; Extension du contexte précédent avec des commandes avancées
+
+# Télécharger avec cookies (pour contenu privé)
+yt-dlp --cookies <cookies_file> "<protected_url>"
+
+# Utiliser un proxy pour contourner les restrictions géographiques
+yt-dlp --proxy "<proxy_settings>" "<geo_restricted_url>"
+
+# Télécharger avec limitation de débit
+yt-dlp --limit-rate <bandwidth_limit> "<url>"
+
+# Variables étendues avec dépendances explicites
+$ cookies_file: find ~ -name "*.txt" -path "*/cookies/*" -o -name "cookies.txt" 2>/dev/null --- --header "Fichiers de cookies disponibles"
+
+$ protected_url: echo "$url" --- --map "echo 'URL protégée: {}'"
+
+$ proxy_settings: echo "socks5://127.0.0.1:1080\nhttp://proxy.example.com:8080\nsocks4://127.0.0.1:1080" | tr '\n' '\n' --- --header "Paramètres proxy"
+
+$ geo_restricted_url: echo "$url" --- --map "echo 'URL géo-restreinte: {}'"
+
+$ bandwidth_limit: echo "1M\n2M\n5M\n10M\n50M\n100M" | tr '\n' '\n' --- --header "Limite de bande passante"
+
+% yt-dlp, batch, automation
+
+# Téléchargement en lot depuis un fichier
+yt-dlp -a <batch_file>
+
+# Téléchargement avec archive pour éviter les doublons
+yt-dlp --download-archive <archive_file> -a <batch_urls>
+
+# Script complet de sauvegarde automatique
+```bash
+#!/bin/bash
+# Sauvegarde automatique avec gestion d'erreurs
+set -e
+
+DOWNLOAD_DIR="<download_directory>"
+ARCHIVE_FILE="<archive_location>"
+LOG_FILE="<log_location>"
+
+mkdir -p "$DOWNLOAD_DIR"
+
+yt-dlp \
+  --download-archive "$ARCHIVE_FILE" \
+  --output "$DOWNLOAD_DIR/%(uploader)s/%(upload_date)s-%(title)s.%(ext)s" \
+  --write-info-json \
+  --write-thumbnail \
+  --embed-subs \
+  --all-subs \
+  --ignore-errors \
+  --no-continue \
+  <batch_automation_urls> 2>&1 | tee "$LOG_FILE"
+
+echo "Téléchargement terminé, vérifiez $LOG_FILE pour les détails"
+```
+
+# Variables avec expansion pour arguments multiples
+$ batch_file: find . -name "*.txt" -exec grep -l "http" {} \; --- --header "Fichiers contenant des URLs"
+
+$ archive_file: echo "~/Downloads/archive.txt\n./downloaded.archive\n~/.yt-dlp-archive" | tr '\n' '\n'
+
+$ batch_urls: echo "https://youtube.com/@channel1\nhttps://youtube.com/@channel2\nhttps://youtube.com/playlist?list=example" | tr '\n' '\n' --- --multi --expand
+
+$ download_directory: echo "$HOME/Downloads\n$HOME/Videos\n./downloads\n/tmp/yt-dlp" | tr '\n' '\n' --- --preview "ls -la {}"
+
+$ archive_location: echo "$download_directory/archive.txt" --- --map "echo {} | sed 's|$|/downloaded.archive|'"
+
+$ log_location: echo "$download_directory/yt-dlp.log" --- --map "dirname {} | xargs -I@ echo @/yt-dlp-$(date +%Y%m%d).log"
+
+% yt-dlp, conversion, post-processing
+@ yt-dlp, download, video, audio
+
+# Conversion avec FFmpeg intégré
+yt-dlp --recode-video <video_format> "<url>"
+
+# Post-traitement audio avancé avec normalisation
+yt-dlp -x --audio-format <audio_format> --postprocessor-args "ffmpeg:-af volume=<volume_level>" "<url>"
+
+# Découpage de vidéo avec timestamps
+yt-dlp --postprocessor-args "ffmpeg:-ss <start_time> -to <end_time>" "<url>"
+
+# Variables avec prévention de saisie libre (--prevent-extra)
+$ video_format: echo "mp4\navi\nmkv\nwebm\nflv" | tr '\n' '\n' --- --prevent-extra --header "Formats vidéo supportés"
+
+$ audio_format: echo "mp3\naac\nflac\nm4a\nogg\nwav" | tr '\n' '\n' --- --prevent-extra --header "Formats audio supportés"
+
+$ volume_level: echo "0.5\n1.0\n1.5\n2.0" | tr '\n' '\n' --- --header "Niveau de volume (1.0 = normal)"
+
+$ start_time: echo "00:00:00\n00:01:00\n00:05:00\n00:10:00" | tr '\n' '\n' --- --header "Temps de début (HH:MM:SS)"
+
+$ end_time: echo "$start_time" | tr '\n' '\n' --- --map "python3 -c \"import sys; from datetime import datetime, timedelta; t=datetime.strptime(sys.stdin.read().strip(), '%H:%M:%S'); print((t + timedelta(minutes=30)).strftime('%H:%M:%S'))\"" --header "Temps de fin (calculé +30min)"
+
+% aliases
+
+; Exemples d'alias pour usage rapide avec navi
+
+# Téléchargement audio rapide :: ytmp3
+yt-dlp -x --audio-format mp3 --audio-quality 0 "<quick_url>"
+
+# Téléchargement qualité HD :: ythd
+yt-dlp -f "best[height<=1080]" "<quick_url>" -o "~/Downloads/%(title)s.%(ext)s"
+
+# Playlist complète :: ytpl
+yt-dlp "<quick_playlist>" -o "%(uploader)s/%(playlist_index)s-%(title)s.%(ext)s"
+
+$ quick_url: echo "Collez URL ici"
+$ quick_playlist: echo "Collez URL playlist ici"
+
+# Télécharger l’audio d’une vidéo YouTube en MP3 haute qualité dans ~/Downloads
+yt-dlp -x \
+  --audio-format mp3 \
+  --audio-quality 0 \
+  -o "$HOME/Downloads/<VideoTitle>.%(ext)s" \
+  "<URL-with-VideoID>"
+
+

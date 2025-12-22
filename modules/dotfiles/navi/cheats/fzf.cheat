@@ -1,0 +1,17 @@
+
+% fzf, fd, nvim, macos, search
+# Fiche: FZF + FD → ouvrir dans nvim (affichage sur 3 niveaux, dotfiles ok, .git et .DS_Store exclus)
+
+# 1) Chercher uniquement dans ~/Documents/Pro/_programmation (fichiers + dossiers) puis ouvrir dans nvim
+fd -H -L -E .git -E '.DS_Store' -t f -t d . "$HOME/Documents/Pro/_programmation" \
+| awk '{orig=$0; n=split($0,a,"/"); start=(n>3?n-2:1); s=a[start]; for(i=start+1;i<=n;i++) s=s"/"a[i]; if(n>3) s="…/"s; print s "\t" orig}' \
+| fzf --multi --height=70% --border --delimiter=$'\t' --with-nth=1 --prompt='🧭 _prog > ' \
+     --preview 'printf "%s\n\n" {2}; (bat --style=plain --color=always --line-range=:200 {2} 2>/dev/null || sed -n "1,200p" {2})' \
+     --bind 'tab:toggle+down,shift-tab:toggle+up,enter:execute(nvim {+2})+abort'
+
+# 2) Chercher uniquement dans ~/dotfiles (fichiers + dossiers) puis ouvrir dans nvim
+fd -H -L -E .git -E '.DS_Store' -t f -t d . "$HOME/dotfiles" \
+| awk '{orig=$0; n=split($0,a,"/"); start=(n>3?n-2:1); s=a[start]; for(i=start+1;i<=n;i++) s=s"/"a[i]; if(n>3) s="…/"s; print s "\t" orig}' \
+| fzf --multi --height=70% --border --delimiter=$'\t' --with-nth=1 --prompt='🧭 dotfiles > ' \
+     --preview 'printf "%s\n\n" {2}; (bat --style=plain --color=always --line-range=:200 {2} 2>/dev/null || sed -n "1,200p" {2})' \
+     --bind 'tab:toggle+down,shift-tab:toggle+up,enter:execute(nvim {+2})+abort'

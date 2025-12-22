@@ -1,0 +1,14 @@
+% Tree - cmd utiles
+
+# tree of my files depth 8 with hidden files and copy
+tree -a -L 8 -I 'node_modules|.git|.DS_Store' | grep -E '^|\.' | pbcopy
+
+# tree of my files depth number with hidden files and symlinks
+tree -a -C -l -L <depth> -I '.gitignore|node_modules' | tee /dev/tty 
+
+# (copy) tree of my files depth number with hidden files and symlinks
+tree -a -l -L <depth> -I '.gitignore|node_modules|.git|.DS_Store|._.DS_Store' | tee /dev/tty | pbcopy
+
+
+# tree of my files depth 4 with hidden files and excluding some folders
+tree -a -L 4 -I '.DS_Store|node_modules|.git'

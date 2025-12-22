@@ -8,6 +8,13 @@
   # === XDG Configuration ===
   xdg.enable = true;
 
+  # === ENVIRONMENT VARIABLES ===
+  # Force XDG compliance for tools that support it via env vars
+  home.sessionVariables = {
+    CLAUDE_CONFIG_DIR = "${config.home.homeDirectory}/.config/claude";
+    CODEX_HOME = "${config.home.homeDirectory}/.config/codex";
+  };
+
   # === PACKAGES ===
   home.packages = with pkgs; [
     # Test smoke test
@@ -23,6 +30,11 @@
     zoxide
     atuin
     carapace
+    navi
+
+    # AI coding assistants
+    claude-code
+    codex
 
     # ZSH plugins et outils (gérés par Nix au lieu de Homebrew/git)
     zsh-fzf-tab
@@ -81,5 +93,16 @@
     # Nushell configuration (XDG-compliant by default)
     "nushell/env.nu".source = ../modules/dotfiles/nushell/env.marigold.nu;
     "nushell/config.nu".source = ../modules/dotfiles/nushell/config.marigold.nu;
+
+    # Navi cheatsheets and configuration
+    "navi/config.yaml".source = ../modules/dotfiles/navi/config.yaml;
+    "navi/config.toml".source = ../modules/dotfiles/navi/config.toml;
+    "navi/cheats".source = ../modules/dotfiles/navi/cheats;
+
+    # Claude Code configuration (XDG-compliant via CLAUDE_CONFIG_DIR)
+    "claude/settings.json".source = ../modules/dotfiles/claude/settings.json;
+
+    # Codex configuration (XDG-compliant via CODEX_HOME)
+    "codex/config.toml".source = ../modules/dotfiles/codex/config.toml;
   };
 }

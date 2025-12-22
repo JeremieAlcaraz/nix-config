@@ -1,0 +1,52 @@
+% duti: macos, defaults, uti, url-scheme
+
+# ── Inspecter ─────────────────────────────────────────────────────────────────
+
+# Quel est l’app par défaut pour une extension (et alternatives possibles) ?
+duti -x {{ext:=pdf}}
+
+# Quel est l’app par défaut pour un UTI ?
+duti -d {{uti:=public.plain-text}}
+
+# UTI d’un fichier (et arbre complet des UTIs)
+mdls -name kMDItemContentType -name kMDItemContentTypeTree "{{f:=/path/to/file}}"
+
+# Récupérer le bundle id à partir du nom de l’app
+osascript -e 'id of app "{{app:=Preview}}"'
+
+# Récupérer le bundle id depuis un .app précis
+mdls -name kMDItemCFBundleIdentifier -r "{{app_path:=/Applications/Preview.app}}"
+
+# ── Définir les apps par défaut ───────────────────────────────────────────────
+
+# Définir l’app par défaut pour un UTI (rôle viewer/editor/all)
+duti -s {{bundle:=com.apple.Preview}} {{uti:=public.pdf}} {{role:=all|viewer|editor}}
+
+# Définir l’app par défaut pour une extension (duti résout l’UTI pour toi)
+duti -s {{bundle:=com.microsoft.VSCode}} {{ext:=txt}} {{role:=all|viewer|editor}}
+
+# Définir l’app par défaut pour un schéma d’URL (http/https/mailto, pas de rôle)
+duti -s {{bundle:=com.apple.Safari}} {{scheme:=http|https|mailto}}
+
+# ── Fichier de config duti (~/.duti) ─────────────────────────────────────────
+
+# Appliquer un fichier de règles (une par ligne: "<bundle> <uti|ext|scheme> <role?>")
+# Exemples de lignes valides :
+# com.apple.Preview public.pdf all
+# com.microsoft.VSCode public.plain-text all
+# com.apple.Safari http
+duti "{{conf:=~/.duti}}"
+
+# Ajouter une règle au vol dans ~/.duti puis appliquer
+printf '%s %s %s\n' "{{bundle:=com.apple.Preview}}" "{{uti:=public.pdf}}" "{{role:=all}}" >> ~/.duti && duti ~/.duti
+
+# Vérifier/relire le contenu du fichier de config
+cat "{{conf:=~/.duti}}"
+
+# ── Utilitaires pratiques ────────────────────────────────────────────────────
+
+# Trouver le bundle id d’une app installée (via Spotlight)
+mdfind "kMDItemContentType == 'com.apple.application-bundle' && kMDItemDisplayName == '{{app:=Preview}}'" | head -n1 | xargs -I{} mdls -name kMDItemCFBundleIdentifier -r {}
+
+# Lister rapidement quelques UTIs courants (mémo)
+printf '%s\n' public.plain-text public.unix-executable public.shell-script public.jpeg public.png public.pdf public.html public.json
