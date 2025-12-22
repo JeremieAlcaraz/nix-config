@@ -1,7 +1,6 @@
-{ config, pkgs, ... }:
-
-{
-  # Used for backwards compatibility, please read the changelog before changing.
-  # $ darwin-rebuild changelog
-  system.stateVersion = 5;
+{ pkgs, ... }: {
+  users.users.jeremiealcaraz.home = "/Users/jeremiealcaraz";
+  services.nix-daemon.enable = true;
+  nix.settings.experimental-features = "nix-command flakes";
+  system.stateVersion = 4;
 }
