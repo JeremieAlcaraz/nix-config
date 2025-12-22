@@ -42,6 +42,12 @@ lg() {
   fi
 }
 
+# === TRY INITIALIZATION ===
+# Initialize try with TRY_TOP path (set in .zshenv)
+if command -v try &> /dev/null; then
+  eval "$(try init "${TRY_TOP:-$HOME/src/tries}")"
+fi
+
 # Debug: afficher le temps de chargement
 if [[ -n "$ZSH_DEBUGRC" ]]; then
   zprof

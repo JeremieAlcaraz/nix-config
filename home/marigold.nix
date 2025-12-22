@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, try, ... }:
 
 {
   home.stateVersion = "23.11";
@@ -35,6 +35,9 @@
     # AI coding assistants (depuis nixpkgs-unstable)
     unstable.claude-code
     unstable.codex
+
+    # Try - Fresh directories for every vibe
+    try.packages.${pkgs.system}.default
 
     # ZSH plugins et outils (gérés par Nix au lieu de Homebrew/git)
     zsh-fzf-tab

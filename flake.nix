@@ -21,9 +21,13 @@
       url = "github:lnl7/nix-darwin/nix-darwin-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    try = {
+      url = "github:tobi/try";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, j12z-site, sops-nix, home-manager, darwin, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, j12z-site, sops-nix, home-manager, darwin, try, ... }:
     let
       system = "x86_64-linux";
     in {
@@ -166,6 +170,8 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.users.jeremiealcaraz = import ./home/marigold.nix;
+              # Passer try à Home Manager
+              home-manager.extraSpecialArgs = { inherit try; };
               # Rendre nixpkgs-unstable accessible dans les modules Home Manager
               nixpkgs.overlays = [
                 (final: prev: {

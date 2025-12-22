@@ -32,3 +32,6 @@ export BG2=0xff414550
 
 # === SOPS - Age Key ===
 export SOPS_AGE_KEY_FILE="$XDG_CONFIG_HOME/sops/age/keys.txt"
+
+# === TRY - Fresh directories for every vibe ===
+export TRY_TOP="$HOME/Development/_programmation/tries"
