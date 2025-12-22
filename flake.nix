@@ -160,6 +160,12 @@
           system = "aarch64-darwin";
           modules = [
             ./hosts/marigold/configuration.nix
+            home-manager.darwinModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremiealcaraz = import ./home/marigold.nix;
+            }
           ];
         };
       };

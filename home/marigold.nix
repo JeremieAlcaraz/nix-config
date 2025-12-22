@@ -1,12 +1,21 @@
-{ pkgs, ... }: {
-  # L'utilisateur principal
-  users.users.jeremiealcaraz.home = "/Users/jeremiealcaraz";
+{ config, pkgs, ... }:
 
-  # --- LA SOLUTION AU CONFLIT ---
-  # On désactive la gestion du moteur Nix par nix-darwin 
-  # car Determinate Systems (que nous avons installé) s'en occupe déjà.
-  nix.enable = false;
+{
+  home.stateVersion = "23.11";
+  home.username = "jeremiealcaraz";
+  home.homeDirectory = "/Users/jeremiealcaraz";
 
-  # On garde la version du système pour nix-darwin
-  system.stateVersion = 4;
+  # 1. Installation de cowsay
+  home.packages = [
+    pkgs.cowsay
+  ];
+
+  # 2. Création d'un fichier de test (XDG compliant)
+  # Ce fichier sera créé dans ~/.config/nix-test.txt
+  xdg.enable = true;
+  xdg.configFile."nix-test.txt".text = ''
+    Test de Home Manager pour Marigold.
+    Date : 22 décembre 2025
+    Statut : En cours de déploiement.
+  '';
 }
