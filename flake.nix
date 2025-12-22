@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     j12z-site = {
       url = "github:JeremieAlcaraz/j12zdotcom";
       # Ne pas forcer nixpkgs - laisser j12zdotcom utiliser sa propre version
@@ -22,7 +23,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, j12z-site, sops-nix, home-manager, darwin, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, j12z-site, sops-nix, home-manager, darwin, ... }:
     let
       system = "x86_64-linux";
     in {
@@ -165,6 +166,15 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.users.jeremiealcaraz = import ./home/marigold.nix;
+              # Rendre nixpkgs-unstable accessible dans les modules Home Manager
+              nixpkgs.overlays = [
+                (final: prev: {
+                  unstable = import nixpkgs-unstable {
+                    system = "aarch64-darwin";
+                    config.allowUnfree = true;
+                  };
+                })
+              ];
             }
           ];
         };

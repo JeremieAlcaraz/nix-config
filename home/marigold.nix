@@ -32,9 +32,9 @@
     carapace
     navi
 
-    # AI coding assistants
-    claude-code
-    codex
+    # AI coding assistants (depuis nixpkgs-unstable)
+    unstable.claude-code
+    unstable.codex
 
     # ZSH plugins et outils (gérés par Nix au lieu de Homebrew/git)
     zsh-fzf-tab
