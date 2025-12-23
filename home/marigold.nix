@@ -13,6 +13,7 @@
   home.sessionVariables = {
     CLAUDE_CONFIG_DIR = "${config.home.homeDirectory}/.config/claude";
     CODEX_HOME = "${config.home.homeDirectory}/.config/codex";
+    RIPGREP_CONFIG_PATH = "${config.home.homeDirectory}/.config/ripgrep/config";
   };
 
   # === PACKAGES ===
@@ -32,11 +33,18 @@
     # GitHub CLI
     gh
 
+    # Editor (LazyVim nécessite une version récente)
+    unstable.neovim
+
     # Shell tools (zoxide, atuin, carapace for completions)
     zoxide
     atuin
     carapace
     navi
+    ripgrep
+
+    # Node.js (Copilot.lua requires >= 22)
+    unstable.nodejs_22
 
     # AI coding assistants (depuis nixpkgs-unstable)
     unstable.claude-code
@@ -110,6 +118,9 @@
     # GitHub CLI configuration
     "gh".source = ../modules/dotfiles/gh;
 
+    # Neovim configuration
+    "nvim".source = ../modules/dotfiles/nvim;
+
     # Nushell configuration (XDG-compliant by default)
     "nushell/env.nu".source = ../modules/dotfiles/nushell/env.marigold.nu;
     "nushell/config.nu".source = ../modules/dotfiles/nushell/config.marigold.nu;
@@ -123,6 +134,12 @@
     "claude/settings.json".source = ../modules/dotfiles/claude/settings.json;
 
     # Codex configuration (XDG-compliant via CODEX_HOME)
-    "codex/config.toml".source = ../modules/dotfiles/codex/config.toml;
+    "codex/config.toml" = {
+      source = ../modules/dotfiles/codex/config.toml;
+      force = true;
+    };
+
+    # Ripgrep configuration
+    "ripgrep".source = ../modules/dotfiles/ripgrep;
   };
 }

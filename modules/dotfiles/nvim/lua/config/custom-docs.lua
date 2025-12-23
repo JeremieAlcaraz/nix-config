@@ -1,0 +1,214 @@
+-- -- ~/.config/nvim/lua/config/custom-docs.lua
+--
+-- local M = {}
+--
+-- -- Base de données de documentation personnalisée
+-- M.custom_docs = {
+--   css = {
+--     ["@plugin"] = {
+--       title = "Daisy UI Plugin Declaration",
+--       content = [[
+-- @plugin directive - Daisy UI Configuration
+--
+-- USAGE:
+--   @plugin "daisyui/plugin"
+--   @plugin "daisyui" { config: { themes: ["light", "dark"] } }
+--
+-- DESCRIPTION:
+--   La directive @plugin permet d'inclure des plugins dans votre configuration CSS.
+--   Pour Daisy UI, elle charge les composants et utilitaires CSS du framework.
+--
+-- EXEMPLES:
+--   /* Basique */
+--   @plugin "daisyui";
+--
+--   /* Avec configuration */
+--   @plugin "daisyui" {
+--     config: {
+--       themes: ["light", "dark", "cupcake"],
+--       darkTheme: "dark",
+--       base: true,
+--       styled: true,
+--       utils: true,
+--     }
+--   }
+--
+-- RÉFÉRENCE:
+--   - Documentation: https://daisyui.com/docs/install/
+--   - Thèmes: https://daisyui.com/docs/themes/
+--   - Configuration: https://daisyui.com/docs/config/
+--       ]]
+--     },
+--     ["@apply"] = {
+--       title = "Tailwind CSS Apply Directive",
+--       content = [[
+-- @apply directive - Tailwind CSS
+--
+-- USAGE:
+--   @apply class-name class-name-2
+--
+-- DESCRIPTION:
+--   Applique des classes utilitaires Tailwind CSS à un sélecteur.
+--
+-- EXEMPLES:
+--   .btn-primary {
+--     @apply bg-blue-500 text-white px-4 py-2 rounded;
+--   }
+--       ]]
+--     }
+--   },
+--   javascript = {
+--     ["console.log"] = {
+--       title = "Console Log - JavaScript",
+--       content = [[
+-- console.log() - JavaScript Debug Method
+--
+-- USAGE:
+--   console.log(value1, value2, ..., valueN)
+--
+-- DESCRIPTION:
+--   Affiche des messages dans la console du navigateur ou du terminal.
+--
+-- EXEMPLES:
+--   console.log("Hello World");
+--   console.log("User:", user, "Age:", age);
+--       ]]
+--     }
+--   }
+-- }
+--
+-- -- Fonction pour obtenir la documentation personnalisée
+-- function M.get_custom_doc(filetype, word)
+--   local docs = M.custom_docs[filetype]
+--   if docs and docs[word] then
+--     return docs[word]
+--   end
+--   return nil
+-- end
+--
+-- -- Fonction pour afficher la documentation dans une fenêtre flottante
+-- function M.show_custom_doc(doc_info)
+--   local buf = vim.api.nvim_create_buf(false, true)
+--
+--   -- Préparer le contenu
+--   local lines = {}
+--   table.insert(lines, "# " .. doc_info.title)
+--   table.insert(lines, "")
+--
+--   -- Séparer le contenu en lignes
+--   for line in doc_info.content:gmatch("[^\r\n]+") do
+--     table.insert(lines, line)
+--   end
+--
+--   -- Définir le contenu du buffer
+--   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+--   vim.api.nvim_buf_set_option(buf, "modifiable", false)
+--   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
+--
+--   -- Calculer la taille de la fenêtre
+--   local width = math.min(80, vim.o.columns - 4)
+--   local height = math.min(#lines + 2, math.floor(vim.o.lines * 0.4))
+--
+--   -- Créer la fenêtre flottante
+--   local win = vim.api.nvim_open_win(buf, false, {
+--     relative = "cursor",
+--     width = width,
+--     height = height,
+--     row = 1,
+--     col = 0,
+--     border = "rounded",
+--     style = "minimal",
+--   })
+--
+--   -- Fermer avec Escape ou q
+--   vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", "<cmd>close<CR>", { noremap = true, silent = true })
+--   vim.api.nvim_buf_set_keymap(buf, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
+--
+--   return win
+-- end
+--
+-- -- Fonction pour capturer le mot complet avec les caractères spéciaux
+-- local function get_full_word()
+--   local line = vim.fn.getline('.')
+--   local col = vim.fn.col('.')
+--
+--   -- Caractères considérés comme faisant partie du mot pour CSS
+--   local word_chars = '[%w@#.-]'
+--
+--   -- Trouver le début du mot
+--   local start_col = col
+--   while start_col > 1 and string.sub(line, start_col - 1, start_col - 1):match(word_chars) do
+--     start_col = start_col - 1
+--   end
+--
+--   -- Trouver la fin du mot
+--   local end_col = col
+--   while end_col <= #line and string.sub(line, end_col, end_col):match(word_chars) do
+--     end_col = end_col + 1
+--   end
+--
+--   -- Extraire le mot
+--   local word = string.sub(line, start_col, end_col - 1)
+--   return word
+-- end
+--
+-- -- Fonction principale pour gérer K (version améliorée)
+-- function M.show_documentation()
+--   local filetype = vim.bo.filetype
+--   local word = get_full_word()  -- Utilise la fonction améliorée
+--
+--   -- Debug temporaire (vous pouvez supprimer ces lignes plus tard)
+--   print("Filetype:", filetype)
+--   print("Mot capturé:", word)
+--
+--   -- Vérifier d'abord la documentation personnalisée
+--   local custom_doc = M.get_custom_doc(filetype, word)
+--   if custom_doc then
+--     print("✓ Documentation trouvée pour:", word)
+--     M.show_custom_doc(custom_doc)
+--     return
+--   end
+--
+--   print("✗ Pas de documentation personnalisée pour:", word)
+--
+--   -- Si pas de doc personnalisée, utiliser le comportement par défaut
+--   local clients = vim.lsp.get_active_clients()
+--   if #clients > 0 then
+--     vim.lsp.buf.hover()
+--   else
+--     -- Fallback vers keywordprg ou man
+--     local keywordprg = vim.bo.keywordprg
+--     if keywordprg ~= "" then
+--       vim.cmd("normal! K")
+--     else
+--       vim.cmd("help " .. word)
+--     end
+--   end
+-- end
+--
+-- -- Ajouter une nouvelle entrée de documentation
+-- function M.add_custom_doc(filetype, keyword, title, content)
+--   if not M.custom_docs[filetype] then
+--     M.custom_docs[filetype] = {}
+--   end
+--
+--   M.custom_docs[filetype][keyword] = {
+--     title = title,
+--     content = content
+--   }
+-- end
+--
+-- -- Commande pour recharger la configuration
+-- function M.reload_docs()
+--   package.loaded['config.custom-docs'] = nil
+--   require('config.custom-docs')
+--   print("Documentation personnalisée rechargée")
+-- end
+--
+-- -- Fonction pour exposer get_full_word (pour debug)
+-- function M.get_full_word()
+--   return get_full_word()
+-- end
+--
+-- return M
+
