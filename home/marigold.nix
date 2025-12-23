@@ -29,6 +29,9 @@
     # Terminal emulator
     wezterm
 
+    # GitHub CLI
+    gh
+
     # Shell tools (zoxide, atuin, carapace for completions)
     zoxide
     atuin
@@ -103,6 +106,9 @@
 
     # WezTerm terminal configuration
     "wezterm".source = ../modules/dotfiles/wezterm;
+
+    # GitHub CLI configuration
+    "gh".source = ../modules/dotfiles/gh;
 
     # Nushell configuration (XDG-compliant by default)
     "nushell/env.nu".source = ../modules/dotfiles/nushell/env.marigold.nu;
