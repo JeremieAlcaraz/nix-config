@@ -1,11 +1,11 @@
--- ~/.hammerspoon/init.lua
+-- Hammerspoon config (XDG-aware)
 hs.loadSpoon("SpoonInstall")
 local Install = spoon.SpoonInstall
 
 -- 1) déclare le repo local
 Install.repos["local"] = {
 	desc = "Mes Spoons perso",
-	url = os.getenv("HOME") .. "/.hammerspoon/Spoons",
+	url = hs.configdir .. "/Spoons",
 }
 
 -- 2) ReloadConfiguration
@@ -160,7 +160,6 @@ end
 -- Raccourcis (garde ceux qui marchent chez toi)
 hs.hotkey.bind({"ctrl","cmd"}, "P", function() focusOrLaunch(ZEN_PRO) end) -- Pro
 hs.hotkey.bind({"ctrl","cmd"}, "D", function() focusOrLaunch(ZEN_PER) end) -- Perso
-
 
 
 

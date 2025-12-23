@@ -15,6 +15,7 @@
   # Programmes communs aux deux hosts
   home.packages = with pkgs; [
     htop
+    direnv
     tree
   ];
 

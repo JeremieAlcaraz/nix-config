@@ -20,6 +20,7 @@ in
   home.sessionVariables = {
     CLAUDE_CONFIG_DIR = "${config.home.homeDirectory}/.config/claude";
     CODEX_HOME = "${config.home.homeDirectory}/.config/codex";
+    GLOW_CONFIG_PATH = "${config.xdg.configHome}/glow/glow.yml";
     RIPGREP_CONFIG_PATH = "${config.home.homeDirectory}/.config/ripgrep/config";
     SSH_AUTH_SOCK = "${config.home.homeDirectory}/.1password/agent.sock";
     SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/nixos-shared-key.txt";
@@ -58,6 +59,8 @@ in
     zoxide
     atuin
     carapace
+    direnv
+    glow
     navi
     ripgrep
     sops
@@ -110,7 +113,6 @@ in
     ".ssh/config".source = ../modules/dotfiles/ssh/config;
     ".ssh/authorized_keys".source = ../modules/dotfiles/ssh/public/authorized_keys;
     ".ssh/public".source = ../modules/dotfiles/ssh/public;
-    ".hammerspoon".source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/hammerspoon";
   };
 
   # === DOTFILES ZSH ===
@@ -161,10 +163,16 @@ in
     # GitHub CLI configuration
     "gh".source = ../modules/dotfiles/gh;
 
+    # Glow configuration (XDG)
+    "glow/glow.yml" = {
+      source = ../modules/dotfiles/glow/glow.yml;
+      force = true;
+    };
+
     # Neovim configuration
     "nvim".source = ../modules/dotfiles/nvim;
 
-    # Hammerspoon configuration (XDG + symlink via ~/.hammerspoon)
+    # Hammerspoon configuration (XDG)
     "hammerspoon".source = ../modules/dotfiles/hammerspoon;
 
     # Nushell configuration (XDG-compliant by default)
