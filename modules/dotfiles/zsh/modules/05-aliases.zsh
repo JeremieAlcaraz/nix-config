@@ -12,6 +12,7 @@ if command -v eza &> /dev/null; then
     alias ll="eza -la --icons --group-directories-first --ignore-glob='.DS_Store'"
     alias lt="eza --tree --level=2 --long --icons --git"
     alias ltd="eza --tree --level=2 --long --icons --git -a --git-ignore --ignore-glob='.DS_Store'"
+    alias tree="eza --tree --icons --git"
 else
     alias ll="ls -la"
 fi
@@ -65,3 +66,4 @@ alias d="lazydocker"
 #                      NIX ALIASES                     #
 ########################################################
 alias nd="nix develop"
+alias drs="darwin-rebuild switch --flake .#marigold"

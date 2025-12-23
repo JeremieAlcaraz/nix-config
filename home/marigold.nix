@@ -46,6 +46,12 @@
     # Node.js (Copilot.lua requires >= 22)
     unstable.nodejs_22
 
+    # Modern ls replacement
+    eza
+
+    # Tree view
+    tree
+
     # AI coding assistants (depuis nixpkgs-unstable)
     unstable.claude-code
     unstable.codex
@@ -108,6 +114,9 @@
 
     # Scripts personnels
     "zsh/scripts".source = ../modules/dotfiles/zsh/scripts;
+
+    # Plugins ZSH
+    "zsh/plugins".source = ../modules/dotfiles/zsh/plugins;
 
     # Starship prompt configuration
     "starship.toml".source = ../modules/dotfiles/starship/starship.toml;
