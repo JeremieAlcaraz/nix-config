@@ -3,7 +3,7 @@
 
   homebrew = {
     enable = true;
-    casks = [ "1password" ];
+    casks = [ "1password" "hammerspoon" ];
   };
 
   users.users.jeremiealcaraz.home = "/Users/jeremiealcaraz";

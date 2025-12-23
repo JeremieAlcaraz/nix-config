@@ -1,5 +1,12 @@
 { config, pkgs, try, ... }:
 
+let
+  bunInstall = "${config.xdg.dataHome}/bun";
+  bunCache = "${config.xdg.cacheHome}/bun";
+  pnpmHome = "${config.xdg.dataHome}/pnpm";
+  pnpmStore = "${config.xdg.dataHome}/pnpm/store";
+in
+
 {
   home.stateVersion = "23.11";
   home.username = "jeremiealcaraz";
@@ -16,7 +23,16 @@
     RIPGREP_CONFIG_PATH = "${config.home.homeDirectory}/.config/ripgrep/config";
     SSH_AUTH_SOCK = "${config.home.homeDirectory}/.1password/agent.sock";
     SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/nixos-shared-key.txt";
+    BUN_INSTALL = bunInstall;
+    BUN_INSTALL_CACHE_DIR = bunCache;
+    PNPM_HOME = pnpmHome;
+    PNPM_STORE_DIR = pnpmStore;
   };
+
+  home.sessionPath = [
+    "${bunInstall}/bin"
+    pnpmHome
+  ];
 
   # === PACKAGES ===
   home.packages = with pkgs; [
@@ -45,6 +61,7 @@
     navi
     ripgrep
     sops
+    pnpm
 
     # Node.js (Copilot.lua requires >= 22)
     unstable.nodejs_22
@@ -57,6 +74,9 @@
 
     # 1Password CLI (op)
     _1password-cli
+
+    # Bun
+    bun
 
     # AI coding assistants (depuis nixpkgs-unstable)
     unstable.claude-code
@@ -90,6 +110,7 @@
     ".ssh/config".source = ../modules/dotfiles/ssh/config;
     ".ssh/authorized_keys".source = ../modules/dotfiles/ssh/public/authorized_keys;
     ".ssh/public".source = ../modules/dotfiles/ssh/public;
+    ".hammerspoon".source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/hammerspoon";
   };
 
   # === DOTFILES ZSH ===
@@ -142,6 +163,9 @@
 
     # Neovim configuration
     "nvim".source = ../modules/dotfiles/nvim;
+
+    # Hammerspoon configuration (XDG + symlink via ~/.hammerspoon)
+    "hammerspoon".source = ../modules/dotfiles/hammerspoon;
 
     # Nushell configuration (XDG-compliant by default)
     "nushell/env.nu".source = ../modules/dotfiles/nushell/env.marigold.nu;
