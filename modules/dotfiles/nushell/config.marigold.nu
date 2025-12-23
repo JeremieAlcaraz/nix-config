@@ -2,6 +2,23 @@
 #
 # version = "0.95.0"
 
+# Define carapace completer function
+let carapace_completer = {|spans|
+  # if the current command is an alias, get it's expansion
+  let expanded_alias = (scope aliases | where name == $spans.0 | get -i 0 | get -i expansion)
+
+  # overwrite
+  let spans = (if $expanded_alias != null  {
+    # put the first word of the expanded alias first in the span
+    $spans | skip 1 | prepend ($expanded_alias | split row " " | take 1)
+  } else {
+    $spans
+  })
+
+  carapace $spans.0 nushell ...$spans
+  | from json
+}
+
 # For more information on defining custom themes, see
 # https://www.nushell.sh/book/coloring_and_theming.html
 # And here is the theme collection
@@ -202,7 +219,7 @@ $env.config = {
         external: {
             enable: true # set to false to prevent nushell looking into $env.PATH to find more suggestions, `false` recommended for WSL users as this look up may be very slow
             max_results: 100 # setting it lower can improve completion performance at the cost of omitting some options
-            completer: null # check 'carapace_completer' above as an example
+            completer: $carapace_completer # Use carapace for external completions
         }
         use_ls_colors: true # set this to true to enable file/path/directory completions using LS_COLORS
     }
@@ -932,25 +949,10 @@ alias kc = kubectx
 alias kns = kubens
 alias ke = kubectl exec -it
 
-# Force override STARSHIP_SHELL (to override inherited value from parent shell)
-$env.STARSHIP_SHELL = "nu"
-
 # Load initialization files from cache
-if ("~/.zoxide.nu" | path exists) {
-    source ~/.zoxide.nu
-}
-
-if ("~/.cache/carapace/init.nu" | path exists) {
-    source ~/.cache/carapace/init.nu
-}
-
-if ("~/.local/share/atuin/init.nu" | path exists) {
-    source ~/.local/share/atuin/init.nu
-}
-
-if ("~/.cache/starship/init.nu" | path exists) {
-    source ~/.cache/starship/init.nu
-}
+try { source ~/.zoxide.nu }
+try { source ~/.local/share/atuin/init.nu }
+try { source ~/.cache/starship/init.nu }
 
 # Ruby gem configuration
 let ruby_ver = "3.4.0"
@@ -975,26 +977,26 @@ def --env _clear_shell_markers [] {
 def n [cmd?: string, ...rest: string] {
   _clear_shell_markers
   if ($cmd | is-empty) {
-    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION nu
+    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION -u STARSHIP_SHELL nu
   } else {
-    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION nu -c $cmd ...$rest
+    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION -u STARSHIP_SHELL nu -c $cmd ...$rest
   }
 }
 
 def f [cmd?: string, ...rest: string] {
   _clear_shell_markers
   if ($cmd | is-empty) {
-    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION fish
+    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION -u STARSHIP_SHELL fish
   } else {
-    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION fish -c $cmd ...$rest
+    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION -u STARSHIP_SHELL fish -c $cmd ...$rest
   }
 }
 
 def zz [cmd?: string, ...rest: string] {
   _clear_shell_markers
   if ($cmd | is-empty) {
-    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION zsh
+    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION -u STARSHIP_SHELL zsh
   } else {
-    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION zsh -c $cmd ...$rest
+    exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION -u STARSHIP_SHELL zsh -c $cmd ...$rest
   }
 }

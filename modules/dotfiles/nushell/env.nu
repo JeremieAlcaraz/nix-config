@@ -108,11 +108,32 @@ path add "/Users/jeremiealcaraz/.local/bin"
 hide-env --ignore-errors ZSH_VERSION
 hide-env --ignore-errors FISH_VERSION
 hide-env --ignore-errors BASH_VERSION
+hide-env --ignore-errors STARSHIP_SHELL
+
+# Force STARSHIP_SHELL to nu (override inherited value from parent shell)
+$env.STARSHIP_SHELL = "nu"
+
 $env.STARSHIP_CONFIG = "/Users/jeremiealcaraz/.config/starship.toml"
 
-mkdir ~/.cache/starship
-starship init nu | save -f ~/.cache/starship/init.nu
-zoxide init nushell | save -f ~/.zoxide.nu
+# Only generate starship init once (not on every shell startup)
+const cache_root = ($nu.home-path | path join ".cache")
+const starship_cache_dir = ($cache_root | path join "starship")
+const starship_cache = ($starship_cache_dir | path join "init.nu")
+if (which starship | is-not-empty) {
+    if not ($starship_cache | path exists) {
+        if not ($cache_root | path exists) { mkdir $cache_root }
+        if not ($starship_cache_dir | path exists) { mkdir $starship_cache_dir }
+        with-env {STARSHIP_SHELL: "nu"} {
+            starship init nu | save -f $starship_cache
+        }
+    }
+}
+
+# Only generate zoxide init once
+const zoxide_cache = ($nu.home-path | path join ".zoxide.nu")
+if not ($zoxide_cache | path exists) {
+    zoxide init nushell | save -f $zoxide_cache
+}
 
 $env.NIX_CONF_DIR = "/Users/jeremiealcaraz/.config/nix"
 $env.CARAPACE_BRIDGES = 'zsh,fish,bash,inshellisense' # optional

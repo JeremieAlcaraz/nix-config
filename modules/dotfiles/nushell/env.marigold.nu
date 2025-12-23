@@ -34,6 +34,7 @@ def create_right_prompt [] {
 }
 
 # Use nushell functions to define your right and left prompt
+# NOTE: These are default prompts, overridden by Starship in config.nu
 $env.PROMPT_COMMAND = {|| create_left_prompt }
 $env.PROMPT_COMMAND_RIGHT = {|| create_right_prompt }
 
@@ -76,22 +77,43 @@ path add ($env.HOME | path join ".local" "bin")
 hide-env --ignore-errors ZSH_VERSION
 hide-env --ignore-errors FISH_VERSION
 hide-env --ignore-errors BASH_VERSION
+hide-env --ignore-errors STARSHIP_SHELL
+
+# Force STARSHIP_SHELL to nu (override inherited value from parent shell)
+$env.STARSHIP_SHELL = "nu"
 
 # Starship - use XDG config location
 $env.STARSHIP_CONFIG = ($env.HOME | path join ".config" "starship.toml")
 
 # Initialize tools (cache in ~/.cache for performance)
-mkdir ~/.cache/starship
-starship init nu | save -f ~/.cache/starship/init.nu
+# Only generate starship init once (not on every shell startup)
+const cache_root = ($nu.home-path | path join ".cache")
+const starship_cache_dir = ($cache_root | path join "starship")
+const starship_cache = ($starship_cache_dir | path join "init.nu")
+if (which starship | is-not-empty) {
+    if not ($starship_cache | path exists) {
+        if not ($cache_root | path exists) { mkdir $cache_root }
+        if not ($starship_cache_dir | path exists) { mkdir $starship_cache_dir }
+        with-env {STARSHIP_SHELL: "nu"} {
+            starship init nu | save -f $starship_cache
+        }
+    }
+}
 
 # Zoxide init (if available)
 if (which zoxide | is-not-empty) {
-    zoxide init nushell | save -f ~/.zoxide.nu
+    const zoxide_cache = ($nu.home-path | path join ".zoxide.nu")
+    if not ($zoxide_cache | path exists) {
+        zoxide init nushell | save -f $zoxide_cache
+    }
 }
 
 # Carapace completions (if available)
 if (which carapace | is-not-empty) {
     $env.CARAPACE_BRIDGES = 'zsh,fish,bash,inshellisense'
-    mkdir ~/.cache/carapace
-    carapace _carapace nushell | save --force ~/.cache/carapace/init.nu
+    const carapace_cache = ($nu.home-path | path join ".cache" "carapace" "init.nu")
+    if not ($carapace_cache | path exists) {
+        mkdir ($nu.home-path | path join ".cache" "carapace")
+        carapace _carapace nushell | save --force $carapace_cache
+    }
 }

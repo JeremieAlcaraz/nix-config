@@ -939,10 +939,10 @@ source ~/.config/nushell/env.nu
 # Force override STARSHIP_SHELL after env.nu (to override inherited value)
 $env.STARSHIP_SHELL = "nu"
 
-source ~/.zoxide.nu
-source ~/.cache/carapace/init.nu
-source ~/.local/share/atuin/init.nu
-use ~/.cache/starship/init.nu
+try { source ~/.zoxide.nu }
+try { source ~/.cache/carapace/init.nu }
+try { source ~/.local/share/atuin/init.nu }
+try { source ~/.cache/starship/init.nu }
 
 let ruby_ver = "3.4.0"
 let gem_home = ($nu.home-path | path join ".gem" "ruby" $ruby_ver)

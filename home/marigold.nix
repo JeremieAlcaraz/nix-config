@@ -52,6 +52,11 @@
   home.file.".zshenv".text = ''
     # Point ZSH to XDG config directory
     export ZDOTDIR="$HOME/.config/zsh"
+
+    # Load the real .zshenv from ZDOTDIR (zsh does not re-read it automatically)
+    if [[ -r "$ZDOTDIR/.zshenv" ]]; then
+      source "$ZDOTDIR/.zshenv"
+    fi
   '';
 
   # === DOTFILES ZSH ===
