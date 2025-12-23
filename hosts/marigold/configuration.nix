@@ -1,4 +1,11 @@
 { pkgs, ... }: {
+  nixpkgs.config.allowUnfree = true;
+
+  homebrew = {
+    enable = true;
+    casks = [ "1password" ];
+  };
+
   users.users.jeremiealcaraz.home = "/Users/jeremiealcaraz";
 
   # Obligatoire pour ne pas casser l'install Determinate
