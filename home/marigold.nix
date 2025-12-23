@@ -26,6 +26,9 @@
     # Shell prompt
     starship
 
+    # Terminal emulator
+    wezterm
+
     # Shell tools (zoxide, atuin, carapace for completions)
     zoxide
     atuin
@@ -97,6 +100,9 @@
 
     # Starship prompt configuration
     "starship.toml".source = ../modules/dotfiles/starship/starship.toml;
+
+    # WezTerm terminal configuration
+    "wezterm".source = ../modules/dotfiles/wezterm;
 
     # Nushell configuration (XDG-compliant by default)
     "nushell/env.nu".source = ../modules/dotfiles/nushell/env.marigold.nu;
