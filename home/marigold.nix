@@ -14,6 +14,8 @@
     CLAUDE_CONFIG_DIR = "${config.home.homeDirectory}/.config/claude";
     CODEX_HOME = "${config.home.homeDirectory}/.config/codex";
     RIPGREP_CONFIG_PATH = "${config.home.homeDirectory}/.config/ripgrep/config";
+    SSH_AUTH_SOCK = "${config.home.homeDirectory}/.1password/agent.sock";
+    SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/nixos-shared-key.txt";
   };
 
   # === PACKAGES ===
@@ -42,6 +44,7 @@
     carapace
     navi
     ripgrep
+    sops
 
     # Node.js (Copilot.lua requires >= 22)
     unstable.nodejs_22
@@ -51,6 +54,9 @@
 
     # Tree view
     tree
+
+    # 1Password CLI (op)
+    _1password-cli
 
     # AI coding assistants (depuis nixpkgs-unstable)
     unstable.claude-code
@@ -69,15 +75,22 @@
   # === ZSH CONFIGURATION ===
   # Solution propre : un seul .zshenv minimal qui définit ZDOTDIR
   # Tout le reste de la config ZSH est dans ~/.config/zsh (XDG-compliant)
-  home.file.".zshenv".text = ''
-    # Point ZSH to XDG config directory
-    export ZDOTDIR="$HOME/.config/zsh"
+  home.file = {
+    ".zshenv".text = ''
+      # Point ZSH to XDG config directory
+      export ZDOTDIR="$HOME/.config/zsh"
 
-    # Load the real .zshenv from ZDOTDIR (zsh does not re-read it automatically)
-    if [[ -r "$ZDOTDIR/.zshenv" ]]; then
-      source "$ZDOTDIR/.zshenv"
-    fi
-  '';
+      # Load the real .zshenv from ZDOTDIR (zsh does not re-read it automatically)
+      if [[ -r "$ZDOTDIR/.zshenv" ]]; then
+        source "$ZDOTDIR/.zshenv"
+      fi
+    '';
+
+    # SSH configuration
+    ".ssh/config".source = ../modules/dotfiles/ssh/config;
+    ".ssh/authorized_keys".source = ../modules/dotfiles/ssh/public/authorized_keys;
+    ".ssh/public".source = ../modules/dotfiles/ssh/public;
+  };
 
   # === DOTFILES ZSH ===
   # Toute la vraie config ZSH est ici (XDG-compliant)
@@ -150,5 +163,21 @@
 
     # Ripgrep configuration
     "ripgrep".source = ../modules/dotfiles/ripgrep;
+  };
+
+  # === SOPS (secrets) ===
+  sops = {
+    defaultSopsFile = ../secrets/marigold.yaml;
+    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/nixos-shared-key.txt";
+    secrets = {
+      ssh_id_ed25519 = {
+        path = "${config.home.homeDirectory}/.ssh/id_ed25519";
+        mode = "0600";
+      };
+      ssh_id_rsa = {
+        path = "${config.home.homeDirectory}/.ssh/id_rsa";
+        mode = "0600";
+      };
+    };
   };
 }

@@ -31,7 +31,13 @@ export BG1=0xff363944
 export BG2=0xff414550
 
 # === SOPS - Age Key ===
-export SOPS_AGE_KEY_FILE="$XDG_CONFIG_HOME/sops/age/keys.txt"
+if [[ -z "$SOPS_AGE_KEY_FILE" ]]; then
+  if [[ -f "$XDG_CONFIG_HOME/sops/age/nixos-shared-key.txt" ]]; then
+    export SOPS_AGE_KEY_FILE="$XDG_CONFIG_HOME/sops/age/nixos-shared-key.txt"
+  elif [[ -f "$XDG_CONFIG_HOME/sops/age/keys.txt" ]]; then
+    export SOPS_AGE_KEY_FILE="$XDG_CONFIG_HOME/sops/age/keys.txt"
+  fi
+fi
 
 # === TRY - Fresh directories for every vibe ===
 export TRY_TOP="$HOME/Development/_programmation/tries"

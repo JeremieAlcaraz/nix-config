@@ -169,6 +169,9 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.sharedModules = [
+                sops-nix.homeManagerModules.sops
+              ];
               home-manager.users.jeremiealcaraz = import ./home/marigold.nix;
               # Passer try à Home Manager
               home-manager.extraSpecialArgs = { inherit try; };

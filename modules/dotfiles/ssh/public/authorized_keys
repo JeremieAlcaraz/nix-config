@@ -1,0 +1,14 @@
+
+# ───────── Clés d’accès automations / conteneurs ─────────
+# n8n (Docker, MacBook Air) – générée le 2025‑07‑30 – accès alias/ssh
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDAFOnaRzfQ4u5UuWkvBlpHMxyrBAj/cSYlbhOz6tm0ZKWoo4PUhYszHy+LWQ/H49Y1kYLN/AtzwxaE2PhlTVjg4f+AWi+09lRm6F+w0tcV0vVtPYu+vYqGibugk0kUSq7XS5s+EkLITdPpNpJ6PU9+anvGwhWhMxQbPIUFB2YX5BdwfV3Z2st0NECNT3Xt3GL8KzBGeTdXyLmI9uM+sz2VJkJ6RXff4wHR2BuVk1fg7mCKuuPJt/daNBjSnbCQe5QSDbHimqyS6pWpGAUmPDaXcpgP/QjqQ/kA8eWDtTXJRzMHWV05yQBAu6vz+fF7QKFrvKugY5TwgvoN/AATDVdtztLqp5sAYv0X/F8hDPssjiEgWkSl7HPfwbwgqPpXWil9nl2jAtzvd2zSCxAqxdp0MAEJmSTLldeBQLsLgzwZppcR6EM8q3CrRrOeIVjFlXBaXPV/NSlMg/xm/607hKOiD5hjoI9JNH8u8NNIP6C5E6H1eKvhuv+/SofzuMHBhRffayvYVY0gnJHkHCHo5bu3yz8oC61/MMbVo3RoJoKiqiJgLXPCRmTPNOdBKVNbcifVMC23BykjUK3+8euKELX6KO5Hhg1hPMgqisClAoxdEdfZ8KiO1E6CyE4L1wlwwb5b5QANZ/7vMdg74HFQixDJPgzQzem2OZDOC21Qgx2Hxw== n8n-container
+
+
+# whitelily public key - générée le 2025-12-05
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDHQnBj3eH+Hf/9XP9Z3Hj6XZS4H1JUEkaiWDJlP1vDt whitelily@nixos
+
+# n8n on whitelily public key - générée le 2025-12-05
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH66UYUkt0fb7M64fjNIdmuHYBc3yxBVg4ZpVHDvsa5Q n8n@whitelily
+
+# public key from magnolia 
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL/86QE9e0ymSz67B8ShU9V5smHpdLKF+KH8tUaYudxi magnolia-deploy@github

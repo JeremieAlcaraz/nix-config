@@ -1,0 +1,6 @@
+# Private keys (managed via sops)
+id_ed25519
+id_rsa
+# Local host data
+known_hosts
+known_hosts.old

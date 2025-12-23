@@ -1,0 +1,65 @@
+# Added by OrbStack: 'orb' SSH host for Linux machines
+# This only works if it's at the top of ssh_config (before any Host blocks).
+# This won't be added again if you remove it.
+Include ~/.orbstack/ssh/config
+
+Include /Users/jeremiealcaraz/.config/colima/ssh_config
+
+# =========================================================
+# Hosts
+# =========================================================
+
+
+
+
+# --- GitHub perso
+Host gh-perso
+  HostName github.com
+  User git
+  IdentityAgent ~/.1password/agent.sock
+  IdentitiesOnly yes
+
+# --- GitHub pro
+Host gh-pro
+  HostName github.com
+  User git
+  IdentityAgent ~/.1password/agent.sock
+  IdentitiesOnly yes
+
+Host mimosa magnolia whitelily
+    User jeremie
+    ForwardAgent yes
+
+ Host muscari crocus
+    User root
+    ForwardAgent yes
+
+   
+# =========================================================
+# Defaults (apply to all hosts)
+# =========================================================
+Host *
+    AddKeysToAgent yes
+    UseKeychain yes
+    IdentitiesOnly no
+    PreferredAuthentications publickey
+    # Pas d'IdentityAgent ici -> on utilise SSH_AUTH_SOCK (KeePass/WezTerm) par défaut
+    # Pas d'IdentityFile global -> évite de forcer une clé fichier
+
+# =========================================================
+# 1Password (macOS) via symlink ~/.1password/agent.sock
+# S'active uniquement si le socket existe ET que l'app 1Password tourne
+# =========================================================
+Match exec "test -S ~/.1password/agent.sock && pgrep -qx 1Password"
+    IdentityAgent ~/.1password/agent.sock
+    UseKeychain no
+    AddKeysToAgent no
+
+# =========================================================
+# (Optionnel) Fallback fichier si tu le veux un jour :
+# Dé-commente pour forcer ~/.ssh/id_ed25519 quand aucun agent n'est dispo
+# =========================================================
+# Match host * exec "test ! -S ~/.1password/agent.sock && test -z \"$SSH_AUTH_SOCK\""
+#     IdentitiesOnly yes
+#     IdentityFile ~/.ssh/id_ed25519
+
