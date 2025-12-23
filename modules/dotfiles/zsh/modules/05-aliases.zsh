@@ -67,3 +67,5 @@ alias d="lazydocker"
 ########################################################
 alias nd="nix develop"
 alias drs="darwin-rebuild switch --flake .#marigold"
+alias sops-edit='SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/nixos-shared-key.txt" sops'
+alias sops-view='SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/nixos-shared-key.txt" sops --decrypt'

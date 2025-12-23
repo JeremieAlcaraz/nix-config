@@ -907,6 +907,16 @@ def --env cx [arg] {
     ls -l
 }
 
+def --env sops-edit [...args: string] {
+    let key = ($env.HOME | path join ".config" "sops" "age" "nixos-shared-key.txt")
+    with-env { SOPS_AGE_KEY_FILE: $key } { sops ...$args }
+}
+
+def --env sops-view [...args: string] {
+    let key = ($env.HOME | path join ".config" "sops" "age" "nixos-shared-key.txt")
+    with-env { SOPS_AGE_KEY_FILE: $key } { sops --decrypt ...$args }
+}
+
 alias l = ls --all
 alias c = clear
 alias ll = ls -l
