@@ -7,10 +7,13 @@ local ssh = require("keys.ssh")
 local tools = require("keys.tools")
 local files = require("keys.files") -- NOUVEAU
 local ui = require("keys.ui") -- Assurez-vous que cette ligne existe
+local panes = require("keys.panes")
 
 local M = {}
 
 function M.apply(config)
+	config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 1000 }
+
 	-- ═══════════════════════════════════════════════════════════════════
 	-- Assemblage de tous les raccourcis clavier
 	-- ═══════════════════════════════════════════════════════════════════
@@ -41,8 +44,11 @@ function M.apply(config)
 		table.insert(keys, key)
 	end
 
+	for _, key in ipairs(panes.get_keys()) do
+		table.insert(keys, key)
+	end
+
 	config.keys = keys
 end
 
 return M
-
