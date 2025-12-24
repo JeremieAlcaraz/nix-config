@@ -15,6 +15,10 @@ in
   # === XDG Configuration ===
   xdg.enable = true;
 
+  imports = [
+    ./wezterm.nix
+  ];
+
   # === ENVIRONMENT VARIABLES ===
   # Force XDG compliance for tools that support it via env vars
   home.sessionVariables = {
@@ -45,9 +49,6 @@ in
 
     # Shell prompt
     starship
-
-    # Terminal emulator
-    wezterm
 
     # GitHub CLI
     gh
@@ -156,9 +157,6 @@ in
 
     # Starship prompt configuration
     "starship.toml".source = ../modules/dotfiles/starship/starship.toml;
-
-    # WezTerm terminal configuration
-    "wezterm".source = ../modules/dotfiles/wezterm;
 
     # GitHub CLI configuration
     "gh".source = ../modules/dotfiles/gh;

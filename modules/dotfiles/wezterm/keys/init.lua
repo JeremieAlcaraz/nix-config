@@ -8,6 +8,7 @@ local tools = require("keys.tools")
 local files = require("keys.files") -- NOUVEAU
 local ui = require("keys.ui") -- Assurez-vous que cette ligne existe
 local panes = require("keys.panes")
+local modal = require("keys.modal")
 
 local M = {}
 
@@ -45,6 +46,10 @@ function M.apply(config)
 	end
 
 	for _, key in ipairs(panes.get_keys()) do
+		table.insert(keys, key)
+	end
+
+	for _, key in ipairs(modal.get_keys()) do
 		table.insert(keys, key)
 	end
 

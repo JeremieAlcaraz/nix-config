@@ -11,6 +11,7 @@ config.key_map_preference = "Mapped"
 require('config.environment').apply(config)
 require('config.appearance').apply(config)
 require('config.domains').apply(config)
+require('config.modal').apply(config)
 require('keys').apply(config)
 require('config.startup').apply()
 

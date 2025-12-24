@@ -9,7 +9,9 @@ function M.apply(config)
 	-- ═══════════════════════════════════════════════════════════════════
 	-- Core appearance
 	-- ═══════════════════════════════════════════════════════════════════
-	config.enable_tab_bar = false
+	config.enable_tab_bar = true
+	config.use_fancy_tab_bar = true
+	config.hide_tab_bar_if_only_one_tab = false
 	config.window_decorations = "RESIZE"
 	config.use_ime = false -- Faster startup on macOS
 	config.native_macos_fullscreen_mode = true
@@ -70,4 +72,3 @@ function M.apply(config)
 end
 
 return M
-
