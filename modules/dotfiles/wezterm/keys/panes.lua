@@ -32,12 +32,13 @@ function M.get_keys()
 		{
 			key = "V",
 			mods = "CMD|ALT|CTRL|SHIFT",
-			action = act.SplitVertical({ domain = "CurrentPaneDomain" }),
+			-- WezTerm names splits by the axis of the cut; we bind by divider intuition.
+			action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }),
 		},
 		{
 			key = "H",
 			mods = "CMD|ALT|CTRL|SHIFT",
-			action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }),
+			action = act.SplitVertical({ domain = "CurrentPaneDomain" }),
 		},
 	}
 end
