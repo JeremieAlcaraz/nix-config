@@ -216,6 +216,9 @@ in
     # GitHub CLI configuration
     "gh".source = ../modules/dotfiles/gh;
 
+    # Git ignore global (XDG)
+    "git/ignore".source = ../modules/dotfiles/git/ignore;
+
     # Glow configuration (XDG)
     "glow/glow.yml" = {
       source = ../modules/dotfiles/glow/glow.yml;
