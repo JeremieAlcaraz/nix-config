@@ -1,4 +1,4 @@
-{ config, pkgs, try, ... }:
+{ config, lib, pkgs, try, ... }:
 
 let
   bunInstall = "${config.xdg.dataHome}/bun";
@@ -89,6 +89,8 @@ in
   };
 
   home.sessionPath = [
+    "/opt/homebrew/bin"
+    "/opt/homebrew/sbin"
     "${bunInstall}/bin"
     pnpmHome
   ];
@@ -115,6 +117,7 @@ in
     zoxide
     atuin
     carapace
+    tabiew
     direnv
     glow
     navi
@@ -281,5 +284,18 @@ in
         mode = "0600";
       };
     };
+  };
+
+  programs.yazi.yaziPlugins.runtimeDeps = lib.mkAfter [
+    pkgs.tabiew
+  ];
+
+  programs.yazi.settings = {
+    opener.csv = [
+      { run = "${pkgs.tabiew}/bin/tw \"$@\""; block = true; desc = "Tabiew"; }
+    ];
+    open.prepend_rules = [
+      { name = "*.csv"; use = [ "csv" ]; }
+    ];
   };
 }

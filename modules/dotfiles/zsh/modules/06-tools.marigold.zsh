@@ -38,6 +38,12 @@ if command -v navi &> /dev/null; then
     alias navi='navi --path "$NAVI_PATH"'
 fi
 
+# === TABIEW - CSV viewer ===
+if command -v tw &> /dev/null; then
+    alias tabview="tw"
+    alias tabiew="tw"
+fi
+
 # === BAT - Cat amélioré ===
 # Géré par Home Manager
 if command -v bat &> /dev/null; then

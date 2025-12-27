@@ -22,9 +22,7 @@ in
     };
   };
 
-  programs.yazi.settings = {
-    yazi = yaziConfig;
-    keymap = keymapConfig;
-    theme = themeConfig;
-  };
+  programs.yazi.settings = yaziConfig;
+  programs.yazi.keymap = keymapConfig;
+  programs.yazi.theme = themeConfig;
 }
