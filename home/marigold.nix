@@ -17,6 +17,7 @@ in
 
   imports = [
     ./wezterm.nix
+    ./yazi.nix
   ];
 
   # === GIT CONFIGURATION ===
