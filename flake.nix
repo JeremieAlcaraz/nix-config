@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nix-yazi-plugins = {
+      url = "github:lordkekz/nix-yazi-plugins";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
     j12z-site = {
       url = "github:JeremieAlcaraz/j12zdotcom";
       # Ne pas forcer nixpkgs - laisser j12zdotcom utiliser sa propre version
@@ -27,7 +31,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, j12z-site, sops-nix, home-manager, darwin, try, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, nix-yazi-plugins, j12z-site, sops-nix, home-manager, darwin, try, ... }:
     let
       system = "x86_64-linux";
     in {
@@ -169,12 +173,16 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "backup";
               home-manager.sharedModules = [
                 sops-nix.homeManagerModules.sops
+                (nix-yazi-plugins.legacyPackages.aarch64-darwin.homeManagerModules.default)
               ];
               home-manager.users.jeremiealcaraz = import ./home/marigold.nix;
               # Passer try à Home Manager
-              home-manager.extraSpecialArgs = { inherit try; };
+              home-manager.extraSpecialArgs = {
+                inherit try nix-yazi-plugins;
+              };
               # Rendre nixpkgs-unstable accessible dans les modules Home Manager
               nixpkgs.overlays = [
                 (final: prev: {
