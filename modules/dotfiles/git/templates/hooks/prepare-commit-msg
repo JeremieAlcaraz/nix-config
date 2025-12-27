@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# ============================================================================
+# Prepare-commit-msg hook - Template de message avec info de branche
+# ============================================================================
+
+commit_msg_file=$1
+commit_source=$2
+
+# Ne rien faire pour les merges, ammends, ou messages existants
+if [ "$commit_source" = "merge" ] || [ "$commit_source" = "squash" ] || [ "$commit_source" = "message" ]; then
+    exit 0
+fi
+
+# Récupérer le nom de la branche
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+# Si on est sur main/master, ne rien faire
+if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+    exit 0
+fi
+
+# Si le fichier de commit est déjà rempli (non vide sans commentaires), ne rien faire
+if grep -qvE '^#' "$commit_msg_file"; then
+    exit 0
+fi
+
+# Extraire un éventuel préfixe de la branche (ex: feat/login -> feat)
+prefix=$(echo "$branch" | grep -oE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)/" | sed 's|/||')
+
+# Extraire le scope de la branche si présent (ex: feat/auth-login -> auth-login)
+scope=$(echo "$branch" | sed -E 's|^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)/||')
+
+# Préparer le template
+if [ -n "$prefix" ]; then
+    # Si la branche a un préfixe conventionnel, l'utiliser
+    if [ -n "$scope" ]; then
+        template="${prefix}(${scope}): "
+    else
+        template="${prefix}: "
+    fi
+
+    # Insérer le template en haut du fichier
+    echo "$template" | cat - "$commit_msg_file" > temp && mv temp "$commit_msg_file"
+else
+    # Sinon, juste ajouter un commentaire avec la branche
+    echo "# Branch: $branch" | cat - "$commit_msg_file" > temp && mv temp "$commit_msg_file"
+fi
+
+exit 0

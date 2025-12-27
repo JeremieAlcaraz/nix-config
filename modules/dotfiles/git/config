@@ -1,0 +1,90 @@
+[user]
+	name = Jérémie Alcaraz
+	email = jeremie.alcaraz@gmail.com
+
+[init]
+	# XDG-compliant templates directory
+	defaultBranch = main
+	templateDir = ~/.config/git/templates
+
+[core]
+	# Global gitignore (XDG-compliant)
+	excludesfile = ~/.config/git/ignore
+	editor = nvim
+	# Better diffs
+	pager = less -FRX
+	# Unicode support
+	quotepath = false
+
+[pull]
+	rebase = false
+
+[push]
+	default = current
+	autoSetupRemote = true
+
+[fetch]
+	prune = true
+
+[rebase]
+	autoStash = true
+
+[merge]
+	conflictStyle = zdiff3
+
+[diff]
+	algorithm = histogram
+	colorMoved = default
+
+[log]
+	date = iso
+
+[color]
+	ui = auto
+
+[color "branch"]
+	current = yellow reverse
+	local = yellow
+	remote = green
+
+[color "diff"]
+	meta = yellow bold
+	frag = magenta bold
+	old = red bold
+	new = green bold
+
+[color "status"]
+	added = yellow
+	changed = green
+	untracked = cyan
+
+[alias]
+	# Shortcuts
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
+
+	# Better log
+	lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+
+	# Show files ignored by git
+	ignored = ls-files --others --ignored --exclude-standard
+
+	# Undo last commit (keep changes)
+	undo = reset HEAD~1 --mixed
+
+	# Amend without editing message
+	amend = commit --amend --no-edit
+
+	# Show current branch
+	current = rev-parse --abbrev-ref HEAD
+
+	# Clean merged branches
+	cleanup = "!git branch --merged | grep -v '\\*\\|main\\|master\\|develop' | xargs -n 1 git branch -d"
+
+[help]
+	autocorrect = 1
+
+[credential]
+	helper = osxkeychain

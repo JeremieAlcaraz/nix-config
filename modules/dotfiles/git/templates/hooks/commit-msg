@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# ============================================================================
+# Commit-msg hook - Validation du format des messages de commit
+# ============================================================================
+# Format recommandé : conventional commits
+# <type>(<scope>): <subject>
+#
+# Types : feat, fix, docs, style, refactor, test, chore, perf, ci
+# ============================================================================
+
+commit_msg_file=$1
+commit_msg=$(cat "$commit_msg_file")
+
+# Couleurs
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo -e "${GREEN}[commit-msg]${NC} Validating commit message..."
+
+# ============================================================================
+# 1. Ignorer les commits de merge/rebase
+# ============================================================================
+if echo "$commit_msg" | grep -qE "^(Merge|Revert|fixup!|squash!)"; then
+    echo -e "${GREEN}✓${NC} Merge/Revert/Fixup commit - skipping validation"
+    exit 0
+fi
+
+# ============================================================================
+# 2. Vérifier la longueur de la première ligne (max 72 caractères)
+# ============================================================================
+first_line=$(echo "$commit_msg" | head -n1)
+if [ ${#first_line} -gt 72 ]; then
+    echo -e "${YELLOW}⚠${NC}  First line is longer than 72 characters (${#first_line} chars)"
+    echo -e "${YELLOW}Tip:${NC} Keep the subject line concise and under 72 characters"
+    # Warning only, not blocking
+fi
+
+# ============================================================================
+# 3. Vérifier que le message n'est pas vide
+# ============================================================================
+if [ -z "$(echo "$commit_msg" | tr -d '[:space:]')" ]; then
+    echo -e "${RED}✗${NC} Commit message is empty!"
+    exit 1
+fi
+
+# ============================================================================
+# 4. Vérifier le format conventional commits (optionnel, warning only)
+# ============================================================================
+# Types valides
+types="feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert"
+
+if ! echo "$first_line" | grep -qE "^($types)(\(.+\))?: .+"; then
+    echo -e "${YELLOW}⚠${NC}  Commit message doesn't follow conventional commits format"
+    echo -e "${YELLOW}Recommended format:${NC} <type>(<scope>): <subject>"
+    echo -e "${YELLOW}Valid types:${NC} $types"
+    echo -e "${YELLOW}Example:${NC} feat(auth): add OAuth2 login support"
+    echo ""
+    echo -e "${YELLOW}Tip:${NC} Use conventional commits for better changelog generation"
+    # Warning only, not blocking - you can uncomment the next line to make it blocking:
+    # exit 1
+fi
+
+echo -e "${GREEN}[commit-msg]${NC} Commit message validated! ✨"
+exit 0

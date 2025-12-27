@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# ============================================================================
+# Pre-commit hook - Vérifications de base avant commit
+# ============================================================================
+
+# Couleurs pour les messages
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}[pre-commit]${NC} Running pre-commit checks..."
+
+# ============================================================================
+# 1. Vérifier les trailing whitespaces
+# ============================================================================
+if git diff --cached --check --diff-filter=ACMR; then
+    echo -e "${GREEN}✓${NC} No trailing whitespace"
+else
+    echo -e "${RED}✗${NC} Trailing whitespace detected!"
+    echo -e "${YELLOW}Tip:${NC} Run 'git diff --cached --check' to see the issues"
+    exit 1
+fi
+
+# ============================================================================
+# 2. Vérifier les markers de merge conflict
+# ============================================================================
+if git diff --cached | grep -E "^(\+<<<<<<<|^\+>>>>>>>|^\+=======)"; then
+    echo -e "${RED}✗${NC} Merge conflict markers detected!"
+    exit 1
+else
+    echo -e "${GREEN}✓${NC} No merge conflict markers"
+fi
+
+# ============================================================================
+# 3. Vérifier qu'on ne commit pas de fichiers sensibles
+# ============================================================================
+sensitive_files=(
+    ".env"
+    ".env.local"
+    "*.pem"
+    "*.key"
+    "*_rsa"
+    "*_dsa"
+    "*.p12"
+    "credentials.json"
+    "secrets.yml"
+)
+
+for pattern in "${sensitive_files[@]}"; do
+    if git diff --cached --name-only | grep -qE "$pattern"; then
+        echo -e "${RED}✗${NC} Sensitive file detected: files matching '$pattern'"
+        echo -e "${YELLOW}Warning:${NC} You're about to commit a potentially sensitive file!"
+        echo -e "${YELLOW}Tip:${NC} Add it to .gitignore if it should never be committed"
+        exit 1
+    fi
+done
+echo -e "${GREEN}✓${NC} No sensitive files detected"
+
+# ============================================================================
+# 4. Vérifier les TODOs/FIXME avec marqueur de blocage
+# ============================================================================
+# Optionnel : décommenter pour empêcher les commits avec des @FIXME
+# if git diff --cached | grep -E "^\+.*@FIXME"; then
+#     echo -e "${RED}✗${NC} @FIXME marker detected in staged changes!"
+#     echo -e "${YELLOW}Tip:${NC} Fix the issue or remove the @FIXME marker"
+#     exit 1
+# fi
+
+echo -e "${GREEN}[pre-commit]${NC} All checks passed! ✨"
+exit 0

@@ -19,6 +19,59 @@ in
     ./wezterm.nix
   ];
 
+  # === GIT CONFIGURATION ===
+  programs.git = {
+    enable = true;
+    userName = "Jérémie Alcaraz";
+    userEmail = "jeremie.alcaraz@gmail.com";
+
+    extraConfig = {
+      init = {
+        defaultBranch = "main";
+        templateDir = "~/.config/git/templates";
+      };
+      core = {
+        excludesfile = "~/.config/git/ignore";
+        editor = "nvim";
+        pager = "less -FRX";
+        quotepath = false;
+      };
+      pull.rebase = false;
+      push = {
+        default = "current";
+        autoSetupRemote = true;
+      };
+      fetch.prune = true;
+      rebase.autoStash = true;
+      merge.conflictStyle = "zdiff3";
+      diff = {
+        algorithm = "histogram";
+        colorMoved = "default";
+      };
+      log.date = "iso";
+      color.ui = "auto";
+      help.autocorrect = 1;
+      credential.helper = "osxkeychain";
+    };
+
+    aliases = {
+      co = "checkout";
+      br = "branch";
+      ci = "commit";
+      st = "status";
+      lg = "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
+      ignored = "ls-files --others --ignored --exclude-standard";
+      undo = "reset HEAD~1 --mixed";
+      amend = "commit --amend --no-edit";
+      current = "rev-parse --abbrev-ref HEAD";
+      cleanup = "!git branch --merged | grep -v '\\*\\|main\\|master\\|develop' | xargs -n 1 git branch -d";
+    };
+
+    ignores = [
+      "**/.claude/settings.local.json"
+    ];
+  };
+
   # === ENVIRONMENT VARIABLES ===
   # Force XDG compliance for tools that support it via env vars
   home.sessionVariables = {
@@ -50,8 +103,9 @@ in
     # Shell prompt
     starship
 
-    # GitHub CLI
-    gh
+    # Version control
+    git
+    gh # GitHub CLI
 
     # Editor (LazyVim nécessite une version récente)
     unstable.neovim
@@ -193,6 +247,20 @@ in
 
     # Ripgrep configuration
     "ripgrep".source = ../modules/dotfiles/ripgrep;
+
+    # Git templates (hooks) - la config est gérée par programs.git
+    "git/templates/hooks/pre-commit" = {
+      source = ../modules/dotfiles/git/templates/hooks/pre-commit;
+      executable = true;
+    };
+    "git/templates/hooks/commit-msg" = {
+      source = ../modules/dotfiles/git/templates/hooks/commit-msg;
+      executable = true;
+    };
+    "git/templates/hooks/prepare-commit-msg" = {
+      source = ../modules/dotfiles/git/templates/hooks/prepare-commit-msg;
+      executable = true;
+    };
   };
 
   # === SOPS (secrets) ===
