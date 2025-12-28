@@ -117,7 +117,7 @@ in
     zoxide
     atuin
     carapace
-    tabiew
+    unstable.tabiew
     direnv
     glow
     navi
@@ -287,12 +287,12 @@ in
   };
 
   programs.yazi.yaziPlugins.runtimeDeps = lib.mkAfter [
-    pkgs.tabiew
+    pkgs.unstable.tabiew
   ];
 
   programs.yazi.settings = {
     opener.csv = [
-      { run = "${pkgs.tabiew}/bin/tw \"$@\""; block = true; desc = "Tabiew"; }
+      { run = "${pkgs.unstable.tabiew}/bin/tw \"$@\""; block = true; desc = "Tabiew"; }
     ];
     open.prepend_rules = [
       { name = "*.csv"; use = [ "csv" ]; }
