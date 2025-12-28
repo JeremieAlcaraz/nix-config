@@ -117,6 +117,7 @@ in
     zoxide
     atuin
     carapace
+    fd
     unstable.tabiew
     direnv
     glow
@@ -254,6 +255,9 @@ in
 
     # Ripgrep configuration
     "ripgrep".source = ../modules/dotfiles/ripgrep;
+
+    # fd ignore file (XDG)
+    "fd/ignore".source = ../modules/dotfiles/fd/ignore;
 
     # Git templates (hooks) - la config est gérée par programs.git
     "git/templates/hooks/pre-commit" = {
