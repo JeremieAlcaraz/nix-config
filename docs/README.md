@@ -10,6 +10,18 @@ Bienvenue dans la documentation complète de ce repository NixOS.
 
 ## 📖 Guides disponibles
 
+### [MARIGOLD-PACKAGES.md](./MARIGOLD-PACKAGES.md)
+**Ajouter un package sur Marigold (darwin)**
+
+Guide court et pratique pour :
+- Ajouter un CLI/TUI via Home Manager
+- Ajouter une app GUI via Homebrew
+- Ranger les configs dans `modules/dotfiles`
+
+**Idéal pour** : Ajouter proprement des outils sur macOS
+
+---
+
 ### [GETTING-STARTED.md](./GETTING-STARTED.md)
 **Guide de démarrage rapide (10 minutes)**
 
