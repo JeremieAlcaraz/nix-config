@@ -22,6 +22,17 @@ Guide court et pratique pour :
 
 ---
 
+### [MACOS-DEFAULTS-REVERSE.md](./MACOS-DEFAULTS-REVERSE.md)
+**Reverse macOS defaults for nix-darwin**
+
+Guide court pour :
+- Trouver les keys "defaults" derriere System Settings
+- Ajouter les valeurs dans `system.defaults.CustomUserPreferences`
+
+**Ideal pour** : Reproduire des preferences macOS non exposees
+
+---
+
 ### [GETTING-STARTED.md](./GETTING-STARTED.md)
 **Guide de démarrage rapide (10 minutes)**
 

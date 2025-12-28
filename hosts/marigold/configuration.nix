@@ -23,7 +23,9 @@
   # === Custom global defaults not exposed by nix-darwin ===
   system.defaults.CustomUserPreferences."NSGlobalDomain" = {
     AppleAccentColor = 6; # Accent color index (6 = pink).
-    AppleHighlightColor = "1.000000 0.749020 0.823529 Pink"; # Highlight color (RGB + name).
+    AppleHighlightColor = "0.819608 0.466667 0.603922 D1779A"; # Highlight color (RGB + name).
+    AppleIconAppearanceTintColor = "Other";
+    AppleIconAppearanceCustomTintColor = "0.819608 0.466667 0.603922 1.000000"; # #d1779a RGBA
   };
 
   users.users.jeremiealcaraz.home = "/Users/jeremiealcaraz";
