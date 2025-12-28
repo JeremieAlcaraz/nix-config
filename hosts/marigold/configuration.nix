@@ -6,6 +6,9 @@
     casks = [ "1password" "hammerspoon" ];
   };
 
+  security.pam.enableSudoTouchIdAuth = true; # Use Touch ID for sudo authentication.
+  fonts.packages = [ pkgs.fira-code pkgs.jetbrains-mono ]; # Install monospace fonts.
+
   # === macOS global defaults (NSGlobalDomain) ===
   system.defaults.NSGlobalDomain = {
     AppleShowAllExtensions = true; # Always show file extensions in Finder.
