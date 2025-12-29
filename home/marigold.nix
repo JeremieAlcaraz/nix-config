@@ -81,7 +81,7 @@ in
     GLOW_CONFIG_PATH = "${config.xdg.configHome}/glow/glow.yml";
     RIPGREP_CONFIG_PATH = "${config.home.homeDirectory}/.config/ripgrep/config";
     SSH_AUTH_SOCK = "${config.home.homeDirectory}/.1password/agent.sock";
-    SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/nixos-shared-key.txt";
+    SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/key.txt";
     BUN_INSTALL = bunInstall;
     BUN_INSTALL_CACHE_DIR = bunCache;
     PNPM_HOME = pnpmHome;
@@ -277,7 +277,7 @@ in
   # === SOPS (secrets) ===
   sops = {
     defaultSopsFile = ../secrets/marigold.yaml;
-    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/nixos-shared-key.txt";
+    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/key.txt";
     secrets = {
       ssh_id_ed25519 = {
         path = "${config.home.homeDirectory}/.ssh/id_ed25519";
@@ -289,6 +289,39 @@ in
       };
     };
   };
+
+  home.activation.bootstrapSopsAgeKey = config.lib.dag.entryAfter ["writeBoundary"] ''
+    KEY_PATH="${config.home.homeDirectory}/.config/sops/age/key.txt"
+    OP_ITEM="op://Personal/sops-age-key/notesPlain"
+    OP_BIN="${pkgs._1password-cli}/bin/op"
+
+    if [ ! -f "$KEY_PATH" ]; then
+      if [ -n "$DRY_RUN_CMD" ]; then
+        echo "DRY RUN: would fetch SOPS age key from 1Password ($OP_ITEM)"
+      else
+        if [ ! -x "$OP_BIN" ]; then
+          echo "Erreur: 1Password CLI (op) introuvable. Installe-le avant le rebuild."
+          exit 1
+        fi
+
+        mkdir -p "$(dirname "$KEY_PATH")"
+
+        if ! "$OP_BIN" read "$OP_ITEM" > "$KEY_PATH"; then
+          echo "Erreur: impossible de lire la clé depuis 1Password. Vault déverrouillé ?"
+          rm -f "$KEY_PATH"
+          exit 1
+        fi
+
+        chmod 600 "$KEY_PATH"
+
+        if ! grep -q "AGE-SECRET-KEY-1" "$KEY_PATH"; then
+          echo "Erreur: contenu de clé age invalide dans 1Password."
+          rm -f "$KEY_PATH"
+          exit 1
+        fi
+      fi
+    fi
+  '';
 
   programs.yazi.yaziPlugins.runtimeDeps = lib.mkAfter [
     pkgs.unstable.tabiew

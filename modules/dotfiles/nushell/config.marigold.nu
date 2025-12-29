@@ -908,12 +908,12 @@ def --env cx [arg] {
 }
 
 def --env sops-edit [...args: string] {
-    let key = ($env.HOME | path join ".config" "sops" "age" "nixos-shared-key.txt")
+    let key = ($env.HOME | path join ".config" "sops" "age" "key.txt")
     with-env { SOPS_AGE_KEY_FILE: $key } { sops ...$args }
 }
 
 def --env sops-view [...args: string] {
-    let key = ($env.HOME | path join ".config" "sops" "age" "nixos-shared-key.txt")
+    let key = ($env.HOME | path join ".config" "sops" "age" "key.txt")
     with-env { SOPS_AGE_KEY_FILE: $key } { sops --decrypt ...$args }
 }
 

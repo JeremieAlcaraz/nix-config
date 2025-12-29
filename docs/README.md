@@ -142,7 +142,7 @@ Voir [DEPLOYMENT.md](./DEPLOYMENT.md) pour le workflow complet.
 ### Gérer un secret
 ```bash
 # Éditer un secret chiffré
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 sops secrets/mimosa.yaml
 
 # Commit et déployer

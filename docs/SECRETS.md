@@ -109,10 +109,10 @@ nix-shell -p sops age
 mkdir -p ~/.config/sops/age
 
 # Générer la clé partagée
-age-keygen -o ~/.config/sops/age/nixos-shared-key.txt
+age-keygen -o ~/.config/sops/age/key.txt
 
 # Afficher la clé publique
-grep "public key:" ~/.config/sops/age/nixos-shared-key.txt
+grep "public key:" ~/.config/sops/age/key.txt
 # Sortie : age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
@@ -152,7 +152,7 @@ Remplacez `age1xxx...` par votre vraie clé publique.
 cp secrets/mimosa.yaml.example secrets/mimosa.yaml
 
 # 2. Configurer sops pour utiliser votre clé
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 
 # 3. Éditer et chiffrer avec sops
 sops secrets/mimosa.yaml
@@ -211,7 +211,7 @@ sudo mkdir -p /mnt/var/lib/sops-nix
 sudo chmod 755 /mnt/var/lib/sops-nix
 
 # Depuis votre Mac
-cat ~/.config/sops/age/nixos-shared-key.txt | ssh nixos@<ip-de-la-vm> "sudo tee /mnt/var/lib/sops-nix/key.txt"
+cat ~/.config/sops/age/key.txt | ssh nixos@<ip-de-la-vm> "sudo tee /mnt/var/lib/sops-nix/key.txt"
 ssh nixos@<ip-de-la-vm> "sudo chmod 600 /mnt/var/lib/sops-nix/key.txt"
 ```
 
@@ -223,11 +223,11 @@ Si la VM est déjà installée :
 
 ```bash
 # Pour mimosa
-cat ~/.config/sops/age/nixos-shared-key.txt | ssh root@mimosa "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
+cat ~/.config/sops/age/key.txt | ssh root@mimosa "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
 ssh root@mimosa "chmod 600 /var/lib/sops-nix/key.txt"
 
 # Pour magnolia
-cat ~/.config/sops/age/nixos-shared-key.txt | ssh root@magnolia "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
+cat ~/.config/sops/age/key.txt | ssh root@magnolia "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
 ssh root@magnolia "chmod 600 /var/lib/sops-nix/key.txt"
 ```
 
@@ -248,7 +248,7 @@ Ajoutez dans votre `~/.zshrc` ou `~/.bashrc` sur votre Mac :
 
 ```bash
 # sops avec la bonne clé
-alias sops-edit='SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt sops'
+alias sops-edit='SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt sops'
 
 # Éditer les secrets rapidement
 alias sops-mimosa='sops-edit ~/path/to/nix-config/secrets/mimosa.yaml'
@@ -328,10 +328,10 @@ creation_rules:
 
 ```bash
 # Générer votre clé personnelle
-age-keygen -o ~/.config/sops/age/keys.txt
+age-keygen -o ~/.config/sops/age/key.txt
 
 # Afficher la clé publique
-grep "public key:" ~/.config/sops/age/keys.txt
+grep "public key:" ~/.config/sops/age/key.txt
 ```
 
 ## 🔒 Étape 4 : Créer et chiffrer les secrets
@@ -504,7 +504,7 @@ python3 -c "import crypt; print(crypt.crypt('VotreMotDePasseSecurise', crypt.mks
 cp secrets/mimosa.yaml.example secrets/mimosa.yaml
 
 # 3. Éditer avec sops
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 sops secrets/mimosa.yaml
 ```
 
@@ -538,7 +538,7 @@ ssh root@mimosa "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#mim
 python3 -c "import crypt; print(crypt.crypt('NouveauMotDePasse', crypt.mksalt(crypt.METHOD_SHA512)))"
 
 # 2. Éditer le secret
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 sops secrets/mimosa.yaml
 # Remplacer la valeur de jeremie-password-hash
 
@@ -604,7 +604,7 @@ users.users.jeremie = {
 
 ```bash
 # 1. Éditer le fichier chiffré
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 sops secrets/mimosa.yaml
 
 # 2. Ajouter le secret (ex: api-key: ma-clé-secrète)
@@ -634,7 +634,7 @@ ssh root@mimosa "cd /etc/nixos && git pull && nixos-rebuild switch --flake .#mim
 
 ```bash
 # 1. Éditer
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 sops secrets/mimosa.yaml
 
 # 2. Modifier et sauvegarder
@@ -686,7 +686,7 @@ git push
 ssh root@mimosa "ls -la /var/lib/sops-nix/key.txt"
 
 # Si elle n'existe pas, copier depuis votre Mac (clé partagée)
-cat ~/.config/sops/age/nixos-shared-key.txt | ssh root@mimosa "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
+cat ~/.config/sops/age/key.txt | ssh root@mimosa "mkdir -p /var/lib/sops-nix && cat > /var/lib/sops-nix/key.txt"
 ssh root@mimosa "chmod 600 /var/lib/sops-nix/key.txt"
 
 # Redéployer
@@ -703,7 +703,7 @@ ssh root@mimosa "nixos-rebuild switch --flake /etc/nixos#mimosa"
 # Sur votre Mac
 cd /path/to/nix-config
 cp secrets/mimosa.yaml.example secrets/mimosa.yaml
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 sops secrets/mimosa.yaml
 # Sauvegarder et quitter
 
@@ -774,10 +774,10 @@ journalctl -u sops-nix
 
 ```bash
 # Définir la variable
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 
 # Ou ajouter dans ~/.zshrc / ~/.bashrc
-echo 'export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt' >> ~/.zshrc
+echo 'export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt' >> ~/.zshrc
 
 # Réessayer
 sops secrets/mimosa.yaml

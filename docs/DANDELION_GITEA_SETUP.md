@@ -77,7 +77,7 @@ Utilisateur (via Tailscale) → http://dandelion:3000 → Gitea → PostgreSQL
 
 2. **Éditer les secrets avec SOPS**:
    ```bash
-   export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+   export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
    sops secrets/dandelion.yaml
    ```
 
@@ -120,10 +120,10 @@ Utilisateur (via Tailscale) → http://dandelion:3000 → Gitea → PostgreSQL
 2. **Copier la clé age partagée**:
    ```bash
    # Option 1: Depuis magnolia via SSH
-   scp magnolia:~/.config/sops/age/nixos-shared-key.txt /tmp/key.txt
+   scp magnolia:~/.config/sops/age/key.txt /tmp/key.txt
 
    # Option 2: Depuis le Mac
-   scp marigold:~/.config/sops/age/nixos-shared-key.txt /tmp/key.txt
+   scp marigold:~/.config/sops/age/key.txt /tmp/key.txt
 
    # Installer la clé
    sudo mkdir -p /var/lib/sops-nix

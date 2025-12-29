@@ -38,7 +38,7 @@ Sur ta **machine de développement** (magnolia), crée/vérifie les secrets:
 cd /home/jeremie/nix-config
 
 # Vérifier que le token Cloudflare est dans secrets/mimosa.yaml
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 sops secrets/mimosa.yaml
 
 # Le fichier doit contenir:
@@ -246,7 +246,7 @@ j12z-site = stdenv.mkDerivation {
 1. **Vérifier les secrets:**
    ```bash
    cd /home/jeremie/nix-config
-   export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+   export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
    sops secrets/mimosa.yaml  # Vérifier que cloudflare-tunnel-token existe
    ```
 
@@ -280,7 +280,7 @@ j12z-site = stdenv.mkDerivation {
 2. **Copier les clés age (si pas déjà fait):**
    ```bash
    # Option 1: Copier depuis magnolia
-   scp magnolia:~/.config/sops/age/keys.txt ~/.config/sops/age/keys.txt
+   scp magnolia:~/.config/sops/age/key.txt ~/.config/sops/age/key.txt
 
    # Option 2: Utiliser la clé SSH host (déjà configuré dans SOPS)
    # Les clés SSH de mimosa sont déjà autorisées dans secrets/mimosa.yaml

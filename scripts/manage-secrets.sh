@@ -193,7 +193,7 @@ check_age_key() {
 
     # Chemins différents selon l'OS
     if [[ "$os" == "macos" ]]; then
-        age_key_file="$HOME/.config/sops/age/keys.txt"
+        age_key_file="$HOME/.config/sops/age/key.txt"
     else
         age_key_file="/var/lib/sops-nix/key.txt"
     fi

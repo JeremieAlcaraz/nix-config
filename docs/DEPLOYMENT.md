@@ -448,7 +448,7 @@ Pour activer les mises à jour automatiques de n8n via GitHub Actions :
 
 ```bash
 # Sur votre Mac
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 sops secrets/whitelily.yaml
 
 # Ajouter ou modifier :
@@ -649,7 +649,7 @@ python3 -c "import crypt; print(crypt.crypt('NouveauMotDePasse', crypt.mksalt(cr
 
 2. Éditer le secret :
 ```bash
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/nixos-shared-key.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/key.txt
 sops secrets/whitelily.yaml
 # Modifier n8n.password
 ```
