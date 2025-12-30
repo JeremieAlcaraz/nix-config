@@ -64,14 +64,51 @@ bindkey -M menuselect '^[[D' backward-char
 # Carapace (complétions générées)
 # -----------------------------------------------------------------
 if command -v carapace &>/dev/null; then
-  source <(carapace _carapace)
+  source <(carapace _carapace zsh)
 fi
 
+# Raccourci : forcer la complétion Carapace (Alt-m)
+_carapace_force_completion() {
+  local cmd=${words[1]}
+  local saved_pnpm_comp=""
+
+  if [[ "$cmd" == "pnpm" ]]; then
+    if ! (( $+functions[_carapace_lazy] )) && command -v carapace &>/dev/null; then
+      eval "$(carapace _carapace zsh)"
+    fi
+
+    if (( $+functions[_carapace_lazy] )); then
+      saved_pnpm_comp=${_comps[pnpm]}
+      _comps[pnpm]=_carapace_lazy
+    fi
+  fi
+
+  if (( $+widgets[fzf-tab-complete] )); then
+    zle fzf-tab-complete
+  else
+    zle complete-word
+  fi
+
+  if [[ "$cmd" == "pnpm" ]] && (( $+functions[_carapace_lazy] )); then
+    if [[ -n "$saved_pnpm_comp" ]]; then
+      _comps[pnpm]=$saved_pnpm_comp
+    else
+      unset "_comps[pnpm]"
+    fi
+  fi
+}
+zle -N carapace-force-completion _carapace_force_completion
+
 # -----------------------------------------------------------------
-# Plugin pnpm-shell-completion 
+# Plugin pnpm-shell-completion
 # -----------------------------------------------------------------
-if [[ -f ~/.config/zsh/plugins/pnpm-shell-completion/pnpm-shell-completion.zsh ]]; then
+if [[ -f ~/.config/zsh/plugins/pnpm-shell-completion/pnpm-shell-completion.plugin.zsh ]]; then
+  source ~/.config/zsh/plugins/pnpm-shell-completion/pnpm-shell-completion.plugin.zsh
+elif [[ -f ~/.config/zsh/plugins/pnpm-shell-completion/pnpm-shell-completion.zsh ]]; then
   source ~/.config/zsh/plugins/pnpm-shell-completion/pnpm-shell-completion.zsh
+fi
+if (( $+functions[_pnpm] )); then
+  compdef _pnpm pnpm
 fi
 
 # -----------------------------------------------------------------
@@ -79,7 +116,7 @@ fi
 # -----------------------------------------------------------------
 # zmodload -i zsh/complist
 # zstyle ':completion:*' menu yes select
-# 
+#
 # _carapace_pick() {
 #   zle list-choices
 #   zle menu-complete
@@ -89,21 +126,52 @@ fi
 # bindkey '^[w' carapace-pick
 
 # -----------------------------------------------------------------
-# Plugin fzf-tab (ACTIVÉ) 👍
+# Plugin fzf-tab (ACTIVÉ) avec colonnes alignées comme navi 🚀
 # -----------------------------------------------------------------
-# Remplace le menu de complétion standard par une interface fzf interactive.
-# Assurez-vous que le chemin est correct pour votre installation.
 if [[ -f "$ZSH_CONFIG_DIR/plugins/fzf-tab/fzf-tab.zsh" ]]; then
   # Activation du menu de sélection pour laisser fzf-tab prendre la main
   zstyle ':completion:*:descriptions' format '[%d]'
 
+  # IMPORTANT : Grouper les complétions pour éviter l'affichage simultané avec carapace
+  zstyle ':completion:*' group-name ''
+
   # Thème et UX fzf-tab
   zstyle ':fzf-tab:*' prefix ''
   zstyle ':fzf-tab:*' switch-group '<' '>'
-  zstyle ':fzf-tab:*' use-fzf-default-opts yes
+
+  # Applique le même style que ton FZF_DEFAULT_OPTS (Catppuccin Mocha)
+  zstyle ':fzf-tab:*' fzf-flags \
+    --ansi \
+    --height=80% \
+    --layout=reverse \
+    --border=rounded \
+    --prompt='> ' \
+    --marker='✓' \
+    --pointer='▶' \
+    --separator='─' \
+    --info=inline \
+    --scrollbar='┃' \
+    --tabstop=16 \
+    --color=bg:#1e1e2e,fg:#cdd6f4,hl:#89b4fa \
+    --color=fg+:#f5e0dc,bg+:#313244,hl+:#89b4fa \
+    --color=spinner:#f38ba8,header:#f9e2af,info:#94e2d5 \
+    --color=pointer:#f38ba8,marker:#a6e3a1,prompt:#89b4fa \
+    --color=scrollbar:#585b70,border:#585b70
+
+  # Optimisations pour carapace + fzf-tab
+  zstyle ':completion:*' fzf-search-display true
+  zstyle ':fzf-tab:complete:*' fzf-bindings 'space:toggle+down'
+  zstyle ':fzf-tab:*' query-string prefix first
 
   # Prévisualisation dédiée à git : affiche l'aide de la sous-commande à droite
   zstyle ':fzf-tab:complete:git-*' option-preview 'git help $word | col -bx | head -200'
 
   source "$ZSH_CONFIG_DIR/plugins/fzf-tab/fzf-tab.zsh"
+fi
+
+# Re-bind after plugins which may override keymaps.
+if (( $+widgets[carapace-force-completion] )); then
+  for keymap in emacs viins vicmd; do
+    bindkey -M "$keymap" '^[m' carapace-force-completion
+  done
 fi

@@ -7,6 +7,13 @@ else
 fi
 
 _pnpm() {
+    if [[ ! -f ./package.json && ! -f ./pnpm-workspace.yaml ]]; then
+        if (( $+functions[_carapace_lazy] )); then
+            _carapace_lazy
+            return
+        fi
+    fi
+
     typeset -A opt_args
 
     _arguments \

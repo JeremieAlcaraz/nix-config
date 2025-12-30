@@ -39,5 +39,8 @@ if [[ -z "$SOPS_AGE_KEY_FILE" ]]; then
   fi
 fi
 
+# === Carapace - Shell completion bridges ===
+export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
+
 # === TRY - Fresh directories for every vibe ===
 export TRY_TOP="$HOME/Development/_programmation/tries"
