@@ -44,6 +44,23 @@ if command -v tw &> /dev/null; then
     alias tabiew="tw"
 fi
 
+# === BROOT - File tree explorer ===
+if command -v broot &> /dev/null; then
+    function br {
+        local cmd cmd_file code
+        cmd_file=$(mktemp)
+        if broot --outcmd "$cmd_file" "$@"; then
+            cmd=$(<"$cmd_file")
+            command rm -f "$cmd_file"
+            eval "$cmd"
+        else
+            code=$?
+            command rm -f "$cmd_file"
+            return "$code"
+        fi
+    }
+fi
+
 # === BAT - Cat amélioré ===
 # Géré par Home Manager
 if command -v bat &> /dev/null; then

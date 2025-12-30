@@ -962,6 +962,7 @@ alias kns = kubens
 alias ke = kubectl exec -it
 
 # Load initialization files from cache
+use ~/.config/nushell/broot.nu *
 try { source ~/.zoxide.nu }
 try { source ~/.local/share/atuin/init.nu }
 try { source ~/.cache/starship/init.nu }

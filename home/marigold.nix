@@ -134,6 +134,7 @@ in
 
     # Tree view
     tree
+    broot
 
     # 1Password CLI (op)
     _1password-cli
@@ -238,6 +239,10 @@ in
     # Nushell configuration (XDG-compliant by default)
     "nushell/env.nu".source = ../modules/dotfiles/nushell/env.marigold.nu;
     "nushell/config.nu".source = ../modules/dotfiles/nushell/config.marigold.nu;
+    "nushell/broot.nu".source = ../modules/dotfiles/nushell/broot.marigold.nu;
+
+    # Fish configuration
+    "fish/conf.d/broot.fish".source = ../modules/dotfiles/fish/conf.d/broot.marigold.fish;
 
     # Navi cheatsheets and configuration
     "navi/config.yaml".source = ../modules/dotfiles/navi/config.yaml;
