@@ -249,6 +249,10 @@ in
     "navi/config.toml".source = ../modules/dotfiles/navi/config.toml;
     "navi/cheats".source = ../modules/dotfiles/navi/cheats;
 
+    # Broot configuration
+    "broot/conf.hjson".source = ../modules/dotfiles/broot/conf.hjson;
+    "broot/verbs.hjson".source = ../modules/dotfiles/broot/verbs.hjson;
+
     # Claude Code configuration (XDG-compliant via CLAUDE_CONFIG_DIR)
     "claude/settings.json".source = ../modules/dotfiles/claude/settings.json;
 
