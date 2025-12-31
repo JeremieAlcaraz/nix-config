@@ -11,24 +11,24 @@ local RIGHT_SEP = " "
 local MID_SEP = " █"
 
 local PALETTE = {
-	bar_bg = "#1e1e2e",
+	bar_bg = "#1a1b26",
 	active = {
-		title_bg = "#45475a",
-		title_fg = "#cdd6f4",
-		number_bg = "#cba6f7",
-		number_fg = "#1e1e2e",
+		title_bg = "#7aa2f7",
+		title_fg = "#16161e",
+		number_bg = "#F7768E",
+		number_fg = "#16161e",
 	},
 	inactive = {
-		title_bg = "#313244",
-		title_fg = "#a6adc8",
-		number_bg = "#45475a",
-		number_fg = "#a6adc8",
+		title_bg = "#292e42",
+		title_fg = "#545c7e",
+		number_bg = "#283457",
+		number_fg = "#545c7e",
 	},
 	hover = {
-		title_bg = "#585b70",
-		title_fg = "#cdd6f4",
-		number_bg = "#b4befe",
-		number_fg = "#1e1e2e",
+		title_bg = "#292e42",
+		title_fg = "#7aa2f7",
+		number_bg = "#283457",
+		number_fg = "#7aa2f7",
 	},
 }
 
@@ -44,6 +44,24 @@ local function tab_title(tab)
 		title = title .. " "
 	end
 	return title
+end
+
+local function render_compact(colors, title, index, max_width)
+	local content = index .. " " .. title
+	local padding = 1
+	local available = max_width - (padding * 2)
+	if available < 1 then
+		padding = 0
+		available = max_width
+	end
+	available = math.max(1, available)
+	content = wezterm.truncate_right(content, available)
+
+	return {
+		{ Background = { Color = colors.title_bg } },
+		{ Foreground = { Color = colors.title_fg } },
+		{ Text = string.rep(" ", padding) .. content .. string.rep(" ", padding) },
+	}
 end
 
 function M.apply(config)
@@ -72,6 +90,9 @@ function M.apply(config)
 		local index = tostring(tab.tab_index + 1)
 		local title = tab_title(tab)
 		local reserved = 9 + #index
+		if max_width <= reserved + 2 then
+			return render_compact(colors, title, index, max_width)
+		end
 		local max_title_width = max_width - reserved
 		if max_title_width < 0 then
 			max_title_width = 0
