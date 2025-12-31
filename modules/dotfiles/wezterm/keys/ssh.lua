@@ -4,6 +4,7 @@
 
 local wezterm = require("wezterm")
 local act = wezterm.action
+local tab_limit = require("config.tab_limit")
 
 local M = {}
 
@@ -15,22 +16,30 @@ function M.get_keys()
 		{
 			key = "1",
 			mods = "CTRL|SHIFT",
-			action = act.SpawnCommandInNewTab({ args = { "ssh", "magnolia" } }),
+			action = tab_limit.guard_action(
+				act.SpawnCommandInNewTab({ args = { "ssh", "magnolia" } })
+			),
 		},
 		{
 			key = "2",
 			mods = "CTRL|SHIFT",
-			action = act.SpawnCommandInNewTab({ args = { "ssh", "whitelily" } }),
+			action = tab_limit.guard_action(
+				act.SpawnCommandInNewTab({ args = { "ssh", "whitelily" } })
+			),
 		},
 		{
 			key = "3",
 			mods = "CTRL|SHIFT",
-			action = act.SpawnCommandInNewTab({ args = { "ssh", "muscari" } }),
+			action = tab_limit.guard_action(
+				act.SpawnCommandInNewTab({ args = { "ssh", "muscari" } })
+			),
 		},
 		{
 			key = "4",
 			mods = "CTRL|SHIFT",
-			action = act.SpawnCommandInNewTab({ args = { "ssh", "crocus" } }),
+			action = tab_limit.guard_action(
+				act.SpawnCommandInNewTab({ args = { "ssh", "crocus" } })
+			),
 		},
 	}
 end

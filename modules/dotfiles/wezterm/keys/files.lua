@@ -4,6 +4,7 @@
 
 local wezterm = require('wezterm')
 local act = wezterm.action
+local tab_limit = require("config.tab_limit")
 local utils = require('utils')
 
 local M = {}
@@ -221,9 +222,9 @@ function M.get_keys()
     { 
       key = "r", 
       mods = "CMD|OPT|CTRL|SHIFT", 
-      action = act.SpawnCommandInNewTab {
+      action = tab_limit.guard_action(act.SpawnCommandInNewTab {
         args = { "/usr/bin/env", "bash", "-lc", generate_recent_files_script() },
-      },
+      }),
     },
   }
 end

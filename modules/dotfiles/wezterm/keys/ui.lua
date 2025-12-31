@@ -3,11 +3,18 @@
 -- ══════════════════════════════════════════════════════════════════════
 
 local wezterm = require("wezterm")
+local tab_limit = require("config.tab_limit")
 
 local M = {}
 
 function M.get_keys()
 	return {
+		-- Nouveau tab (respecte la limite d'onglets)
+		{
+			key = "t",
+			mods = "CMD",
+			action = tab_limit.guard_action(wezterm.action.SpawnTab("CurrentPaneDomain")),
+		},
 		-- Renommer l'onglet (style tmux: Prefix + r)
 		{
 			key = "r",

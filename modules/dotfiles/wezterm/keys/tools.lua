@@ -4,6 +4,7 @@
 
 local wezterm = require('wezterm')
 local act = wezterm.action
+local tab_limit = require("config.tab_limit")
 
 local M = {}
 
@@ -44,6 +45,10 @@ exec $SHELL -l
 ]],
             lvl
           )
+
+          if not tab_limit.allow_new_tab(window) then
+            return
+          end
 
           window:perform_action(
             act.SpawnCommandInNewTab {
