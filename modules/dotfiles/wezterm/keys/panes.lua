@@ -9,6 +9,7 @@ local M = {}
 
 function M.get_keys()
 	return {
+		-- LEADER wezterm = Ctrl+B (tmux utilise Ctrl+A)
 		{
 			key = "h",
 			mods = "LEADER",

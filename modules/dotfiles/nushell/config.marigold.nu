@@ -419,12 +419,27 @@ $env.config = {
                 ]
             }
         }
+        # Television - Files picker (Alt+T)
         {
-            name: history_menu
-            modifier: control
+            name: tv_files
+            modifier: alt
+            keycode: char_t
+            mode: [emacs, vi_insert, vi_normal]
+            event: {
+                send: executehostcommand
+                cmd: "commandline edit --insert (tv files --no-status-bar | str trim)"
+            }
+        }
+        # Television - History (Alt+R)
+        {
+            name: tv_history
+            modifier: alt
             keycode: char_r
             mode: [emacs, vi_insert, vi_normal]
-            event: { send: menu name: history_menu }
+            event: {
+                send: executehostcommand
+                cmd: "commandline edit --replace (history | get command | str join \"\n\" | tv --no-status-bar | str trim)"
+            }
         }
         {
             name: help_menu
@@ -1016,4 +1031,11 @@ def zz [cmd?: string, ...rest: string] {
   } else {
     exec env -u ZSH_VERSION -u FISH_VERSION -u BASH_VERSION -u NU_VERSION -u STARSHIP_SHELL zsh -c $cmd ...$rest
   }
+}
+
+# === TELEVISION - Fuzzy Finder ===
+# Keybindings: Ctrl+R (history), Ctrl+T (smart autocomplete)
+if (which tv | is-not-empty) {
+    mkdir ($nu.data-dir | path join "vendor/autoload")
+    tv init nu | save -f ($nu.data-dir | path join "vendor/autoload/tv.nu")
 }

@@ -119,6 +119,7 @@ in
     carapace
     fd
     unstable.tabiew
+    unstable.television
     direnv
     glow
     navi
@@ -174,6 +175,17 @@ in
     ".ssh/config".source = ../modules/dotfiles/ssh/config;
     ".ssh/authorized_keys".source = ../modules/dotfiles/ssh/public/authorized_keys;
     ".ssh/public".source = ../modules/dotfiles/ssh/public;
+
+    # TPM (Tmux Plugin Manager) - installation déclarative (XDG-compliant)
+    ".config/tmux/plugins/tpm" = {
+      source = pkgs.fetchFromGitHub {
+        owner = "tmux-plugins";
+        repo = "tpm";
+        rev = "v3.1.0";
+        sha256 = "sha256-CeI9Wq6tHqV68woE11lIY4cLoNY8XWyXyMHTDmFKJKI=";
+      };
+      recursive = true;
+    };
   };
 
   # === DOTFILES ZSH ===
@@ -279,6 +291,27 @@ in
     };
     "git/templates/hooks/prepare-commit-msg" = {
       source = ../modules/dotfiles/git/templates/hooks/prepare-commit-msg;
+      executable = true;
+    };
+
+    # Television - Fuzzy finder
+    "television/config.toml".source = ../modules/dotfiles/television/config.toml;
+    "television/cable".source = ../modules/dotfiles/television/cable;
+    "television/scripts/recent-files-preview.zsh" = {
+      source = ../modules/dotfiles/television/scripts/recent-files-preview.zsh;
+      executable = true;
+    };
+    "television/scripts/recent-files-source.zsh" = {
+      source = ../modules/dotfiles/television/scripts/recent-files-source.zsh;
+      executable = true;
+    };
+    "television/shell/integration.zsh".source = ../modules/dotfiles/television/shell/integration.zsh;
+
+    # Tmux configuration
+    "tmux/tmux.conf".source = ../modules/dotfiles/tmux/tmux.conf;
+    "tmux/tmux.reset.conf".source = ../modules/dotfiles/tmux/tmux.reset.conf;
+    "tmux/scripts/cal.sh" = {
+      source = ../modules/dotfiles/tmux/scripts/cal.sh;
       executable = true;
     };
   };

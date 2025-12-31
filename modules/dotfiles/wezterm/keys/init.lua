@@ -13,7 +13,8 @@ local modal = require("keys.modal")
 local M = {}
 
 function M.apply(config)
-	config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 1000 }
+	-- LEADER pour wezterm = Ctrl+B (tmux utilise Ctrl+A)
+	config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 1000 }
 
 	-- ═══════════════════════════════════════════════════════════════════
 	-- Assemblage de tous les raccourcis clavier

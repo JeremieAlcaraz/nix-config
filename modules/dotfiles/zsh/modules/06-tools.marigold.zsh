@@ -89,3 +89,11 @@ if [[ -d "$HOME/.config/zsh/scripts" ]]; then
     [[ -f "$HOME/.config/zsh/scripts/delete-repo.sh" ]] && alias dgh="delete-repo.sh"
     [[ -f "$HOME/.config/zsh/scripts/mkrepo.sh" ]] && alias cgh="mkrepo.sh"
 fi
+
+# === TELEVISION - Fuzzy Finder ===
+# Keybindings: Ctrl+Y (smart autocomplete), Ctrl+O (shell history)
+if command -v tv &> /dev/null; then
+    if [[ -f "$HOME/.config/television/shell/integration.zsh" ]]; then
+        source "$HOME/.config/television/shell/integration.zsh"
+    fi
+fi

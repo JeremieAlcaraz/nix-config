@@ -1,0 +1,27 @@
+[metadata]
+name = "recent-files"
+description = "Fichiers récents via fd (zsh), dossiers ciblés + chemins lisibles"
+requirements = ["zsh", "fd", "mdls", "bat", "file", "grep", "sed"]
+
+[source]
+command = "zsh -c '$HOME/.config/television/scripts/recent-files-source.zsh'"
+
+[preview]
+command = "zsh -c '$HOME/.config/television/scripts/recent-files-preview.zsh \"$1\"' _ '{}'"
+
+[ui]
+max_preview_size = 1024
+max_results = 1000
+
+[ui.preview_panel]
+size = 38
+scrollbar = true
+
+[ui.result_list]
+# Améliore l'affichage des entrées longues
+max_entry_width = 80
+
+[actions.open]
+label = "Open in Finder"
+key = "enter"
+command = "open '{}'"
