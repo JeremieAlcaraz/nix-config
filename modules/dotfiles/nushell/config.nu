@@ -274,7 +274,7 @@ $env.config = {
         pre_prompt: [{ null }] # run before the prompt is shown
         pre_execution: [{ null }] # run before the repl input is run
         env_change: {
-            PWD: [{|before, after| null }] # run if the PWD environment is different since the last repl input
+            PWD: [] # zoxide will add its hook here
         }
         display_output: "if (term size).columns >= 100 { table -e } else { table }" # run to display the output of a pipeline
         command_not_found: { null } # return an error message when a command is not found
@@ -934,12 +934,7 @@ alias kns = kubens
 alias kl = kubectl logs -f
 alias ke = kubectl exec -it
 
-source ~/.config/nushell/env.nu
-
-# Force override STARSHIP_SHELL after env.nu (to override inherited value)
-$env.STARSHIP_SHELL = "nu"
-
-try { source ~/.zoxide.nu }
+source ~/.zoxide.nu
 try { source ~/.cache/carapace/init.nu }
 try { source ~/.local/share/atuin/init.nu }
 try { source ~/.cache/starship/init.nu }
