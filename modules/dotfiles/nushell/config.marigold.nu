@@ -726,12 +726,16 @@ $env.config = {
                 ]
             }
         }
+        # Navi widget - cheatsheet navigator (Ctrl+G)
         {
-            name: redo_change
+            name: navi_menu
             modifier: control
             keycode: char_g
-            mode: emacs
-            event: { edit: redo }
+            mode: [emacs, vi_normal, vi_insert]
+            event: {
+                send: executehostcommand
+                cmd: "commandline edit --insert (navi --print | str trim)"
+            }
         }
         {
             name: undo_change
