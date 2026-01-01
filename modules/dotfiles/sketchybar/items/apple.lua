@@ -6,6 +6,8 @@ local helpers_dir = HELPERS_DIR or (os.getenv("HOME") .. "/.local/share/sketchyb
 local apple = sbar.add("item", {
     icon = {
         font = {
+            family = settings.font.text,
+            style = settings.font.style_map["Regular"],
             size = 22.0
         },
         string = settings.modes.main.icon,

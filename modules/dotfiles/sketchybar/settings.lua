@@ -46,8 +46,8 @@ return {
     icons = "sketchybar-app-font:Regular:16.0", -- alternatively available: NerdFont
 
     font = {
-        text = "FiraCode Nerd Font Mono", -- Used for text
-        numbers = "FiraCode Nerd Font Mono", -- Used for numbers
+        text = "JetBrainsMono Nerd Font Mono", -- Used for text
+        numbers = "JetBrainsMono Nerd Font Mono", -- Used for numbers
         style_map = {
             ["Regular"] = "Regular",
             ["Semibold"] = "Medium",
