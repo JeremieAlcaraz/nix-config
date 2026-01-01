@@ -15,7 +15,7 @@ local PALETTE = {
 	active = {
 		title_bg = "#7aa2f7",
 		title_fg = "#16161e",
-		number_bg = "#F7768E",
+		number_bg = "#E0AF68",
 		number_fg = "#16161e",
 	},
 	inactive = {
