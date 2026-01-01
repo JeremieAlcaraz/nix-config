@@ -16,6 +16,8 @@ in
   xdg.enable = true;
 
   imports = [
+    ./aerospace.nix
+    ./sketchybar.nix
     ./wezterm.nix
     ./yazi.nix
   ];

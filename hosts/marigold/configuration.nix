@@ -1,9 +1,33 @@
-{ config, pkgs, ... }: {
+{ config, pkgs, ... }:
+let
+  brewBin = if pkgs.stdenv.hostPlatform.isAarch64 then "/opt/homebrew/bin" else "/usr/local/bin";
+in {
   nixpkgs.config.allowUnfree = true;
 
   homebrew = {
     enable = true;
-    casks = [ "1password" "hammerspoon" ];
+    caskArgs = {
+      appdir = "/Applications";
+    };
+    taps = [
+      "felixkratz/formulae"
+      "nikitabobko/tap"
+    ];
+    brews = [
+      "borders"
+      "lua"
+      "nowplaying-cli"
+      "sketchybar"
+      "switchaudio-osx"
+    ];
+    casks = [
+      "1password"
+      "nikitabobko/tap/aerospace@0.19.2"
+      "font-sf-mono"
+      "font-sf-pro"
+      "hammerspoon"
+      "sf-symbols"
+    ];
   };
 
   security.pam.enableSudoTouchIdAuth = true; # Use Touch ID for sudo authentication.
