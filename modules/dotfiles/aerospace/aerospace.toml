@@ -16,7 +16,7 @@ after-startup-command = [
   'exec-and-forget sketchybar >> $HOME/.sketchybar/service.log 2>&1',
   # JankyBorders has a built-in detection of already running process,
   # so it won't be run twice on AeroSpace restart
-  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0',
+  "exec-and-forget borders style=round width=6.0 active_color='gradient(top_left=0xfff72585,bottom_right=0xff4cc9f0)' inactive_color=0x00000000",
 ]
 
 # Notify Sketchybar about workspace change
