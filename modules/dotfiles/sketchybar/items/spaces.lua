@@ -13,6 +13,14 @@ if #workspaces > max_workspaces then
     end
 end
 local current_workspace = get_current_workspace()
+local workspace_index = {}
+for i, workspace in ipairs(workspaces) do
+    workspace_index[workspace] = i
+end
+local display_workspaces = {}
+for i = #workspaces, 1, -1 do
+    display_workspaces[#display_workspaces + 1] = workspaces[i]
+end
 local workspace_by_item = {}
 local function split(str, sep)
     local result = {}
@@ -23,8 +31,9 @@ local function split(str, sep)
     return result
 end
 
-for i, workspace in ipairs(workspaces) do
+for i, workspace in ipairs(display_workspaces) do
     local selected = workspace == current_workspace
+    local order = workspace_index[workspace] or i
     workspace_by_item[i] = workspace
     local space = sbar.add("item", "item." .. i, {
         position = "q",
@@ -32,17 +41,17 @@ for i, workspace in ipairs(workspaces) do
             font = {
                 family = settings.font.numbers
             },
-            string = i,
+            string = workspace,
             padding_left = settings.items.padding.left,
             padding_right = settings.items.padding.left / 2,
-            color = settings.items.default_color(i),
-            highlight_color = settings.items.highlight_color(i),
+            color = settings.items.default_color(order),
+            highlight_color = settings.items.highlight_color(order),
             highlight = selected
         },
         label = {
             padding_right = settings.items.padding.right,
-            color = settings.items.default_color(i),
-            highlight_color = settings.items.highlight_color(i),
+            color = settings.items.default_color(order),
+            highlight_color = settings.items.highlight_color(order),
             font = settings.icons,
             y_offset = -1,
             highlight = selected
@@ -53,7 +62,7 @@ for i, workspace in ipairs(workspaces) do
             color = settings.items.colors.background,
             border_width = 1,
             height = settings.items.height,
-            border_color = selected and settings.items.highlight_color(i) or settings.items.default_color(i)
+            border_color = selected and settings.items.highlight_color(order) or settings.items.default_color(order)
         },
         popup = {
             background = {
@@ -119,7 +128,7 @@ for i, workspace in ipairs(workspaces) do
                 highlight = selected
             },
             background = {
-                border_color = selected and settings.items.highlight_color(i) or settings.items.default_color(i)
+                border_color = selected and settings.items.highlight_color(order) or settings.items.default_color(order)
             }
         })
 
@@ -185,7 +194,7 @@ local spaces_indicator = sbar.add("item", {
 
 -- Event handles
 space_window_observer:subscribe("space_windows_change", function(env)
-    for i, workspace in ipairs(workspaces) do
+    for i, workspace in ipairs(display_workspaces) do
         sbar.exec("aerospace list-windows --workspace " .. workspace .. " --format '%{app-name}' --json ", function(apps)
             local icon_line = ""
             local no_app = true
@@ -211,7 +220,7 @@ space_window_observer:subscribe("space_windows_change", function(env)
 end)
 
 space_window_observer:subscribe("aerospace_focus_change", function(env)
-    for i, workspace in ipairs(workspaces) do
+    for i, workspace in ipairs(display_workspaces) do
         sbar.exec("aerospace list-windows --workspace " .. workspace .. " --format '%{app-name}' --json ", function(apps)
             local icon_line = ""
             local no_app = true
