@@ -941,6 +941,7 @@ alias c = clear
 alias ll = ls -l
 alias lt = eza --tree --level=2 --long --icons --git
 alias tree = eza --tree --icons --git
+alias y = yazi
 alias v = nvim
 alias as = aerospace
 alias asr = atuin scripts run
