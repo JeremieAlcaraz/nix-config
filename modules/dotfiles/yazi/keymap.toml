@@ -1,4 +1,6 @@
 "$schema" = "https://yazi-rs.github.io/schemas/keymap.json"
 
 [mgr]
-prepend_keymap = []
+prepend_keymap = [
+	{ on = [ "d" ], run = "remove --force", desc = "Envoyer a la corbeille sans confirmation" },
+]
