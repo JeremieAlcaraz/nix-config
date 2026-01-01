@@ -72,14 +72,14 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 [gaps]
 inner.horizontal = 10
 inner.vertical = 10
-outer.left = 10
-outer.bottom = 10
+outer.left = 20
+outer.bottom = 20
 outer.top = [
-  { monitor."LG HDR 4K" = 40 },
-  { monitor."Sidecar Display" = 40 },
-  10,
+  { monitor."LG HDR 4K" = 20 },
+  { monitor."Sidecar Display" = 20 },
+  20,
 ]
-outer.right = 10
+outer.right = 20
 
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
@@ -217,4 +217,3 @@ run = 'move-node-to-workspace 3'
 [[on-window-detected]]
 if.app-id = 'com.jetbrains.intellij'
 run = 'move-node-to-workspace 3'
-
