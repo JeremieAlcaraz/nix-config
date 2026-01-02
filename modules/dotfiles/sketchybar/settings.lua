@@ -32,6 +32,9 @@ return {
             bottom = 0
         },
         default_color = function(workspace)
+            if workspace == 6 then
+                return colors.rainbow[10]
+            end
             return colors.rainbow[workspace + 1]
         end,
         highlight_color = function(workspace)

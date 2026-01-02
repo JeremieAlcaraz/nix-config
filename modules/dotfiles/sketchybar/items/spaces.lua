@@ -5,7 +5,7 @@ local app_icons = require("helpers.app_icons")
 
 local spaces = {}
 
-local max_workspaces = 5
+local max_workspaces = 6
 local workspaces = get_workspaces()
 if #workspaces > max_workspaces then
     for i = max_workspaces + 1, #workspaces do
