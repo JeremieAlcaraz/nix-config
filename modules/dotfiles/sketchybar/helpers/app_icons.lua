@@ -151,6 +151,7 @@ return {
     ["Cursor"] = ":code:",
     ["Code - Insiders"] = ":code:",
     ["Notion"] = ":notion:",
+    ["Notion Calendar"] = ":calendar:",
     ["Final Cut Pro"] = ":final_cut_pro:",
     ["Zotero"] = ":zotero:",
     ["Safari"] = ":safari:",
