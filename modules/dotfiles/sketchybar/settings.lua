@@ -6,7 +6,7 @@ return {
     group_paddings = 5,
     modes = {
         main = {
-            icon = icons.rebel,
+            icon = icons.cat,
             color = colors.rainbow[1]
         },
         service = {

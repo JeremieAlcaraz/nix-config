@@ -7,6 +7,7 @@ return {
     gear = "􀍟",
     cpu = "􀫥",
     nuke = "",
+    cat = "󰄛",
     clipboard = "􀉄",
 
     switch = {
