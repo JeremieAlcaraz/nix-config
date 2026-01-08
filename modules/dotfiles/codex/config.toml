@@ -12,6 +12,7 @@ rmcp_client = true
 [mcp_servers.notion]
 command = "npx"
 args = ["-y", "mcp-remote", "https://mcp.notion.com/mcp"]
+startup_timeout_sec = 30
 
 [mcp_servers.chrome-devtools]
 command = "npx"
