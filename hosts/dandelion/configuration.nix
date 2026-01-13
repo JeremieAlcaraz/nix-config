@@ -151,19 +151,21 @@
       # Lire le mot de passe depuis sops
       ADMIN_PASSWORD=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."gitea/admin_password".path} | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs)
 
-      # Créer l'utilisateur admin (ignore l'erreur s'il existe déjà)
       # Note: "admin" est un nom réservé, on utilise "gitadmin"
-      ${pkgs.gitea}/bin/gitea admin user create \
-        --username gitadmin \
-        --password "$ADMIN_PASSWORD" \
-        --email gitadmin@dandelion.local \
-        --admin \
-        --must-change-password=false 2>/dev/null || {
-          echo "[gitea-setup] L'utilisateur gitadmin existe déjà, mise à jour du mot de passe..."
-          ${pkgs.gitea}/bin/gitea admin user change-password \
-            --username gitadmin \
-            --password "$ADMIN_PASSWORD"
-        }
+      if ${pkgs.gitea}/bin/gitea admin user list | ${pkgs.gawk}/bin/awk '$2=="gitadmin"{found=1} END {exit !found}'; then
+        echo "[gitea-setup] L'utilisateur gitadmin existe déjà, mise à jour du mot de passe..."
+        ${pkgs.gitea}/bin/gitea admin user change-password \
+          --username gitadmin \
+          --password "$ADMIN_PASSWORD"
+      else
+        echo "[gitea-setup] Création de l'utilisateur gitadmin..."
+        ${pkgs.gitea}/bin/gitea admin user create \
+          --username gitadmin \
+          --password "$ADMIN_PASSWORD" \
+          --email gitadmin@dandelion.local \
+          --admin \
+          --must-change-password=false
+      fi
 
       echo "[gitea-setup] Configuration admin terminée !"
     '';
