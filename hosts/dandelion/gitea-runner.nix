@@ -15,7 +15,10 @@ in
     enable = true;
     dockerCompat = true;
     dockerSocket.enable = true;
-    defaultNetwork.settings.dns_enabled = true;
+    defaultNetwork.settings = {
+      dns_enabled = true;
+      dns_servers = [ "1.1.1.1" "8.8.8.8" ];
+    };
   };
 
   ########################################
