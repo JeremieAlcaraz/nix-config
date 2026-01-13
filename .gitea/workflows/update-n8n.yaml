@@ -40,24 +40,37 @@ jobs:
         run: |
           set -euo pipefail
           CURRENT_IMAGE=$(grep -oP 'image = "docker.io/n8nio/n8n:\K[^"]+' hosts/whitelily/n8n.nix)
+          echo "Current image: $CURRENT_IMAGE"
           echo "image=$CURRENT_IMAGE" >> $GITHUB_OUTPUT
           if [[ "$CURRENT_IMAGE" == *"@sha256:"* ]]; then
             CURRENT_DIGEST=$(echo "$CURRENT_IMAGE" | grep -oP '@sha256:\K[a-f0-9]+')
           else
             CURRENT_DIGEST="none"
           fi
+          echo "Current digest: $CURRENT_DIGEST"
           echo "digest=$CURRENT_DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Debug network (Docker Hub)
+        run: |
+          set -euo pipefail
+          echo "resolv.conf:"
+          cat /etc/resolv.conf || true
+          echo "hosts lookup:"
+          getent hosts auth.docker.io registry-1.docker.io || true
 
       - name: Get latest n8n:next digest from Docker Hub
         id: latest
         run: |
           set -euo pipefail
-          TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" | jq -r .token)
+          TOKEN=$(curl -fsS --retry 3 --retry-connrefused --retry-delay 1 \
+            "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" \
+            | jq -r .token)
           if [[ -z "$TOKEN" || "$TOKEN" == "null" ]]; then
             echo "Token Docker Hub introuvable." >&2
             exit 1
           fi
-          LATEST_DIGEST=$(curl -sI -H "Authorization: Bearer $TOKEN" \
+          LATEST_DIGEST=$(curl -fsSI --retry 3 --retry-connrefused --retry-delay 1 \
+            -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
             "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next" \
             | grep -i "docker-content-digest:" | cut -d' ' -f2 | tr -d '\r' | cut -d: -f2)
@@ -65,6 +78,7 @@ jobs:
             echo "Digest n8n:next introuvable." >&2
             exit 1
           fi
+          echo "Latest digest: $LATEST_DIGEST"
           echo "digest=$LATEST_DIGEST" >> $GITHUB_OUTPUT
 
       - name: Extract n8n version from image
