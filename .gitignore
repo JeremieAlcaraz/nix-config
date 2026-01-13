@@ -9,6 +9,9 @@
 !.sops.yaml
 # 2.1. On autorise les fichiers de config Navi (pas de secrets)
 !modules/dotfiles/navi/*.yaml
+# 2.2. On autorise les workflows Gitea
+!.gitea/workflows/*.yaml
+!.gitea/workflows/*.yml
 # 3. On autorise les fichiers d'exemple (documentation)
 !*.example
 .zcompdump*

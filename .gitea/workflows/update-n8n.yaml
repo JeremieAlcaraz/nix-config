@@ -1,0 +1,125 @@
+name: Update n8n next version
+run-name: Mise à jour n8n (Next) 🚀
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    container:
+      # On force l'utilisation d'une image qui contient Docker, curl et jq
+      image: catthehacker/ubuntu:act-latest
+      # IMPORTANT : Permet d'utiliser docker à l'intérieur du job
+      options: --user root -v /var/run/docker.sock:/var/run/docker.sock
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --- VOS SCRIPTS ORIGINAUX (INCHANGÉS) ---
+      
+      - name: Get current n8n image
+        id: current
+        run: |
+          CURRENT_IMAGE=$(grep -oP 'image = "docker.io/n8nio/n8n:\K[^"]+' hosts/whitelily/n8n.nix)
+          echo "image=$CURRENT_IMAGE" >> $GITHUB_OUTPUT
+          if [[ "$CURRENT_IMAGE" == *"@sha256:"* ]]; then
+            CURRENT_DIGEST=$(echo "$CURRENT_IMAGE" | grep -oP '@sha256:\K[a-f0-9]+')
+          else
+            CURRENT_DIGEST="none"
+          fi
+          echo "digest=$CURRENT_DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Get latest n8n:next digest from Docker Hub
+        id: latest
+        run: |
+          TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" | jq -r .token)
+          LATEST_DIGEST=$(curl -sI -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+            "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next" \
+            | grep -i "docker-content-digest:" | cut -d' ' -f2 | tr -d '\r' | cut -d: -f2)
+          echo "digest=$LATEST_DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Extract n8n version from image
+        id: version
+        run: |
+          FULL_IMAGE="docker.io/n8nio/n8n:next@sha256:${{ steps.latest.outputs.digest }}"
+          docker pull --quiet "$FULL_IMAGE" > /dev/null 2>&1 || true
+          VERSION=$(docker inspect "$FULL_IMAGE" 2>/dev/null | jq -r '.[0].Config.Labels["org.opencontainers.image.version"] // .[0].Config.Labels["version"] // .[0].Config.Labels["org.label-schema.version"] // empty')
+          
+          if [ -z "$VERSION" ]; then
+            SHORT_DIGEST=$(echo "${{ steps.latest.outputs.digest }}" | cut -c1-12)
+            VERSION="next-${SHORT_DIGEST}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Nettoyage
+          docker rmi "$FULL_IMAGE" 2>/dev/null || true
+
+      - name: Check if update needed
+        id: check
+        run: |
+          CURRENT="${{ steps.current.outputs.digest }}"
+          LATEST="${{ steps.latest.outputs.digest }}"
+          if [ "$CURRENT" != "$LATEST" ]; then
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update n8n.nix with new digest
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          LATEST_DIGEST="${{ steps.latest.outputs.digest }}"
+          sed -i 's|image = "docker.io/n8nio/n8n:.*";.*|image = "docker.io/n8nio/n8n:next@sha256:'"$LATEST_DIGEST"'";  # Tag next pour les dernières betas|' hosts/whitelily/n8n.nix
+
+      # --- MODIFICATION POUR GITEA (Remplacement de peter-evans) ---
+
+      - name: Push changes and Create PR (Gitea API)
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          GITEA_TOKEN: ${{ secrets.N8N_UPDATE_TOKEN }}
+          NEW_BRANCH: update/n8n-next-${{ steps.latest.outputs.digest }}
+          TARGET_BRANCH: main # Changez ceci si votre branche par défaut est master
+        run: |
+          # 1. Configuration Git
+          git config --global user.email "bot@votre-gitea.com"
+          git config --global user.name "Gitea Update Bot"
+          
+          # 2. Création de la branche et Push
+          git checkout -b $NEW_BRANCH
+          git commit -am "⬆️ Update n8n to next@sha256:${{ steps.latest.outputs.digest }}"
+          git push origin $NEW_BRANCH
+          
+          # 3. Préparation du corps de la PR (JSON safe)
+          # On utilise jq pour créer un JSON propre pour l'API
+          PR_BODY=$(jq -n \
+            --arg version "${{ steps.version.outputs.version }}" \
+            --arg old_digest "${{ steps.current.outputs.digest }}" \
+            --arg new_digest "${{ steps.latest.outputs.digest }}" \
+            --arg content "## 🚀 Automated n8n Update
+          A new version of \`n8n:next\` has been detected.
+          **Version:** \`$version\`
+          
+          | Previous Digest | New Digest |
+          | --- | --- |
+          | \`$old_digest\` | \`$new_digest\` |
+          
+          *This PR was automatically created by Gitea Actions.*" \
+            '$content')
+
+          # 4. Appel API pour créer la PR
+          curl -X POST "${{ gitea.api_url }}/repos/${{ gitea.repository }}/pulls" \
+            -H "Authorization: token $GITEA_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d @- <<EOF
+          {
+            "head": "$NEW_BRANCH",
+            "base": "$TARGET_BRANCH",
+            "title": "⬆️ Update n8n:next to ${{ steps.version.outputs.version }}",
+            "body": $PR_BODY
+          }
+          EOF
