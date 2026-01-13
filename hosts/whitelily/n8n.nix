@@ -223,7 +223,7 @@ EOF
   virtualisation.oci-containers = {
     backend = "podman";
     containers.n8n = {
-      image = "docker.io/n8nio/n8n:next@sha256:ee59276d9d5c7daa97462830cfae12d71cea55adcad705e1756e0c616fcf26b9";  # Tag next pour les dernières betas
+      image = "docker.io/n8nio/n8n:next@sha256:55864da7c574d641e42552ad6e9ef40ae3207109028600e6d8a8e9a3eed1a071";  # Tag next pour les dernières betas
       autoStart = true;
       # Pas de ports mapping avec --network host (le conteneur utilise directement les ports de l'hôte)
 
