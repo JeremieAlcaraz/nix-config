@@ -152,17 +152,29 @@
       ADMIN_PASSWORD=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."gitea/admin_password".path} | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs)
 
       # Note: "admin" est un nom réservé, on utilise "gitadmin"
-      if ${pkgs.gitea}/bin/gitea admin user list | ${pkgs.gawk}/bin/awk '$2=="gitadmin"{found=1} END {exit !found}'; then
-        echo "[gitea-setup] L'utilisateur gitadmin existe déjà, mise à jour du mot de passe..."
+      ADMIN_USER="gitadmin"
+      ADMIN_EMAIL="gitadmin@dandelion.local"
+      USER_LIST="$(${pkgs.gitea}/bin/gitea admin user list)"
+
+      if echo "$USER_LIST" | ${pkgs.gawk}/bin/awk 'NR>1 && $2=="gitadmin"{found=1} END {exit !found}'; then
+        echo "[gitea-setup] L'utilisateur $ADMIN_USER existe déjà, mise à jour du mot de passe..."
         ${pkgs.gitea}/bin/gitea admin user change-password \
-          --username gitadmin \
+          --username "$ADMIN_USER" \
           --password "$ADMIN_PASSWORD"
       else
-        echo "[gitea-setup] Création de l'utilisateur gitadmin..."
+        EXISTING_USER_BY_EMAIL="$(
+          echo "$USER_LIST" | ${pkgs.gawk}/bin/awk -v email="$ADMIN_EMAIL" 'NR>1 && $3==email {print $2; exit}'
+        )"
+        if [ -n "$EXISTING_USER_BY_EMAIL" ]; then
+          echo "[gitea-setup] Email $ADMIN_EMAIL déjà utilisé par $EXISTING_USER_BY_EMAIL, aucun nouvel utilisateur créé."
+          exit 0
+        fi
+
+        echo "[gitea-setup] Création de l'utilisateur $ADMIN_USER..."
         ${pkgs.gitea}/bin/gitea admin user create \
-          --username gitadmin \
+          --username "$ADMIN_USER" \
           --password "$ADMIN_PASSWORD" \
-          --email gitadmin@dandelion.local \
+          --email "$ADMIN_EMAIL" \
           --admin \
           --must-change-password=false
       fi
