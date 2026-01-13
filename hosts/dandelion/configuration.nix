@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./gitea-runner.nix
     (import ../../modules/home-manager/sops.nix { defaultSopsFile = ../../secrets/dandelion.yaml; })
     ../../modules/home-manager/tailscale.nix
     ../../modules/home-manager/tailscale-dns.nix   # Configuration DNS pour MagicDNS
@@ -30,6 +31,7 @@
     secrets = {
       # Secrets Gitea - accessible par l'utilisateur gitea
       "gitea/admin_password" = { owner = "gitea"; group = "gitea"; mode = "0400"; };
+      "gitea/runner_registration_token" = { owner = "root"; group = "root"; mode = "0400"; };
     };
   };
 
@@ -72,6 +74,10 @@
 
       service = {
         DISABLE_REGISTRATION = true;  # Seul l'admin peut créer des comptes
+      };
+
+      actions = {
+        ENABLED = true;
       };
 
       # Timeouts pour les gros miroirs GitHub
