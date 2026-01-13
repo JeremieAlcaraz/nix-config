@@ -5,6 +5,9 @@ on: [push]
 jobs:
   explore-gitea-actions:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_SERVER_URL: http://100.96.250.43:3000
+      GITEA_SERVER_URL: http://100.96.250.43:3000
     steps:
       - run: echo "Le job a ete declenche automatiquement."
       - run: echo "Ce job tourne sur un serveur ${{ runner.os }} heberge par Gitea."
