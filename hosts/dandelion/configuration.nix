@@ -154,22 +154,22 @@
       # Note: "admin" est un nom réservé, on utilise "gitadmin"
       ADMIN_USER="gitadmin"
       ADMIN_EMAIL="gitadmin@dandelion.local"
-      USER_LIST="$(${pkgs.gitea}/bin/gitea admin user list)"
+      PSQL="${pkgs.postgresql}/bin/psql"
 
-      if echo "$USER_LIST" | ${pkgs.gawk}/bin/awk 'NR>1 && $2=="gitadmin"{found=1} END {exit !found}'; then
+      ADMIN_EXISTS="$($PSQL -tA -h /run/postgresql -U gitea -d gitea \
+        -c "SELECT 1 FROM \"user\" WHERE lower(name)=lower('$ADMIN_USER') LIMIT 1;" 2>/dev/null || true)"
+      EMAIL_IN_USE="$($PSQL -tA -h /run/postgresql -U gitea -d gitea \
+        -c "SELECT 1 FROM email_address WHERE lower(email)=lower('$ADMIN_EMAIL') LIMIT 1;" 2>/dev/null || true)"
+
+      if [ "$ADMIN_EXISTS" = "1" ]; then
         echo "[gitea-setup] L'utilisateur $ADMIN_USER existe déjà, mise à jour du mot de passe..."
         ${pkgs.gitea}/bin/gitea admin user change-password \
           --username "$ADMIN_USER" \
           --password "$ADMIN_PASSWORD"
+      elif [ "$EMAIL_IN_USE" = "1" ]; then
+        echo "[gitea-setup] Email $ADMIN_EMAIL déjà utilisé, aucun nouvel utilisateur créé."
+        exit 0
       else
-        EXISTING_USER_BY_EMAIL="$(
-          echo "$USER_LIST" | ${pkgs.gawk}/bin/awk -v email="$ADMIN_EMAIL" 'NR>1 && $3==email {print $2; exit}'
-        )"
-        if [ -n "$EXISTING_USER_BY_EMAIL" ]; then
-          echo "[gitea-setup] Email $ADMIN_EMAIL déjà utilisé par $EXISTING_USER_BY_EMAIL, aucun nouvel utilisateur créé."
-          exit 0
-        fi
-
         echo "[gitea-setup] Création de l'utilisateur $ADMIN_USER..."
         ${pkgs.gitea}/bin/gitea admin user create \
           --username "$ADMIN_USER" \
