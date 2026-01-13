@@ -2,6 +2,9 @@ name: Update n8n next version
 run-name: Mise à jour n8n (Next) 🚀
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
