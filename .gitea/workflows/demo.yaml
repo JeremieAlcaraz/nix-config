@@ -12,5 +12,7 @@ jobs:
       - run: echo "Le job a ete declenche automatiquement."
       - run: echo "Ce job tourne sur un serveur ${{ runner.os }} heberge par Gitea."
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          github-server-url: http://100.96.250.43:3000
       - run: echo "Le statut est ${{ job.status }}."

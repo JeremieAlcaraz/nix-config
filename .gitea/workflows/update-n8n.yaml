@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          github-server-url: http://100.96.250.43:3000
 
       # --- VOS SCRIPTS ORIGINAUX (INCHANGÉS) ---
       
