@@ -15,11 +15,17 @@ jobs:
     env:
       GITHUB_SERVER_URL: http://100.96.250.43:3000
       GITEA_SERVER_URL: http://100.96.250.43:3000
+      GITEA_API_URL: http://100.96.250.43:3000/api/v1
+      GITEA_REPOSITORY: jeremiealcaraz/nix-config
     container:
       # On force l'utilisation d'une image qui contient Docker, curl et jq
       image: catthehacker/ubuntu:act-latest
       # IMPORTANT : Permet d'utiliser docker à l'intérieur du job
       options: --user root -v /var/run/docker.sock:/var/run/docker.sock
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout repository
@@ -32,6 +38,7 @@ jobs:
       - name: Get current n8n image
         id: current
         run: |
+          set -euo pipefail
           CURRENT_IMAGE=$(grep -oP 'image = "docker.io/n8nio/n8n:\K[^"]+' hosts/whitelily/n8n.nix)
           echo "image=$CURRENT_IMAGE" >> $GITHUB_OUTPUT
           if [[ "$CURRENT_IMAGE" == *"@sha256:"* ]]; then
@@ -44,16 +51,26 @@ jobs:
       - name: Get latest n8n:next digest from Docker Hub
         id: latest
         run: |
+          set -euo pipefail
           TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" | jq -r .token)
+          if [[ -z "$TOKEN" || "$TOKEN" == "null" ]]; then
+            echo "Token Docker Hub introuvable." >&2
+            exit 1
+          fi
           LATEST_DIGEST=$(curl -sI -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
             "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next" \
             | grep -i "docker-content-digest:" | cut -d' ' -f2 | tr -d '\r' | cut -d: -f2)
+          if [[ -z "$LATEST_DIGEST" ]]; then
+            echo "Digest n8n:next introuvable." >&2
+            exit 1
+          fi
           echo "digest=$LATEST_DIGEST" >> $GITHUB_OUTPUT
 
       - name: Extract n8n version from image
         id: version
         run: |
+          set -euo pipefail
           FULL_IMAGE="docker.io/n8nio/n8n:next@sha256:${{ steps.latest.outputs.digest }}"
           docker pull --quiet "$FULL_IMAGE" > /dev/null 2>&1 || true
           VERSION=$(docker inspect "$FULL_IMAGE" 2>/dev/null | jq -r '.[0].Config.Labels["org.opencontainers.image.version"] // .[0].Config.Labels["version"] // .[0].Config.Labels["org.label-schema.version"] // empty')
@@ -70,6 +87,7 @@ jobs:
       - name: Check if update needed
         id: check
         run: |
+          set -euo pipefail
           CURRENT="${{ steps.current.outputs.digest }}"
           LATEST="${{ steps.latest.outputs.digest }}"
           if [ "$CURRENT" != "$LATEST" ]; then
@@ -81,6 +99,7 @@ jobs:
       - name: Update n8n.nix with new digest
         if: steps.check.outputs.update_needed == 'true'
         run: |
+          set -euo pipefail
           LATEST_DIGEST="${{ steps.latest.outputs.digest }}"
           sed -i 's|image = "docker.io/n8nio/n8n:.*";.*|image = "docker.io/n8nio/n8n:next@sha256:'"$LATEST_DIGEST"'";  # Tag next pour les dernières betas|' hosts/whitelily/n8n.nix
 
@@ -93,6 +112,7 @@ jobs:
           NEW_BRANCH: update/n8n-next-${{ steps.latest.outputs.digest }}
           TARGET_BRANCH: main # Changez ceci si votre branche par défaut est master
         run: |
+          set -euo pipefail
           # 1. Configuration Git
           git config --global user.email "bot@votre-gitea.com"
           git config --global user.name "Gitea Update Bot"
@@ -120,7 +140,7 @@ jobs:
             '$content')
 
           # 4. Appel API pour créer la PR
-          curl -X POST "${{ gitea.api_url }}/repos/${{ gitea.repository }}/pulls" \
+          curl -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
             -H "Authorization: token $GITEA_TOKEN" \
             -H "Content-Type: application/json" \
             -d @- <<EOF
