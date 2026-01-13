@@ -21,6 +21,12 @@ in
     };
   };
 
+  virtualisation.containers.containersConf.settings = {
+    network = {
+      dns_servers = [ "1.1.1.1" "8.8.8.8" ];
+    };
+  };
+
   ########################################
   # Runtime files
   ########################################
