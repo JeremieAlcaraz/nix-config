@@ -1,0 +1,13 @@
+name: Gitea Actions Demo
+run-name: ${{ gitea.actor }} teste le runner
+on: [push]
+
+jobs:
+  explore-gitea-actions:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Le job a ete declenche automatiquement."
+      - run: echo "Ce job tourne sur un serveur ${{ runner.os }} heberge par Gitea."
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - run: echo "Le statut est ${{ job.status }}."
