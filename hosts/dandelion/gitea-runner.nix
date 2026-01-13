@@ -5,6 +5,7 @@ let
   runnerRuntimeDir = "/run/gitea-runner";
   runnerName = "dandelion-runner";
   runnerLabels = "ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-latest";
+  giteaInstanceUrl = "http://100.96.250.43:3000";
 in
 {
   ########################################
@@ -42,7 +43,7 @@ in
       TOKEN=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."gitea/runner_registration_token".path} | ${pkgs.coreutils}/bin/tr -d '\n"' | ${pkgs.findutils}/bin/xargs)
 
       cat > ${runnerRuntimeDir}/runner.env <<EOF
-GITEA_INSTANCE_URL=http://dandelion:3000
+GITEA_INSTANCE_URL=${giteaInstanceUrl}
 GITEA_RUNNER_REGISTRATION_TOKEN=$TOKEN
 GITEA_RUNNER_NAME=${runnerName}
 GITEA_RUNNER_LABELS=${runnerLabels}

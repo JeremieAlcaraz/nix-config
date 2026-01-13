@@ -66,10 +66,10 @@
     # Configuration du serveur
     settings = {
       server = {
-        DOMAIN = "dandelion";
+        DOMAIN = "100.96.250.43";
         HTTP_ADDR = "0.0.0.0";  # Écoute sur toutes les interfaces (accessible via Tailscale)
         HTTP_PORT = 3000;
-        ROOT_URL = "http://dandelion:3000/";
+        ROOT_URL = "http://100.96.250.43:3000/";
       };
 
       service = {
