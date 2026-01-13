@@ -54,6 +54,35 @@ EOF
   };
 
   ########################################
+  # Wait for Gitea before starting runner
+  ########################################
+  systemd.services."gitea-runner-wait" = {
+    description = "Wait for Gitea to become reachable";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network-online.target" "gitea.service" "gitea-runner-envfile.service" ];
+    requires = [ "gitea-runner-envfile.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      set -euo pipefail
+
+      for i in {1..30}; do
+        if ${pkgs.curl}/bin/curl -fsS ${giteaInstanceUrl}/api/v1/version >/dev/null 2>&1; then
+          echo "[gitea-runner] Gitea is reachable."
+          exit 0
+        fi
+        echo "[gitea-runner] Waiting for Gitea... ($i/30)"
+        sleep 2
+      done
+
+      echo "[gitea-runner] Gitea did not become reachable in time."
+      exit 1
+    '';
+  };
+
+  ########################################
   # Gitea Actions runner (act_runner)
   ########################################
   virtualisation.oci-containers = {
@@ -73,7 +102,7 @@ EOF
   };
 
   systemd.services."podman-gitea-runner" = {
-    after = [ "gitea-runner-envfile.service" ];
-    requires = [ "gitea-runner-envfile.service" ];
+    after = [ "gitea-runner-envfile.service" "gitea-runner-wait.service" ];
+    requires = [ "gitea-runner-envfile.service" "gitea-runner-wait.service" ];
   };
 }
