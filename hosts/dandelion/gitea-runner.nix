@@ -33,8 +33,9 @@ in
   systemd.tmpfiles.rules = [
     "d ${runnerDataDir} 0750 root root -"
     "d ${runnerRuntimeDir} 0700 root root -"
-    # Copier le fichier de config act_runner
-    "C ${runnerDataDir}/config.yaml 0644 root root - ${./act_runner_config.yaml}"
+    # Lien symbolique vers le fichier de config act_runner (force overwrite)
+    # L+ permet de remplacer le fichier à chaque rebuild
+    "L+ ${runnerDataDir}/config.yaml - - - - ${./act_runner_config.yaml}"
   ];
 
   ########################################
