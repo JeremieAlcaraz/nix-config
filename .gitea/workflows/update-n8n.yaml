@@ -167,32 +167,23 @@ jobs:
 
       # --- MODIFICATION POUR GITEA (Remplacement de peter-evans) ---
 
-      - name: Push changes and Create PR (Gitea API)
+      - name: Install Gitea CLI (tea)
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          echo "📦 Installing Gitea CLI (tea)..."
+          wget -q https://dl.gitea.com/tea/0.9.2/tea-0.9.2-linux-amd64 -O /usr/local/bin/tea
+          chmod +x /usr/local/bin/tea
+          tea --version
+          echo "✅ tea installed successfully"
+
+      - name: Push changes and Create PR (using tea CLI)
         if: steps.check.outputs.update_needed == 'true'
         env:
           GITEA_TOKEN: ${{ secrets.N8N_UPDATE_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEW_BRANCH: update/n8n-next-${{ steps.latest.outputs.digest }}
-          TARGET_BRANCH: main # Changez ceci si votre branche par défaut est master
+          TARGET_BRANCH: main
         run: |
           set -euo pipefail
-          echo "🔍 Debug: Checking available tokens..."
-          echo "   GITEA_TOKEN length: ${#GITEA_TOKEN}"
-          echo "   GITHUB_TOKEN length: ${#GITHUB_TOKEN}"
-          echo "   ACTIONS_RUNTIME_TOKEN length: ${#ACTIONS_RUNTIME_TOKEN}"
-
-          # Try using GITHUB_TOKEN (automatic Gitea Actions token) instead
-          if [ -n "$GITHUB_TOKEN" ]; then
-            echo "✅ Using automatic GITHUB_TOKEN from Gitea Actions"
-            export GITEA_TOKEN="$GITHUB_TOKEN"
-          elif [ -z "$GITEA_TOKEN" ]; then
-            echo "❌ ERROR: No token available!"
-            exit 1
-          fi
-
-          echo "✅ Token selected (length: ${#GITEA_TOKEN} chars)"
-          echo "   First 10 chars: ${GITEA_TOKEN:0:10}"
-          echo "   Last 10 chars: ${GITEA_TOKEN: -10}"
 
           echo "🔧 Configuration Git..."
           git config --global user.email "bot@votre-gitea.com"
@@ -210,58 +201,31 @@ jobs:
           git push --force origin $NEW_BRANCH
           echo "✅ Branch pushed successfully"
 
-          echo "📝 Creating Pull Request..."
+          echo "📝 Creating Pull Request with tea CLI..."
           VERSION="${{ steps.version.outputs.version }}"
           OLD_DIGEST="${{ steps.current.outputs.digest }}"
           NEW_DIGEST="${{ steps.latest.outputs.digest }}"
 
-          echo "🔍 Debug info:"
-          echo "  - NEW_BRANCH: $NEW_BRANCH"
-          echo "  - VERSION: $VERSION"
-          echo "  - OLD_DIGEST: $OLD_DIGEST"
-          echo "  - NEW_DIGEST: $NEW_DIGEST"
-          echo "  - GITEA_API_URL: $GITEA_API_URL"
-          echo "  - GITEA_REPOSITORY: $GITEA_REPOSITORY"
+          # Configure tea with our Gitea instance
+          tea login add \
+            --name gitea-actions \
+            --url "$GITEA_SERVER_URL" \
+            --token "$GITEA_TOKEN"
 
-          # Créer le JSON dans un fichier temporaire
-          echo "📄 Building JSON payload..."
-          jq -n \
-            --arg head "$NEW_BRANCH" \
-            --arg base "$TARGET_BRANCH" \
-            --arg version "$VERSION" \
-            --arg old "$OLD_DIGEST" \
-            --arg new "$NEW_DIGEST" \
-            '{
-              head: $head,
-              base: $base,
-              title: ("⬆️ Update n8n:next to " + $version),
-              body: ("## 🚀 Automated n8n Update\n\nA new version of `n8n:next` has been detected.\n**Version:** `" + $version + "`\n\n| Previous Digest | New Digest |\n| --- | --- |\n| `" + $old + "` | `" + $new + "` |\n\n*This PR was automatically created by Gitea Actions.*")
-            }' > /tmp/pr_payload.json
+          # Create PR using tea CLI
+          tea pr create \
+            --base "$TARGET_BRANCH" \
+            --head "$NEW_BRANCH" \
+            --title "⬆️ Update n8n:next to $VERSION" \
+            --description "## 🚀 Automated n8n Update
 
-          echo "✅ JSON payload created. Content:"
-          cat /tmp/pr_payload.json | jq '.'
+A new version of \`n8n:next\` has been detected.
+**Version:** \`$VERSION\`
 
-          echo ""
-          echo "🚀 Sending POST request to Gitea API..."
-          echo "   URL: ${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls"
+| Previous Digest | New Digest |
+| --- | --- |
+| \`$OLD_DIGEST\` | \`$NEW_DIGEST\` |
 
-          PR_RESPONSE=$(curl -v -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
-            -H "Authorization: token ${GITEA_TOKEN:0:10}..." \
-            -H "Content-Type: application/json" \
-            --data-binary @/tmp/pr_payload.json 2>&1)
+*This PR was automatically created by Gitea Actions.*"
 
-          echo ""
-          echo "📋 Complete API Response:"
-          echo "$PR_RESPONSE"
-
-          echo ""
-          echo "📋 Parsed API Response (JSON only):"
-          echo "$PR_RESPONSE" | grep -A 9999 '^{' | jq '.' || echo "$PR_RESPONSE" | grep -A 9999 '^{'
-
-          # Extraction de l'URL de la PR créée
-          PR_URL=$(echo "$PR_RESPONSE" | jq -r '.html_url // empty')
-          if [ -n "$PR_URL" ]; then
-            echo "✅ Pull Request created successfully: $PR_URL"
-          else
-            echo "⚠️  PR may have been created but URL not found in response"
-          fi
+          echo "✅ Pull Request created successfully!"
