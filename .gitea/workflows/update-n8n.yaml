@@ -21,7 +21,8 @@ jobs:
       # On force l'utilisation d'une image qui contient Docker, curl et jq
       image: catthehacker/ubuntu:act-latest
       # IMPORTANT : Permet d'utiliser docker à l'intérieur du job
-      options: --user root -v /var/run/docker.sock:/var/run/docker.sock --dns 1.1.1.1 --dns 8.8.8.8
+      # --network=host évite le DNS Aardvark-dns de Podman qui ne résout pas les domaines externes
+      options: --user root -v /var/run/docker.sock:/var/run/docker.sock --network=host --dns 1.1.1.1 --dns 8.8.8.8
 
     defaults:
       run:
