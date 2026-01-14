@@ -1,0 +1,23 @@
+name: Internet connectivity check
+run-name: Check internet connectivity on push
+on: [push]
+
+jobs:
+  internet-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show DNS resolver
+        run: |
+          set -euo pipefail
+          echo "== /etc/resolv.conf =="
+          cat /etc/resolv.conf || true
+          echo "== DNS resolution =="
+          getent hosts example.com
+          getent hosts auth.docker.io
+
+      - name: HTTP connectivity
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 5 https://example.com >/dev/null
+          curl -sS --max-time 5 https://www.cloudflare.com/cdn-cgi/trace >/dev/null
+          echo "Internet OK"
