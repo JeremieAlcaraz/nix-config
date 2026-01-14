@@ -190,33 +190,23 @@ jobs:
           git push --force origin $NEW_BRANCH
           echo "✅ Branch pushed successfully"
 
-          echo "📝 Preparing PR body..."
+          echo "📝 Preparing PR body and JSON payload..."
           VERSION="${{ steps.version.outputs.version }}"
           OLD_DIGEST="${{ steps.current.outputs.digest }}"
           NEW_DIGEST="${{ steps.latest.outputs.digest }}"
 
-          PR_BODY=$(cat <<EOF
-## 🚀 Automated n8n Update
-
-A new version of \`n8n:next\` has been detected.
-**Version:** \`$VERSION\`
-
-| Previous Digest | New Digest |
-| --- | --- |
-| \`$OLD_DIGEST\` | \`$NEW_DIGEST\` |
-
-*This PR was automatically created by Gitea Actions.*
-EOF
-)
-          echo "✅ PR body prepared"
-
-          echo "🚀 Creating Pull Request via Gitea API..."
           PR_JSON=$(jq -n \
             --arg head "$NEW_BRANCH" \
             --arg base "$TARGET_BRANCH" \
-            --arg title "⬆️ Update n8n:next to $VERSION" \
-            --arg body "$PR_BODY" \
-            '{head: $head, base: $base, title: $title, body: $body}')
+            --arg version "$VERSION" \
+            --arg old "$OLD_DIGEST" \
+            --arg new "$NEW_DIGEST" \
+            '{
+              head: $head,
+              base: $base,
+              title: ("⬆️ Update n8n:next to " + $version),
+              body: ("## 🚀 Automated n8n Update\n\nA new version of `n8n:next` has been detected.\n**Version:** `" + $version + "`\n\n| Previous Digest | New Digest |\n| --- | --- |\n| `" + $old + "` | `" + $new + "` |\n\n*This PR was automatically created by Gitea Actions.*")
+            }')
 
           PR_RESPONSE=$(curl -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
             -H "Authorization: token $GITEA_TOKEN" \
