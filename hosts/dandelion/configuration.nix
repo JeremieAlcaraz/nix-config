@@ -113,6 +113,11 @@
       3000  # Gitea HTTP
       22    # SSH (pour git push/pull via SSH)
     ];
+    # Autoriser le DNS interne des réseaux Podman (Gitea Actions)
+    extraInputRules = ''
+      iifname "podman+" udp dport 53 accept
+      iifname "podman+" tcp dport 53 accept
+    '';
   };
 
   # Paquets système essentiels
