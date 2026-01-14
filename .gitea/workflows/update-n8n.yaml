@@ -212,11 +212,67 @@ jobs:
             --url "$GITEA_SERVER_URL" \
             --token "$GITEA_TOKEN"
 
+          # Create rich PR description in a temporary file
+          cat > /tmp/pr_body.md <<EOF
+## 🚀 Automated n8n Update
+
+A new version of \`n8n:next\` has been detected on Docker Hub.
+
+## 🎯 **Version n8n: \`$VERSION\`**
+
+### 📊 Changes
+
+| Item | Value |
+|------|-------|
+| **n8n Version** | **\`$VERSION\`** |
+| **Previous digest** | \`$OLD_DIGEST\` |
+| **New digest** | \`$NEW_DIGEST\` |
+| **Tag** | \`next\` (beta releases) |
+| **Image** | \`docker.io/n8nio/n8n:next\` |
+
+### 🔍 What's in this update?
+
+This PR updates the n8n container to the latest \`next\` tag version. The \`next\` tag includes the latest beta features and improvements from n8n.
+
+### ✅ Deployment Instructions
+
+After merging this PR, deploy on whitelily:
+
+\`\`\`bash
+# SSH into whitelily
+ssh jeremie@whitelily
+
+# Pull the latest config
+cd /root/nix-config
+sudo git pull
+
+# Rebuild and switch
+sudo nixos-rebuild switch --flake .#whitelily
+
+# Verify n8n is running
+sudo systemctl status podman-n8n.service
+\`\`\`
+
+### 📚 Release Notes
+
+Check n8n release notes and changelog:
+- 🔗 [n8n Releases](https://github.com/n8n-io/n8n/releases)
+- 🔗 [n8n Changelog](https://docs.n8n.io/changelog/)
+
+### 🔐 Security Note
+
+The digest (\`sha256:...\`) ensures image integrity and immutability. The exact same image will be deployed.
+
+---
+
+🤖 *This PR was automatically created by the [update-n8n workflow](.gitea/workflows/update-n8n.yaml)*
+EOF
+
           # Create PR using tea CLI
           tea pr create \
             --base "$TARGET_BRANCH" \
             --head "$NEW_BRANCH" \
             --title "⬆️ Update n8n:next to $VERSION" \
-            --description "Automated n8n Update - Version: $VERSION - Old digest: $OLD_DIGEST - New digest: $NEW_DIGEST"
+            --description "$(cat /tmp/pr_body.md)"
 
           echo "✅ Pull Request created successfully!"
