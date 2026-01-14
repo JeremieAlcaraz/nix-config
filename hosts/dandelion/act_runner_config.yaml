@@ -1,0 +1,34 @@
+# Configuration act_runner pour MAXIMISER les logs
+# et FORCER les DNS corrects dans les conteneurs de jobs
+
+log:
+  # Mode debug pour voir TOUT ce qui se passe
+  # Options: trace, debug, info, warn, error, fatal
+  level: debug
+
+runner:
+  # Fichier où act_runner stocke ses infos d'enregistrement
+  file: .runner
+  # Capacité : nombre de jobs parallèles
+  capacity: 2
+  # Timeout pour considérer un job comme en échec s'il ne démarre pas
+  timeout: 3h
+  # Timeout pour qu'un job en cours se termine
+  job_timeout: 2h
+
+container:
+  # Network : vide = act_runner crée un réseau automatiquement par job
+  network: ""
+
+  # Privilégié : false (pas besoin de Docker-in-Docker ici)
+  privileged: false
+
+  # CRITIQUE : Options passées à TOUS les conteneurs de jobs
+  # Force les DNS publics pour résoudre auth.docker.io, registry-1.docker.io, etc.
+  options: "--dns=1.1.1.1 --dns=8.8.8.8"
+
+  # Docker host détecté automatiquement (/var/run/docker.sock via Podman)
+  docker_host: ""
+
+  # Force le pull des images (garantit les dernières versions)
+  force_pull: false
