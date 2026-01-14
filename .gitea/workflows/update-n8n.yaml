@@ -14,9 +14,9 @@ jobs:
   check-and-update:
     runs-on: ubuntu-latest
     env:
-      GITHUB_SERVER_URL: http://100.96.250.43:3000
-      GITEA_SERVER_URL: http://100.96.250.43:3000
-      GITEA_API_URL: http://100.96.250.43:3000/api/v1
+      GITHUB_SERVER_URL: http://dandelion:3000
+      GITEA_SERVER_URL: http://dandelion:3000
+      GITEA_API_URL: http://dandelion:3000/api/v1
       GITEA_REPOSITORY: jeremiealcaraz/nix-config
     container:
       image: catthehacker/ubuntu:act-latest
@@ -171,19 +171,28 @@ jobs:
         if: steps.check.outputs.update_needed == 'true'
         env:
           GITEA_TOKEN: ${{ secrets.N8N_UPDATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEW_BRANCH: update/n8n-next-${{ steps.latest.outputs.digest }}
           TARGET_BRANCH: main # Changez ceci si votre branche par défaut est master
         run: |
           set -euo pipefail
-          echo "🔍 Debug: Checking GITEA_TOKEN..."
-          if [ -z "$GITEA_TOKEN" ]; then
-            echo "❌ ERROR: GITEA_TOKEN is empty or not set!"
+          echo "🔍 Debug: Checking available tokens..."
+          echo "   GITEA_TOKEN length: ${#GITEA_TOKEN}"
+          echo "   GITHUB_TOKEN length: ${#GITHUB_TOKEN}"
+          echo "   ACTIONS_RUNTIME_TOKEN length: ${#ACTIONS_RUNTIME_TOKEN}"
+
+          # Try using GITHUB_TOKEN (automatic Gitea Actions token) instead
+          if [ -n "$GITHUB_TOKEN" ]; then
+            echo "✅ Using automatic GITHUB_TOKEN from Gitea Actions"
+            export GITEA_TOKEN="$GITHUB_TOKEN"
+          elif [ -z "$GITEA_TOKEN" ]; then
+            echo "❌ ERROR: No token available!"
             exit 1
           fi
-          echo "✅ Token is set (length: ${#GITEA_TOKEN} chars)"
+
+          echo "✅ Token selected (length: ${#GITEA_TOKEN} chars)"
           echo "   First 10 chars: ${GITEA_TOKEN:0:10}"
           echo "   Last 10 chars: ${GITEA_TOKEN: -10}"
-          echo "   Full token (for verification): $GITEA_TOKEN"
 
           echo "🔧 Configuration Git..."
           git config --global user.email "bot@votre-gitea.com"
