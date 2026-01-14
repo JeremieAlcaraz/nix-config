@@ -190,12 +190,12 @@ jobs:
           git push --force origin $NEW_BRANCH
           echo "✅ Branch pushed successfully"
 
-          echo "📝 Preparing PR body and JSON payload..."
+          echo "📝 Creating Pull Request..."
           VERSION="${{ steps.version.outputs.version }}"
           OLD_DIGEST="${{ steps.current.outputs.digest }}"
           NEW_DIGEST="${{ steps.latest.outputs.digest }}"
 
-          PR_JSON=$(jq -n \
+          PR_RESPONSE=$(jq -n \
             --arg head "$NEW_BRANCH" \
             --arg base "$TARGET_BRANCH" \
             --arg version "$VERSION" \
@@ -206,12 +206,10 @@ jobs:
               base: $base,
               title: ("⬆️ Update n8n:next to " + $version),
               body: ("## 🚀 Automated n8n Update\n\nA new version of `n8n:next` has been detected.\n**Version:** `" + $version + "`\n\n| Previous Digest | New Digest |\n| --- | --- |\n| `" + $old + "` | `" + $new + "` |\n\n*This PR was automatically created by Gitea Actions.*")
-            }')
-
-          PR_RESPONSE=$(curl -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
+            }' | curl -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
             -H "Authorization: token $GITEA_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "$PR_JSON")
+            -d @-)
 
           echo "📋 API Response:"
           echo "$PR_RESPONSE" | jq '.' || echo "$PR_RESPONSE"
