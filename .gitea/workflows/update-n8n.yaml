@@ -195,7 +195,17 @@ jobs:
           OLD_DIGEST="${{ steps.current.outputs.digest }}"
           NEW_DIGEST="${{ steps.latest.outputs.digest }}"
 
-          PR_RESPONSE=$(jq -n \
+          echo "🔍 Debug info:"
+          echo "  - NEW_BRANCH: $NEW_BRANCH"
+          echo "  - VERSION: $VERSION"
+          echo "  - OLD_DIGEST: $OLD_DIGEST"
+          echo "  - NEW_DIGEST: $NEW_DIGEST"
+          echo "  - GITEA_API_URL: $GITEA_API_URL"
+          echo "  - GITEA_REPOSITORY: $GITEA_REPOSITORY"
+
+          # Créer le JSON dans un fichier temporaire
+          echo "📄 Building JSON payload..."
+          jq -n \
             --arg head "$NEW_BRANCH" \
             --arg base "$TARGET_BRANCH" \
             --arg version "$VERSION" \
@@ -206,13 +216,27 @@ jobs:
               base: $base,
               title: ("⬆️ Update n8n:next to " + $version),
               body: ("## 🚀 Automated n8n Update\n\nA new version of `n8n:next` has been detected.\n**Version:** `" + $version + "`\n\n| Previous Digest | New Digest |\n| --- | --- |\n| `" + $old + "` | `" + $new + "` |\n\n*This PR was automatically created by Gitea Actions.*")
-            }' | curl -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
-            -H "Authorization: token $GITEA_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d @-)
+            }' > /tmp/pr_payload.json
 
-          echo "📋 API Response:"
-          echo "$PR_RESPONSE" | jq '.' || echo "$PR_RESPONSE"
+          echo "✅ JSON payload created. Content:"
+          cat /tmp/pr_payload.json | jq '.'
+
+          echo ""
+          echo "🚀 Sending POST request to Gitea API..."
+          echo "   URL: ${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls"
+
+          PR_RESPONSE=$(curl -v -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
+            -H "Authorization: token ${GITEA_TOKEN:0:10}..." \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/pr_payload.json 2>&1)
+
+          echo ""
+          echo "📋 Complete API Response:"
+          echo "$PR_RESPONSE"
+
+          echo ""
+          echo "📋 Parsed API Response (JSON only):"
+          echo "$PR_RESPONSE" | grep -A 9999 '^{' | jq '.' || echo "$PR_RESPONSE" | grep -A 9999 '^{'
 
           # Extraction de l'URL de la PR créée
           PR_URL=$(echo "$PR_RESPONSE" | jq -r '.html_url // empty')
