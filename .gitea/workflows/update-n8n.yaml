@@ -212,72 +212,45 @@ jobs:
             --url "$GITEA_SERVER_URL" \
             --token "$GITEA_TOKEN"
 
-          # Create rich PR description
-          cat > /tmp/pr_body.md << 'EOFMARKER'
-## 🚀 Automated n8n Update
+          # Create PR using tea CLI with rich description
+          tea pr create \
+            --base "$TARGET_BRANCH" \
+            --head "$NEW_BRANCH" \
+            --title "⬆️ Update n8n:next to $VERSION" \
+            --description "## 🚀 Automated n8n Update
 
-A new version of `n8n:next` has been detected on Docker Hub.
+A new version of n8n:next has been detected on Docker Hub.
 
-## 🎯 **Version n8n: `VERSION_PLACEHOLDER`**
+## 🎯 Version n8n: $VERSION
 
 ### 📊 Changes
 
 | Item | Value |
 |------|-------|
-| **n8n Version** | **`VERSION_PLACEHOLDER`** |
-| **Previous digest** | `OLD_DIGEST_PLACEHOLDER` |
-| **New digest** | `NEW_DIGEST_PLACEHOLDER` |
-| **Tag** | `next` (beta releases) |
-| **Image** | `docker.io/n8nio/n8n:next` |
+| **n8n Version** | **$VERSION** |
+| **Previous digest** | $OLD_DIGEST |
+| **New digest** | $NEW_DIGEST |
+| **Tag** | next (beta releases) |
+| **Image** | docker.io/n8nio/n8n:next |
 
 ### 🔍 What's in this update?
 
-This PR updates the n8n container to the latest `next` tag version. The `next` tag includes the latest beta features and improvements from n8n.
+This PR updates the n8n container to the latest next tag version. The next tag includes the latest beta features and improvements from n8n.
 
 ### ✅ Deployment Instructions
 
-After merging this PR, deploy on whitelily:
-
-```bash
-# SSH into whitelily
-ssh jeremie@whitelily
-
-# Pull the latest config
-cd /root/nix-config
-sudo git pull
-
-# Rebuild and switch
-sudo nixos-rebuild switch --flake .#whitelily
-
-# Verify n8n is running
-sudo systemctl status podman-n8n.service
-```
+After merging this PR, deploy on whitelily with: sudo nixos-rebuild switch --flake .#whitelily
 
 ### 📚 Release Notes
 
-Check n8n release notes and changelog:
-- 🔗 [n8n Releases](https://github.com/n8n-io/n8n/releases)
-- 🔗 [n8n Changelog](https://docs.n8n.io/changelog/)
+Check n8n release notes: https://github.com/n8n-io/n8n/releases and https://docs.n8n.io/changelog/
 
 ### 🔐 Security Note
 
-The digest (`sha256:...`) ensures image integrity and immutability. The exact same image will be deployed.
+The digest ensures image integrity and immutability. The exact same image will be deployed.
 
 ---
 
-🤖 *This PR was automatically created by the [update-n8n workflow](.gitea/workflows/update-n8n.yaml)*
-EOFMARKER
-
-          # Replace placeholders
-          sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" /tmp/pr_body.md
-          sed -i "s/OLD_DIGEST_PLACEHOLDER/$OLD_DIGEST/g" /tmp/pr_body.md
-          sed -i "s/NEW_DIGEST_PLACEHOLDER/$NEW_DIGEST/g" /tmp/pr_body.md
-
-          # Create PR using tea CLI
-          tea pr create \
-            --base "$TARGET_BRANCH" \
-            --head "$NEW_BRANCH" \
-            --title "⬆️ Update n8n:next to $VERSION" \
-            --description "$(cat /tmp/pr_body.md)"
+🤖 This PR was automatically created by Gitea Actions"
 
           echo "✅ Pull Request created successfully!"
