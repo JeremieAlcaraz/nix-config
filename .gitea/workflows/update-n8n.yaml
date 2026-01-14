@@ -175,6 +175,13 @@ jobs:
           TARGET_BRANCH: main # Changez ceci si votre branche par défaut est master
         run: |
           set -euo pipefail
+          echo "🔍 Debug: Checking GITEA_TOKEN..."
+          if [ -z "$GITEA_TOKEN" ]; then
+            echo "❌ ERROR: GITEA_TOKEN is empty or not set!"
+            exit 1
+          fi
+          echo "✅ Token is set (length: ${#GITEA_TOKEN} chars, first 10 chars: ${GITEA_TOKEN:0:10})"
+
           echo "🔧 Configuration Git..."
           git config --global user.email "bot@votre-gitea.com"
           git config --global user.name "Gitea Update Bot"
