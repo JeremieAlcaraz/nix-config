@@ -18,17 +18,22 @@ jobs:
       GITEA_API_URL: http://100.96.250.43:3000/api/v1
       GITEA_REPOSITORY: jeremiealcaraz/nix-config
     container:
-      # On force l'utilisation d'une image qui contient Docker, curl et jq
       image: catthehacker/ubuntu:act-latest
-      # IMPORTANT : Permet d'utiliser docker à l'intérieur du job
-      # --network=podman utilise le réseau par défaut avec dns_enabled=false
-      options: --user root -v /var/run/docker.sock:/var/run/docker.sock --network=podman --dns 1.1.1.1 --dns 8.8.8.8
+      options: --user root -v /var/run/docker.sock:/var/run/docker.sock
 
     defaults:
       run:
         shell: bash
 
     steps:
+      - name: Fix DNS resolution (workaround Aardvark-dns bug)
+        run: |
+          echo "🔧 Fixing DNS: replacing Aardvark-dns with public DNS..."
+          echo "nameserver 1.1.1.1" > /etc/resolv.conf
+          echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+          echo "✅ DNS fixed:"
+          cat /etc/resolv.conf
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
