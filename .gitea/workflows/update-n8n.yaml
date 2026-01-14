@@ -191,35 +191,34 @@ jobs:
           echo "✅ Branch pushed successfully"
 
           echo "📝 Preparing PR body..."
-          PR_BODY=$(jq -n \
-            --arg version "${{ steps.version.outputs.version }}" \
-            --arg old_digest "${{ steps.current.outputs.digest }}" \
-            --arg new_digest "${{ steps.latest.outputs.digest }}" \
-            --arg content "## 🚀 Automated n8n Update
-          A new version of \`n8n:next\` has been detected.
-          **Version:** \`$version\`
+          VERSION="${{ steps.version.outputs.version }}"
+          OLD_DIGEST="${{ steps.current.outputs.digest }}"
+          NEW_DIGEST="${{ steps.latest.outputs.digest }}"
 
-          | Previous Digest | New Digest |
-          | --- | --- |
-          | \`$old_digest\` | \`$new_digest\` |
+          PR_BODY="## 🚀 Automated n8n Update
 
-          *This PR was automatically created by Gitea Actions.*" \
-            '$content')
+A new version of \`n8n:next\` has been detected.
+**Version:** \`$VERSION\`
+
+| Previous Digest | New Digest |
+| --- | --- |
+| \`$OLD_DIGEST\` | \`$NEW_DIGEST\` |
+
+*This PR was automatically created by Gitea Actions.*"
           echo "✅ PR body prepared"
 
           echo "🚀 Creating Pull Request via Gitea API..."
+          PR_JSON=$(jq -n \
+            --arg head "$NEW_BRANCH" \
+            --arg base "$TARGET_BRANCH" \
+            --arg title "⬆️ Update n8n:next to $VERSION" \
+            --arg body "$PR_BODY" \
+            '{head: $head, base: $base, title: $title, body: $body}')
+
           PR_RESPONSE=$(curl -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
             -H "Authorization: token $GITEA_TOKEN" \
             -H "Content-Type: application/json" \
-            -d @- <<EOF
-          {
-            "head": "$NEW_BRANCH",
-            "base": "$TARGET_BRANCH",
-            "title": "⬆️ Update n8n:next to ${{ steps.version.outputs.version }}",
-            "body": $PR_BODY
-          }
-          EOF
-          )
+            -d "$PR_JSON")
 
           echo "📋 API Response:"
           echo "$PR_RESPONSE" | jq '.' || echo "$PR_RESPONSE"
