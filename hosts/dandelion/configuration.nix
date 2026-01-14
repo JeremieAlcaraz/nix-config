@@ -114,9 +114,14 @@
       22    # SSH (pour git push/pull via SSH)
     ];
     # Autoriser le DNS interne des réseaux Podman (Gitea Actions)
-    extraInputRules = ''
-      iifname "podman+" udp dport 53 accept
-      iifname "podman+" tcp dport 53 accept
+    # Note: iptables est utilisé sur dandelion, donc on injecte des règles dédiées.
+    extraCommands = ''
+      iptables -I nixos-fw -i podman+ -p udp --dport 53 -j nixos-fw-accept
+      iptables -I nixos-fw -i podman+ -p tcp --dport 53 -j nixos-fw-accept
+    '';
+    extraStopCommands = ''
+      iptables -D nixos-fw -i podman+ -p udp --dport 53 -j nixos-fw-accept || true
+      iptables -D nixos-fw -i podman+ -p tcp --dport 53 -j nixos-fw-accept || true
     '';
   };
 
