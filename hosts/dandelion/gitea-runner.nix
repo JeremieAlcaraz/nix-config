@@ -101,6 +101,8 @@ EOF
     containers.gitea-runner = {
       image = "docker.io/gitea/act_runner:latest";
       autoStart = true;
+      # Override la commande par défaut pour passer le fichier de config
+      cmd = [ "act_runner" "daemon" "--config" "/data/config.yaml" ];
       extraOptions = [
         "--network=host"
         "--volume=${runnerDataDir}:/data"
@@ -109,10 +111,6 @@ EOF
         "--cpus=2"
         "--memory=4g"
       ];
-      # Variables d'environnement pour utiliser le fichier de config
-      environment = {
-        GITEA_RUNNER_CONFIG = "/data/config.yaml";
-      };
     };
   };
 
