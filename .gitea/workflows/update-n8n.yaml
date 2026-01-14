@@ -212,23 +212,11 @@ jobs:
             --url "$GITEA_SERVER_URL" \
             --token "$GITEA_TOKEN"
 
-          # Build PR description
-          PR_DESCRIPTION="## 🚀 Automated n8n Update
-
-A new version of \`n8n:next\` has been detected.
-**Version:** \`$VERSION\`
-
-| Previous Digest | New Digest |
-| --- | --- |
-| \`$OLD_DIGEST\` | \`$NEW_DIGEST\` |
-
-*This PR was automatically created by Gitea Actions.*"
-
           # Create PR using tea CLI
           tea pr create \
             --base "$TARGET_BRANCH" \
             --head "$NEW_BRANCH" \
             --title "⬆️ Update n8n:next to $VERSION" \
-            --description "$PR_DESCRIPTION"
+            --description "Automated n8n Update - Version: $VERSION - Old digest: $OLD_DIGEST - New digest: $NEW_DIGEST"
 
           echo "✅ Pull Request created successfully!"
