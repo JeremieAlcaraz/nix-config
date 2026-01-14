@@ -17,9 +17,9 @@ runner:
   job_timeout: 2h
 
 container:
-  # Network : host pour éviter le DNS Aardvark-dns de Podman qui casse tout
-  # Les réseaux bridge créés par act_runner ignorent les --dns flags
-  network: "host"
+  # Network : utilise le réseau podman par défaut (dns_enabled=false)
+  # Les réseaux auto-créés par act_runner ignorent network_dns_servers
+  network: "podman"
 
   # Privilégié : false (pas besoin de Docker-in-Docker ici)
   privileged: false

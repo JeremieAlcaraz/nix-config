@@ -16,19 +16,16 @@ in
     dockerCompat = true;
     dockerSocket.enable = true;
     defaultNetwork.settings = {
-      dns_enabled = true;
-      # CRITIQUE : network_dns_servers configure Aardvark-dns pour forward vers ces DNS
-      # Sans ça, Aardvark-dns ne peut pas résoudre les domaines externes
-      network_dns_servers = [ "1.1.1.1" "8.8.8.8" ];
+      # DÉSACTIVE Aardvark-dns pour que les conteneurs utilisent les --dns flags
+      # Aardvark-dns ignore network_dns_servers dans les réseaux créés dynamiquement
+      dns_enabled = false;
     };
   };
 
   virtualisation.containers.containersConf.settings = {
     network = {
+      # DNS servers par défaut pour les conteneurs (quand dns_enabled=false)
       dns_servers = [ "1.1.1.1" "8.8.8.8" ];
-      # CRITIQUE : network_dns_servers configure Aardvark-dns au niveau GLOBAL
-      # Tous les réseaux créés dynamiquement (par act_runner) hériteront de cette config
-      network_dns_servers = [ "1.1.1.1" "8.8.8.8" ];
     };
   };
 
