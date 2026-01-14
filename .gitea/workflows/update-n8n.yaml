@@ -39,46 +39,67 @@ jobs:
         id: current
         run: |
           set -euo pipefail
+          echo "🔍 Reading current n8n image from hosts/whitelily/n8n.nix..."
           CURRENT_IMAGE=$(grep -oP 'image = "docker.io/n8nio/n8n:\K[^"]+' hosts/whitelily/n8n.nix)
-          echo "Current image: $CURRENT_IMAGE"
+          echo "✅ Current image: $CURRENT_IMAGE"
           echo "image=$CURRENT_IMAGE" >> $GITHUB_OUTPUT
+
+          echo "🔍 Extracting digest from current image..."
           if [[ "$CURRENT_IMAGE" == *"@sha256:"* ]]; then
             CURRENT_DIGEST=$(echo "$CURRENT_IMAGE" | grep -oP '@sha256:\K[a-f0-9]+')
+            echo "✅ Current digest found: $CURRENT_DIGEST"
           else
             CURRENT_DIGEST="none"
+            echo "⚠️  No digest in current image (using tag only)"
           fi
-          echo "Current digest: $CURRENT_DIGEST"
           echo "digest=$CURRENT_DIGEST" >> $GITHUB_OUTPUT
 
       - name: Debug network (Docker Hub)
         run: |
           set -euo pipefail
-          echo "resolv.conf:"
+          echo "🔍 Checking DNS configuration..."
+          echo "📄 /etc/resolv.conf:"
           cat /etc/resolv.conf || true
-          echo "hosts lookup:"
-          getent hosts auth.docker.io registry-1.docker.io || true
+          echo ""
+          echo "🌐 Testing DNS resolution for Docker Hub..."
+          getent hosts auth.docker.io || echo "❌ Failed to resolve auth.docker.io"
+          getent hosts registry-1.docker.io || echo "❌ Failed to resolve registry-1.docker.io"
+          echo ""
+          echo "🔌 Testing connectivity with curl..."
+          curl -v https://auth.docker.io 2>&1 | head -20 || echo "❌ curl to auth.docker.io failed"
 
       - name: Get latest n8n:next digest from Docker Hub
         id: latest
         run: |
           set -euo pipefail
+          echo "🔑 Requesting Docker Hub authentication token..."
           TOKEN=$(curl -fsS --retry 3 --retry-connrefused --retry-delay 1 \
             "https://auth.docker.io/token?service=registry.docker.io&scope=repository:n8nio/n8n:pull" \
             | jq -r .token)
+
           if [[ -z "$TOKEN" || "$TOKEN" == "null" ]]; then
-            echo "Token Docker Hub introuvable." >&2
+            echo "❌ Token Docker Hub introuvable." >&2
             exit 1
           fi
-          LATEST_DIGEST=$(curl -fsSI --retry 3 --retry-connrefused --retry-delay 1 \
+          echo "✅ Token obtained successfully (length: ${#TOKEN} chars)"
+
+          echo "📡 Fetching latest n8n:next manifest from Docker Hub..."
+          RESPONSE=$(curl -fsSI --retry 3 --retry-connrefused --retry-delay 1 \
             -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-            "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next" \
-            | grep -i "docker-content-digest:" | cut -d' ' -f2 | tr -d '\r' | cut -d: -f2)
+            "https://registry-1.docker.io/v2/n8nio/n8n/manifests/next")
+
+          echo "📋 HTTP Response headers:"
+          echo "$RESPONSE"
+          echo ""
+
+          LATEST_DIGEST=$(echo "$RESPONSE" | grep -i "docker-content-digest:" | cut -d' ' -f2 | tr -d '\r' | cut -d: -f2)
+
           if [[ -z "$LATEST_DIGEST" ]]; then
-            echo "Digest n8n:next introuvable." >&2
+            echo "❌ Digest n8n:next introuvable dans les headers." >&2
             exit 1
           fi
-          echo "Latest digest: $LATEST_DIGEST"
+          echo "✅ Latest digest: $LATEST_DIGEST"
           echo "digest=$LATEST_DIGEST" >> $GITHUB_OUTPUT
 
       - name: Extract n8n version from image
@@ -86,17 +107,23 @@ jobs:
         run: |
           set -euo pipefail
           FULL_IMAGE="docker.io/n8nio/n8n:next@sha256:${{ steps.latest.outputs.digest }}"
-          docker pull --quiet "$FULL_IMAGE" > /dev/null 2>&1 || true
+          echo "🐳 Pulling image to extract version: $FULL_IMAGE"
+          docker pull --quiet "$FULL_IMAGE" > /dev/null 2>&1 || echo "⚠️  Pull may have failed, continuing anyway..."
+
+          echo "🔍 Inspecting image labels..."
           VERSION=$(docker inspect "$FULL_IMAGE" 2>/dev/null | jq -r '.[0].Config.Labels["org.opencontainers.image.version"] // .[0].Config.Labels["version"] // .[0].Config.Labels["org.label-schema.version"] // empty')
-          
+
           if [ -z "$VERSION" ]; then
             SHORT_DIGEST=$(echo "${{ steps.latest.outputs.digest }}" | cut -c1-12)
             VERSION="next-${SHORT_DIGEST}"
+            echo "⚠️  No version label found, using digest-based version: $VERSION"
+          else
+            echo "✅ Version extracted from labels: $VERSION"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          
-          # Nettoyage
-          docker rmi "$FULL_IMAGE" 2>/dev/null || true
+
+          echo "🧹 Cleaning up pulled image..."
+          docker rmi "$FULL_IMAGE" 2>/dev/null || echo "⚠️  Failed to remove image (not critical)"
 
       - name: Check if update needed
         id: check
@@ -104,9 +131,16 @@ jobs:
           set -euo pipefail
           CURRENT="${{ steps.current.outputs.digest }}"
           LATEST="${{ steps.latest.outputs.digest }}"
+
+          echo "🔍 Comparing digests..."
+          echo "   Current: $CURRENT"
+          echo "   Latest:  $LATEST"
+
           if [ "$CURRENT" != "$LATEST" ]; then
+            echo "🆕 Update needed! New version available."
             echo "update_needed=true" >> $GITHUB_OUTPUT
           else
+            echo "✅ Already up to date. No update needed."
             echo "update_needed=false" >> $GITHUB_OUTPUT
           fi
 
@@ -115,7 +149,14 @@ jobs:
         run: |
           set -euo pipefail
           LATEST_DIGEST="${{ steps.latest.outputs.digest }}"
+
+          echo "✏️  Updating hosts/whitelily/n8n.nix with new digest..."
+          echo "   New digest: $LATEST_DIGEST"
+
           sed -i 's|image = "docker.io/n8nio/n8n:.*";.*|image = "docker.io/n8nio/n8n:next@sha256:'"$LATEST_DIGEST"'";  # Tag next pour les dernières betas|' hosts/whitelily/n8n.nix
+
+          echo "✅ File updated. Showing diff:"
+          git diff hosts/whitelily/n8n.nix || true
 
       # --- MODIFICATION POUR GITEA (Remplacement de peter-evans) ---
 
@@ -127,17 +168,23 @@ jobs:
           TARGET_BRANCH: main # Changez ceci si votre branche par défaut est master
         run: |
           set -euo pipefail
-          # 1. Configuration Git
+          echo "🔧 Configuration Git..."
           git config --global user.email "bot@votre-gitea.com"
           git config --global user.name "Gitea Update Bot"
-          
-          # 2. Création de la branche et Push
+          echo "✅ Git configured"
+
+          echo "🌿 Creating new branch: $NEW_BRANCH"
           git checkout -b $NEW_BRANCH
+
+          echo "💾 Committing changes..."
           git commit -am "⬆️ Update n8n to next@sha256:${{ steps.latest.outputs.digest }}"
+          echo "✅ Commit created"
+
+          echo "⬆️  Pushing to origin..."
           git push origin $NEW_BRANCH
-          
-          # 3. Préparation du corps de la PR (JSON safe)
-          # On utilise jq pour créer un JSON propre pour l'API
+          echo "✅ Branch pushed successfully"
+
+          echo "📝 Preparing PR body..."
           PR_BODY=$(jq -n \
             --arg version "${{ steps.version.outputs.version }}" \
             --arg old_digest "${{ steps.current.outputs.digest }}" \
@@ -145,16 +192,17 @@ jobs:
             --arg content "## 🚀 Automated n8n Update
           A new version of \`n8n:next\` has been detected.
           **Version:** \`$version\`
-          
+
           | Previous Digest | New Digest |
           | --- | --- |
           | \`$old_digest\` | \`$new_digest\` |
-          
+
           *This PR was automatically created by Gitea Actions.*" \
             '$content')
+          echo "✅ PR body prepared"
 
-          # 4. Appel API pour créer la PR
-          curl -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
+          echo "🚀 Creating Pull Request via Gitea API..."
+          PR_RESPONSE=$(curl -X POST "${GITEA_API_URL}/repos/${GITEA_REPOSITORY}/pulls" \
             -H "Authorization: token $GITEA_TOKEN" \
             -H "Content-Type: application/json" \
             -d @- <<EOF
@@ -165,3 +213,15 @@ jobs:
             "body": $PR_BODY
           }
           EOF
+          )
+
+          echo "📋 API Response:"
+          echo "$PR_RESPONSE" | jq '.' || echo "$PR_RESPONSE"
+
+          # Extraction de l'URL de la PR créée
+          PR_URL=$(echo "$PR_RESPONSE" | jq -r '.html_url // empty')
+          if [ -n "$PR_URL" ]; then
+            echo "✅ Pull Request created successfully: $PR_URL"
+          else
+            echo "⚠️  PR may have been created but URL not found in response"
+          fi

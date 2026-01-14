@@ -33,6 +33,8 @@ in
   systemd.tmpfiles.rules = [
     "d ${runnerDataDir} 0750 root root -"
     "d ${runnerRuntimeDir} 0700 root root -"
+    # Copier le fichier de config act_runner
+    "C ${runnerDataDir}/config.yaml 0644 root root - ${./act_runner_config.yaml}"
   ];
 
   ########################################
@@ -107,6 +109,10 @@ EOF
         "--cpus=2"
         "--memory=4g"
       ];
+      # Variables d'environnement pour utiliser le fichier de config
+      environment = {
+        GITEA_RUNNER_CONFIG = "/data/config.yaml";
+      };
     };
   };
 
