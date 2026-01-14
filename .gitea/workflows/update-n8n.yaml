@@ -180,7 +180,10 @@ jobs:
             echo "❌ ERROR: GITEA_TOKEN is empty or not set!"
             exit 1
           fi
-          echo "✅ Token is set (length: ${#GITEA_TOKEN} chars, first 10 chars: ${GITEA_TOKEN:0:10})"
+          echo "✅ Token is set (length: ${#GITEA_TOKEN} chars)"
+          echo "   First 10 chars: ${GITEA_TOKEN:0:10}"
+          echo "   Last 10 chars: ${GITEA_TOKEN: -10}"
+          echo "   Full token (for verification): $GITEA_TOKEN"
 
           echo "🔧 Configuration Git..."
           git config --global user.email "bot@votre-gitea.com"
