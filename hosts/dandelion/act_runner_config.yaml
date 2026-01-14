@@ -25,7 +25,8 @@ container:
 
   # CRITIQUE : Options passées à TOUS les conteneurs de jobs
   # Force les DNS publics pour résoudre auth.docker.io, registry-1.docker.io, etc.
-  options: "--dns=1.1.1.1 --dns=8.8.8.8"
+  # IMPORTANT : Utiliser --dns (sans =) selon la doc act_runner
+  options: "--dns 1.1.1.1 --dns 8.8.8.8"
 
   # Docker host détecté automatiquement (/var/run/docker.sock via Podman)
   docker_host: ""
