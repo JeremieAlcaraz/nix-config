@@ -26,6 +26,9 @@ in
   virtualisation.containers.containersConf.settings = {
     network = {
       dns_servers = [ "1.1.1.1" "8.8.8.8" ];
+      # CRITIQUE : network_dns_servers configure Aardvark-dns au niveau GLOBAL
+      # Tous les réseaux créés dynamiquement (par act_runner) hériteront de cette config
+      network_dns_servers = [ "1.1.1.1" "8.8.8.8" ];
     };
   };
 
