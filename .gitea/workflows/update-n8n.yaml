@@ -186,8 +186,8 @@ jobs:
           git commit -am "⬆️ Update n8n to next@sha256:${{ steps.latest.outputs.digest }}"
           echo "✅ Commit created"
 
-          echo "⬆️  Pushing to origin..."
-          git push origin $NEW_BRANCH
+          echo "⬆️  Pushing to origin (force push to replace existing branch if any)..."
+          git push --force origin $NEW_BRANCH
           echo "✅ Branch pushed successfully"
 
           echo "📝 Preparing PR body..."
