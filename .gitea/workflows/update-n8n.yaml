@@ -14,9 +14,9 @@ jobs:
   check-and-update:
     runs-on: ubuntu-latest
     env:
-      GITHUB_SERVER_URL: http://dandelion:3000
-      GITEA_SERVER_URL: http://dandelion:3000
-      GITEA_API_URL: http://dandelion:3000/api/v1
+      GITHUB_SERVER_URL: http://100.96.250.43:3000
+      GITEA_SERVER_URL: http://100.96.250.43:3000
+      GITEA_API_URL: http://100.96.250.43:3000/api/v1
       GITEA_REPOSITORY: jeremiealcaraz/nix-config
     container:
       image: catthehacker/ubuntu:act-latest
