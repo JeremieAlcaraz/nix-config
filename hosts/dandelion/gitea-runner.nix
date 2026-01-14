@@ -17,7 +17,9 @@ in
     dockerSocket.enable = true;
     defaultNetwork.settings = {
       dns_enabled = true;
-      dns_servers = [ "1.1.1.1" "8.8.8.8" ];
+      # CRITIQUE : network_dns_servers configure Aardvark-dns pour forward vers ces DNS
+      # Sans ça, Aardvark-dns ne peut pas résoudre les domaines externes
+      network_dns_servers = [ "1.1.1.1" "8.8.8.8" ];
     };
   };
 
