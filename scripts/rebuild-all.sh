@@ -52,7 +52,7 @@ Usage: $0 [OPTIONS]
 Rebuild toutes les configurations NixOS et remplit le cache binaire magnolia.
 
 Ce script va :
-  1. Synchroniser le repo depuis GitHub
+  1. Synchroniser le repo depuis Gitea (origin)
   2. Mettre à jour j12z-site (optionnel)
   3. Builder mimosa, whitelily, dandelion, minimal pour le cache
   4. Builder et appliquer la config magnolia
@@ -116,9 +116,9 @@ fi
 # Début du script
 log_header "🚀 Rebuild All Configurations"
 
-# Étape 1: Sync depuis GitHub
-log_info "Synchronisation depuis GitHub..."
-git fetch --all
+# Étape 1: Sync depuis Gitea (origin)
+log_info "Synchronisation depuis origin (Gitea)..."
+git fetch origin
 git reset --hard origin/main
 log_success "Repo synchronisé"
 
@@ -190,9 +190,9 @@ else
     log_info "Commit du flake.lock..."
     git commit -m "chore: update flake.lock after full rebuild"
 
-    log_info "Push vers GitHub..."
+    log_info "Push vers origin (Gitea)..."
     if git push origin main; then
-        log_success "flake.lock pushed to GitHub"
+        log_success "flake.lock pushed to origin"
     else
         log_error "Push failed! Fais-le manuellement avec: git push origin main"
     fi
