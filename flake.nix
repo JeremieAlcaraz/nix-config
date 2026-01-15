@@ -9,9 +9,10 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     j12z-site = {
-      url = "github:JeremieAlcaraz/j12zdotcom";
+      url = "git+http://dandelion:3000/jeremiealcaraz/j12zdotcom";
       # Ne pas forcer nixpkgs - laisser j12zdotcom utiliser sa propre version
       # inputs.nixpkgs.follows = "nixpkgs";
+      flake = true;
     };
     sops-nix = {
       url = "github:Mic92/sops-nix";
