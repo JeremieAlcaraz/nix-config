@@ -151,15 +151,15 @@
       "locked": {
         "lastModified": 1767123481,
         "narHash": "sha256-RWwcZMasqUlCnVvSGqOKeGE0Xx4P7pEbyIMQnkPBzXc=",
-        "owner": "JeremieAlcaraz",
-        "repo": "j12zdotcom",
+        "ref": "refs/heads/main",
         "rev": "db9c0e2a9c43a13a15bacfaf14aca5bf13d2024a",
-        "type": "github"
+        "revCount": 479,
+        "type": "git",
+        "url": "http://dandelion:3000/jeremiealcaraz/j12zdotcom"
       },
       "original": {
-        "owner": "JeremieAlcaraz",
-        "repo": "j12zdotcom",
-        "type": "github"
+        "type": "git",
+        "url": "http://dandelion:3000/jeremiealcaraz/j12zdotcom"
       }
     },
     "nix-yazi-plugins": {
