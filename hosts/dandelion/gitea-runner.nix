@@ -1,11 +1,11 @@
-{ config, pkgs, ... }:
+{ config, pkgs, projectConfig, ... }:
 
 let
   runnerDataDir = "/var/lib/gitea-runner";
   runnerRuntimeDir = "/run/gitea-runner";
   runnerName = "dandelion-runner";
   runnerLabels = "ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-latest";
-  giteaInstanceUrl = "http://100.96.250.43:3000";
+  giteaInstanceUrl = projectConfig.gitForge.gitea.url;
 in
 {
   ########################################

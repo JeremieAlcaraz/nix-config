@@ -34,11 +34,14 @@
   outputs = { self, nixpkgs, nixpkgs-unstable, nix-yazi-plugins, j12z-site, sops-nix, home-manager, darwin, try, ... }:
     let
       system = "x86_64-linux";
+      # Import configuration centralisée
+      projectConfig = import ./config.nix;
     in {
       nixosConfigurations = {
         # Magnolia - Infrastructure Proxmox
         magnolia = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { inherit projectConfig; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix
@@ -58,7 +61,7 @@
         # Une fois installé, basculez vers "mimosa" pour activer le webserver
         mimosa-bootstrap = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit j12z-site; };
+          specialArgs = { inherit j12z-site projectConfig; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix
@@ -83,7 +86,7 @@
         #   sudo nixos-rebuild switch --flake .#mimosa
         mimosa = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit j12z-site; };
+          specialArgs = { inherit j12z-site projectConfig; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix
@@ -106,6 +109,7 @@
         # Whitelily - VM n8n automation
         whitelily = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { inherit projectConfig; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix
@@ -123,6 +127,7 @@
         # Dandelion - VM Gitea (serveur Git auto-hébergé)
         dandelion = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { inherit projectConfig; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix
@@ -140,6 +145,7 @@
         # Minimal - VM de démonstration minimale
         minimal = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { inherit projectConfig; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix
@@ -158,6 +164,7 @@
         # Build avec: nix build .#nixosConfigurations.installer.config.system.build.isoImage
         installer = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { inherit projectConfig; };
           modules = [
             ./iso/custom-installer.nix
           ];
@@ -167,6 +174,7 @@
       darwinConfigurations = {
         marigold = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
+          specialArgs = { inherit projectConfig; };
           modules = [
             ./hosts/marigold/configuration.nix
             home-manager.darwinModules.home-manager
@@ -181,7 +189,7 @@
               home-manager.users.jeremiealcaraz = import ./home/marigold.nix;
               # Passer try à Home Manager
               home-manager.extraSpecialArgs = {
-                inherit try nix-yazi-plugins;
+                inherit try nix-yazi-plugins projectConfig;
               };
               # Rendre nixpkgs-unstable accessible dans les modules Home Manager
               nixpkgs.overlays = [

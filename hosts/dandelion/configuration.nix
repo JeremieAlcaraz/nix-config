@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, projectConfig, ... }:
 
 {
   imports = [
@@ -66,10 +66,10 @@
     # Configuration du serveur
     settings = {
       server = {
-        DOMAIN = "100.96.250.43";
+        DOMAIN = projectConfig.gitForge.gitea.host;
         HTTP_ADDR = "0.0.0.0";  # Écoute sur toutes les interfaces (accessible via Tailscale)
-        HTTP_PORT = 3000;
-        ROOT_URL = "http://100.96.250.43:3000/";
+        HTTP_PORT = projectConfig.gitForge.gitea.port;
+        ROOT_URL = "${projectConfig.gitForge.gitea.url}/";
       };
 
       service = {

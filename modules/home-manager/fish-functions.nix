@@ -19,7 +19,7 @@
           set -l YELLOW '\033[1;33m'
           set -l NC '\033[0m' # No Color
 
-          echo -e "$BLUE🔄 Syncing from GitHub...$NC"
+          echo -e "$BLUE🔄 Syncing from origin (Gitea)...$NC"
 
           # Git fetch et reset
           if git fetch --all; and git reset --hard origin/main

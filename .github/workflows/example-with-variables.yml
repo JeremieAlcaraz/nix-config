@@ -1,0 +1,43 @@
+name: Example workflow avec variables
+run-name: ${{ github.actor }} teste les variables d'environnement
+on: [workflow_dispatch]
+
+jobs:
+  test-variables:
+    runs-on: ubuntu-latest
+    env:
+      # Utiliser les variables de repository (à configurer dans Gitea/GitHub)
+      # Fallback vers les valeurs par défaut si les variables ne sont pas définies
+      GIT_SERVER_URL: ${{ vars.GIT_SERVER_URL || 'https://github.com' }}
+      GIT_SERVER_TYPE: ${{ vars.GIT_SERVER_TYPE || 'github' }}
+      GITHUB_SERVER_URL: ${{ vars.GIT_SERVER_URL || 'https://github.com' }}
+
+    steps:
+      - name: Afficher les variables
+        run: |
+          echo "🔧 Configuration détectée :"
+          echo "  Type de serveur: $GIT_SERVER_TYPE"
+          echo "  URL du serveur: $GIT_SERVER_URL"
+          echo ""
+          echo "📝 Pour changer ces valeurs :"
+          echo "  1. Aller dans Settings → Secrets and variables → Actions → Variables"
+          echo "  2. Créer GIT_SERVER_URL et GIT_SERVER_TYPE"
+          echo "  3. Les workflows utiliseront automatiquement ces valeurs"
+
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Exemple d'utilisation conditionnelle
+        run: |
+          if [ "$GIT_SERVER_TYPE" = "gitea" ]; then
+            echo "✅ Configuration Gitea détectée"
+            echo "🔗 Serveur Gitea: $GIT_SERVER_URL"
+          elif [ "$GIT_SERVER_TYPE" = "github" ]; then
+            echo "✅ Configuration GitHub détectée"
+            echo "🔗 GitHub: $GIT_SERVER_URL"
+          else
+            echo "⚠️  Type de serveur inconnu: $GIT_SERVER_TYPE"
+          fi
+
+      - name: Statut final
+        run: echo "✅ Workflow terminé avec succès !"
