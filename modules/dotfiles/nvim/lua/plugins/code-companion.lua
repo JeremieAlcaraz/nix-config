@@ -4,7 +4,7 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
-    "zbirenbaum/copilot.lua",
+    -- "zbirenbaum/copilot.lua", -- ❌ DÉSACTIVÉ : Copilot spam "Not authenticated"
     "ravitemer/mcphub.nvim", -- ✅ AJOUTÉ : Déclare mcphub comme dépendance de CodeCompanion
     -- Cela signifie que mcphub sera installé ET chargé AVANT CodeCompanion
     -- Nécessaire pour que CodeCompanion puisse accéder aux fonctions de mcphub
@@ -29,12 +29,12 @@ return {
             model = "gpt-4o-mini",
           })
         end,
-        copilot = function()
-          return require("codecompanion.adapters").extend("copilot", {})
-        end,
+        -- copilot = function()
+        --   return require("codecompanion.adapters").extend("copilot", {})
+        -- end,
       },
       strategies = {
-        chat = { adapter = "copilot" },
+        chat = { adapter = "openai" }, -- ✅ AVANT: copilot -> maintenant OpenAI
         inline = { adapter = "openai" },
         agent = { adapter = "openai" },
       },
