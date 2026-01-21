@@ -13,6 +13,7 @@ require('config.appearance').apply(config)
 require('config.tab_bar').apply(config)
 require('config.domains').apply(config)
 require('config.modal').apply(config)
+require('config.notifications').apply(config)
 require('keys').apply(config)
 require('config.startup').apply()
 
