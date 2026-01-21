@@ -4,155 +4,180 @@ Checklist des étapes réalisées et restantes pour passer du site statique à u
 
 ## ✅ Fait (validé le 2026-01-21)
 
-### Côté projet Astro (repo j12zdotcom)
+### Phase 1 : Préparation et validation locale
 
+#### Repo j12zdotcom
 - [x] Adaptateur Node (`@astrojs/node` v9.5.1) déjà installé et configuré.
 - [x] Configuration Astro 5+ validée : `output: 'static'` + `adapter: node({ mode: 'standalone' })`.
 - [x] Page de test SSR créée (`/test-ssr.astro`) avec `export const prerender = false`.
 - [x] Page de test statique créée (`/test-static.astro`) pour comparaison.
-- [x] Build local réussi : `dist/server/entry.mjs` généré correctement.
+- [x] Build local réussi : `dist/server/entry.mjs` généré correctement (4.5K).
 - [x] Test serveur Node local : `node dist/server/entry.mjs` fonctionne sur port 4321.
 - [x] Validation SSR : date change à chaque refresh sur `/test-ssr`.
 - [x] Validation static : date figée sur `/test-static`.
+- [x] Commit + push pages de test (commit `f0067b7`).
 
-### Prochaine étape immédiate
+#### Repo nix-config
+- [x] Renommage `j12z-site` → `j12zdotcom` dans tout le projet (commit `f35a6f9`).
+- [x] Mise à jour PLAN.md avec résultats validation (commit `e4fda7e`).
 
-- [ ] Commit + push sur le repo `j12zdotcom` (pages de test + validation SSR).
+### Phase 2 : Build et validation Nix
+
+- [x] Mise à jour hash pnpmDeps pour Linux x86_64 (commit `ec81498` + `64d7432`).
+- [x] Résolution problème cache Nix source (commit vide `670b637` pour invalider cache).
+- [x] Libération espace disque sur Magnolia (98% → 16% via garbage collection).
+- [x] Build Nix réussi avec serveur SSR généré.
+- [x] Vérification structure package : `/nix/store/r8pbci4ngs57kcllmymhmf58kppipqqk-j12zdotcom-1.0.0/`
+  - ✅ `server/entry.mjs` (4.4K)
+  - ✅ `server/pages/test-ssr.astro.mjs`
+  - ✅ `client/test-static/` (pré-rendu)
+
+**Chemin validé** : `${sitePackage}/server/entry.mjs` (PAS dans dist/)
 
 ## ⏳ À faire (prochaines étapes)
 
-### 2) Côté infra Nix (repo nix-config)
+### Phase 3 : Déploiement sur Mimosa
 
-### 2) Côté infra Nix (repo nix-config)
+#### Étape 1 : Modifier hosts/mimosa/webserver.nix
 
-- [ ] Sur Magnolia, vérifier le chemin exact de `entry.mjs` dans le store Nix (après `nix build`).
 - [ ] Mettre à jour `hosts/mimosa/webserver.nix` :
-- [ ] Ajouter un service systemd `j12zdotcom` qui lance Node.
-- [ ] Modifier Caddy pour faire `reverse_proxy 127.0.0.1:4321`.
-- [ ] Garder `cloudflared` et `sops` inchangés.
-- [ ] Commit + push sur le repo `nix-config`.
+  - [ ] Ajouter service systemd `j12zdotcom` qui lance Node
+  - [ ] Modifier Caddy : `file_server` → `reverse_proxy 127.0.0.1:4321`
+  - [ ] Garder `cloudflared` et `sops` inchangés
+- [ ] Commit + push sur le repo `nix-config`
 
-### 3) Déploiement (Magnolia → Mimosa)
+#### Étape 2 : Déploiement sur Magnolia
 
-- [ ] Lancer `ra` sur Magnolia (met à jour `j12zdotcom` + build + cache).
-- [ ] Lancer `da` sur Magnolia (déploie sur Mimosa).
-- [ ] Vérifier sur Mimosa :
-- [ ] `systemctl status j12zdotcom`
-- [ ] `journalctl -u j12zdotcom -f`
-- [ ] `curl http://127.0.0.1:4321`
-- [ ] Tester l'URL publique.
+- [ ] Sur Magnolia : `gu` (update repo depuis Gitea)
+- [ ] Sur Magnolia : `ra` (rebuild all + cache j12zdotcom)
+- [ ] Sur Magnolia : `da` (deploy sur Mimosa)
 
-### 4) Rollback (si besoin)
+#### Étape 3 : Vérifications sur Mimosa
 
-- [ ] Sur Mimosa : `sudo nixos-rebuild switch --rollback`.
+- [ ] `systemctl status j12zdotcom` (service Node actif)
+- [ ] `journalctl -u j12zdotcom -f` (logs serveur)
+- [ ] `curl http://127.0.0.1:4321/test-ssr` (date dynamique)
+- [ ] `curl http://127.0.0.1:4321/test-static` (date figée)
+- [ ] Tester URL publique : https://jeremiealcaraz.com/test-ssr
 
-Top, si le build SSR tourne bien en local, on peut l’intégrer proprement dans Mimosa. Il y a 2 changements NixOS à
-faire :
+#### Étape 4 : Rollback (si besoin)
 
-1. lancer le serveur Node (systemd)
-2. faire proxy Caddy → Node
+- [ ] Sur Mimosa : `sudo nixos-rebuild switch --rollback`
 
-Voici la version minimale et sûre à mettre dans hosts/mimosa/webserver.nix (je te laisse valider le chemin exact du
-entry.mjs après build Nix) :
+---
 
+## 📝 Template de configuration (VALIDÉ)
+
+**Chemin confirmé** : `${sitePackage}/server/entry.mjs` ✅
+(Package Nix : `/nix/store/r8pbci4ngs57kcllmymhmf58kppipqqk-j12zdotcom-1.0.0/`)
+
+Configuration à appliquer dans `hosts/mimosa/webserver.nix` :
+
+```nix
 # hosts/mimosa/webserver.nix
-
 { config, lib, pkgs, j12zdotcom, ... }:
 
 let
-cfg = config.mimosa.webserver;
-sitePackage = j12zdotcom.packages.x86_64-linux.site;
+  cfg = config.mimosa.webserver;
+  sitePackage = j12zdotcom.packages.x86_64-linux.site;
 in
 {
-options.mimosa.webserver.enable = lib.mkEnableOption "the j12z webserver for mimosa";
+  options.mimosa.webserver.enable = lib.mkEnableOption "the j12z webserver for mimosa";
 
-    config = lib.mkIf cfg.enable {
-      # ✅ Nouveau service Node (Astro SSR/Hybrid)
-      systemd.services.j12zdotcom = {
-        description = "J12z Astro Site Server";
-        wantedBy = [ "multi-user.target" ];
-        restartTriggers = [ sitePackage ];
+  config = lib.mkIf cfg.enable {
+    # ✅ Nouveau service Node (Astro SSR/Hybrid)
+    systemd.services.j12zdotcom = {
+      description = "J12z Astro Site Server";
+      wantedBy = [ "multi-user.target" ];
+      restartTriggers = [ sitePackage ];
 
-        serviceConfig = {
-          ExecStart = "${pkgs.nodejs_20}/bin/node ${sitePackage}/server/entry.mjs";
-          WorkingDirectory = "${sitePackage}";
-          Environment = [
-            "HOST=127.0.0.1"
-            "PORT=4321"
-            "NODE_ENV=production"
-          ];
+      serviceConfig = {
+        ExecStart = "${pkgs.nodejs_20}/bin/node ${sitePackage}/server/entry.mjs";
+        WorkingDirectory = "${sitePackage}";
+        Environment = [
+          "HOST=127.0.0.1"
+          "PORT=4321"
+          "NODE_ENV=production"
+        ];
 
-          DynamicUser = true;
-          Restart = "always";
-          RestartSec = "5s";
-        };
+        DynamicUser = true;
+        Restart = "always";
+        RestartSec = "5s";
       };
-
-      # ✅ Caddy devient reverse proxy
-      services.caddy = {
-        enable = true;
-        globalConfig = ''
-          auto_https off
-        '';
-        virtualHosts."http://jeremiealcaraz.com" = {
-          extraConfig = ''
-            reverse_proxy 127.0.0.1:4321
-
-            encode gzip zstd
-
-            header {
-              X-Frame-Options "SAMEORIGIN"
-              X-Content-Type-Options "nosniff"
-              X-XSS-Protection "1; mode=block"
-              Referrer-Policy "strict-origin-when-cross-origin"
-              Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-
-
-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https:;
-connect-src 'self' https:; media-src 'self' https:;"
-Permissions-Policy "geolocation=(), microphone=(), camera=()"
-Cache-Control "public, must-revalidate, max-age=0"
--Server
-}
-
-            log {
-              output file /var/log/caddy/jeremiealcaraz.com.log {
-                roll_size 100mb
-                roll_keep 10
-                roll_keep_for 720h
-              }
-              format json
-              level INFO
-            }
-          '';
-        };
-      };
-
-      # (cloudflared + sops inchangés)
     };
 
+    # ✅ Caddy devient reverse proxy
+    services.caddy = {
+      enable = true;
+      globalConfig = ''
+        auto_https off
+      '';
+      virtualHosts."http://jeremiealcaraz.com" = {
+        extraConfig = ''
+          reverse_proxy 127.0.0.1:4321
+
+          encode gzip zstd
+
+          header {
+            X-Frame-Options "SAMEORIGIN"
+            X-Content-Type-Options "nosniff"
+            X-XSS-Protection "1; mode=block"
+            Referrer-Policy "strict-origin-when-cross-origin"
+            Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https:; connect-src 'self' https:; media-src 'self' https:;"
+            Permissions-Policy "geolocation=(), microphone=(), camera=()"
+            Cache-Control "public, must-revalidate, max-age=0"
+            -Server
+          }
+
+          log {
+            output file /var/log/caddy/jeremiealcaraz.com.log {
+              roll_size 100mb
+              roll_keep 10
+              roll_keep_for 720h
+            }
+            format json
+            level INFO
+          }
+        '';
+      };
+    };
+
+    # ✅ Cloudflared + SOPS (inchangés)
+    sops.secrets.cloudflare-tunnel-token = {
+      owner = "root";
+      group = "root";
+      mode = "0444";
+    };
+
+    systemd.services.cloudflared = {
+      description = "Cloudflare Tunnel";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+
+      serviceConfig = {
+        Type = "simple";
+        DynamicUser = true;
+        LoadCredential = "tunnel-token:${config.sops.secrets.cloudflare-tunnel-token.path}";
+        ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $(cat $CREDENTIALS_DIRECTORY/tunnel-token)'";
+        Restart = "on-failure";
+        RestartSec = "5s";
+
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [];
+      };
+    };
+  };
 }
+```
 
-Points importants
+---
 
-- Le chemin ${sitePackage}/server/entry.mjs suppose que le package Nix copie bien dist à la racine.
-    Si dans le store tu vois .../dist/server/entry.mjs, alors change en ${sitePackage}/dist/server/entry.mjs et
-    WorkingDirectory = "${sitePackage}/dist";.
-- Avec ra + da, la nouvelle version du site est buildée sur Magnolia puis téléchargée sur Mimosa via le cache.
+## 🔧 Notes techniques
 
-Déploiement (ta méthode habituelle)
-
-1. Push tes modifs dans le repo j12zdotcom (adapter + output hybrid).
-2. Dans nix-config, applique la modification ci‑dessus.
-3. Sur Magnolia :
-   - ra (met à jour j12zdotcom + build + cache)
-   - da (déploie Mimosa)
-4. Vérifs sur Mimosa :
-   - systemctl status j12zdotcom
-   - journalctl -u j12zdotcom -f
-   - curl <http://127.0.0.1:4321>
-
-Rollback ultra simple
-Si besoin : sudo nixos-rebuild switch --rollback sur Mimosa.
-
-Si tu veux, je peux appliquer directement le changement dans hosts/mimosa/webserver.nix et te dire exactement quoi
-exécuter pour valider (avec vérifs du chemin entry.mjs).
+- **Chemin entry.mjs** : Le package Nix copie `dist/*` à la racine, donc `server/entry.mjs` (pas `dist/server/entry.mjs`)
+- **Cache binaire** : Avec `ra` + `da`, le site est buildé sur Magnolia puis téléchargé sur Mimosa via le cache local
+- **Rollback** : NixOS permet un retour arrière immédiat en cas de problème : `sudo nixos-rebuild switch --rollback`
