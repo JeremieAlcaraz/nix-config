@@ -2,8 +2,8 @@
 # Script pour rebuilder toutes les configurations et remplir le cache binaire
 #
 # Usage:
-#   ./scripts/rebuild-all.sh              # Rebuild tout et met à jour j12z-site
-#   ./scripts/rebuild-all.sh --skip-site  # Rebuild tout sans mettre à jour j12z-site
+#   ./scripts/rebuild-all.sh              # Rebuild tout et met à jour j12zdotcom
+#   ./scripts/rebuild-all.sh --skip-site  # Rebuild tout sans mettre à jour j12zdotcom
 #   ./scripts/rebuild-all.sh --help       # Affiche l'aide
 
 set -euo pipefail
@@ -53,18 +53,18 @@ Rebuild toutes les configurations NixOS et remplit le cache binaire magnolia.
 
 Ce script va :
   1. Synchroniser le repo depuis Gitea (origin)
-  2. Mettre à jour j12z-site (optionnel)
+  2. Mettre à jour j12zdotcom (optionnel)
   3. Builder mimosa, whitelily, dandelion, minimal pour le cache
   4. Builder et appliquer la config magnolia
   5. Commit et push le flake.lock (si modifié)
 
 OPTIONS:
-    --skip-site    Ne pas mettre à jour j12z-site
+    --skip-site    Ne pas mettre à jour j12zdotcom
     --help         Affiche cette aide
 
 EXAMPLES:
-    $0                # Rebuild tout et met à jour j12z-site
-    $0 --skip-site    # Rebuild tout sans toucher à j12z-site
+    $0                # Rebuild tout et met à jour j12zdotcom
+    $0 --skip-site    # Rebuild tout sans toucher à j12zdotcom
 
 NOTE:
     Ce script est conçu pour être exécuté sur magnolia.
@@ -122,13 +122,13 @@ git fetch origin
 git reset --hard origin/main
 log_success "Repo synchronisé"
 
-# Étape 2: Update j12z-site (optionnel)
+# Étape 2: Update j12zdotcom (optionnel)
 if $SKIP_SITE; then
-    log_warning "Mise à jour de j12z-site ignorée (--skip-site)"
+    log_warning "Mise à jour de j12zdotcom ignorée (--skip-site)"
 else
-    log_info "Mise à jour de j12z-site..."
-    nix flake update j12z-site
-    log_success "j12z-site mis à jour"
+    log_info "Mise à jour de j12zdotcom..."
+    nix flake update j12zdotcom
+    log_success "j12zdotcom mis à jour"
 fi
 
 # Étape 3: Build toutes les configurations
@@ -209,7 +209,7 @@ echo "  • Dandelion: ${GREEN}✓${NC} Cached"
 echo "  • Minimal:   ${GREEN}✓${NC} Cached"
 
 if ! $SKIP_SITE; then
-    echo "  • j12z-site: ${GREEN}✓${NC} Latest version"
+    echo "  • j12zdotcom: ${GREEN}✓${NC} Latest version"
 fi
 
 echo ""

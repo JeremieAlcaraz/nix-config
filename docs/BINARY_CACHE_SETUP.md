@@ -215,7 +215,7 @@ nixosConfigurations = {
 
   jasmine = nixpkgs.lib.nixosSystem {
     system = "x86_64-linux";
-    specialArgs = { inherit j12z-site; };
+    specialArgs = { inherit j12zdotcom; };
     modules = [
       ./hosts/jasmine/configuration.nix
       # Importer les modules nécessaires

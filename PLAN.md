@@ -22,18 +22,18 @@ Checklist des étapes réalisées et restantes pour passer du site statique à u
 
 - [ ] Sur Magnolia, vérifier le chemin exact de `entry.mjs` dans le store Nix (après `nix build`).
 - [ ] Mettre à jour `hosts/mimosa/webserver.nix` :
-- [ ] Ajouter un service systemd `j12z-site` qui lance Node.
+- [ ] Ajouter un service systemd `j12zdotcom` qui lance Node.
 - [ ] Modifier Caddy pour faire `reverse_proxy 127.0.0.1:4321`.
 - [ ] Garder `cloudflared` et `sops` inchangés.
 - [ ] Commit + push sur le repo `nix-config`.
 
 ### 3) Déploiement (Magnolia → Mimosa)
 
-- [ ] Lancer `ra` sur Magnolia (met à jour `j12z-site` + build + cache).
+- [ ] Lancer `ra` sur Magnolia (met à jour `j12zdotcom` + build + cache).
 - [ ] Lancer `da` sur Magnolia (déploie sur Mimosa).
 - [ ] Vérifier sur Mimosa :
-- [ ] `systemctl status j12z-site`
-- [ ] `journalctl -u j12z-site -f`
+- [ ] `systemctl status j12zdotcom`
+- [ ] `journalctl -u j12zdotcom -f`
 - [ ] `curl http://127.0.0.1:4321`
 - [ ] Tester l'URL publique.
 
@@ -52,18 +52,18 @@ entry.mjs après build Nix) :
 
 # hosts/mimosa/webserver.nix
 
-{ config, lib, pkgs, j12z-site, ... }:
+{ config, lib, pkgs, j12zdotcom, ... }:
 
 let
 cfg = config.mimosa.webserver;
-sitePackage = j12z-site.packages.x86_64-linux.site;
+sitePackage = j12zdotcom.packages.x86_64-linux.site;
 in
 {
 options.mimosa.webserver.enable = lib.mkEnableOption "the j12z webserver for mimosa";
 
     config = lib.mkIf cfg.enable {
       # ✅ Nouveau service Node (Astro SSR/Hybrid)
-      systemd.services.j12z-site = {
+      systemd.services.j12zdotcom = {
         description = "J12z Astro Site Server";
         wantedBy = [ "multi-user.target" ];
         restartTriggers = [ sitePackage ];
@@ -139,11 +139,11 @@ Déploiement (ta méthode habituelle)
 1. Push tes modifs dans le repo j12zdotcom (adapter + output hybrid).
 2. Dans nix-config, applique la modification ci‑dessus.
 3. Sur Magnolia :
-   - ra (met à jour j12z-site + build + cache)
+   - ra (met à jour j12zdotcom + build + cache)
    - da (déploie Mimosa)
 4. Vérifs sur Mimosa :
-   - systemctl status j12z-site
-   - journalctl -u j12z-site -f
+   - systemctl status j12zdotcom
+   - journalctl -u j12zdotcom -f
    - curl <http://127.0.0.1:4321>
 
 Rollback ultra simple

@@ -8,7 +8,7 @@
       url = "github:lordkekz/nix-yazi-plugins";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
-    j12z-site = {
+    j12zdotcom = {
       url = "git+http://dandelion:3000/jeremiealcaraz/j12zdotcom";
       # Ne pas forcer nixpkgs - laisser j12zdotcom utiliser sa propre version
       # inputs.nixpkgs.follows = "nixpkgs";
@@ -32,7 +32,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, nix-yazi-plugins, j12z-site, sops-nix, home-manager, darwin, try, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, nix-yazi-plugins, j12zdotcom, sops-nix, home-manager, darwin, try, ... }:
     let
       system = "x86_64-linux";
       # Import configuration centralisée
@@ -62,7 +62,7 @@
         # Une fois installé, basculez vers "mimosa" pour activer le webserver
         mimosa-bootstrap = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit j12z-site projectConfig; };
+          specialArgs = { inherit j12zdotcom projectConfig; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix
@@ -87,7 +87,7 @@
         #   sudo nixos-rebuild switch --flake .#mimosa
         mimosa = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit j12z-site projectConfig; };
+          specialArgs = { inherit j12zdotcom projectConfig; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix

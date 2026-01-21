@@ -9,10 +9,10 @@ Voir le guide complet: [`../docs/MIMOSA_WEBSERVER_SETUP.md`](../docs/MIMOSA_WEBS
 ### Rebuild toutes les configurations (sur magnolia)
 
 ```bash
-# Rebuild tout et met à jour j12z-site
+# Rebuild tout et met à jour j12zdotcom
 ./scripts/rebuild-all.sh
 
-# Rebuild tout sans mettre à jour j12z-site
+# Rebuild tout sans mettre à jour j12zdotcom
 ./scripts/rebuild-all.sh --skip-site
 
 # Aide

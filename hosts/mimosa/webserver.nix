@@ -2,12 +2,12 @@
 # Ce fichier est importé uniquement dans la configuration "mimosa" complète
 # Pour éviter les erreurs, il n'est PAS importé dans "mimosa-minimal"
 
-{ config, lib, pkgs, j12z-site, ... }:
+{ config, lib, pkgs, j12zdotcom, ... }:
 
 let
   cfg = config.mimosa.webserver;
   # Package pré-buildé depuis la flake (téléchargé depuis le cache magnolia)
-  sitePackage = j12z-site.packages.x86_64-linux.site;
+  sitePackage = j12zdotcom.packages.x86_64-linux.site;
 in
 {
   options.mimosa.webserver.enable = lib.mkEnableOption "the j12z webserver for mimosa";

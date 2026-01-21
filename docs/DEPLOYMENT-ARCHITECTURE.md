@@ -87,7 +87,7 @@ GitHub Actions ──SSH──▶ Magnolia
                                │
                                ▼
                     ┌───────────────────────────────┐
-                    │ 2. nix flake update j12z-site │
+                    │ 2. nix flake update j12zdotcom │
                     │    (Met à jour la dépendance) │
                     └──────────┬────────────────────┘
                                │

@@ -143,17 +143,17 @@
         "type": "github"
       }
     },
-    "j12z-site": {
+    "j12zdotcom": {
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1768842397,
-        "narHash": "sha256-pN9Elm0U0E3YSC/P9eTxIEr+C4kvbgaGFEE1r4Jyp8I=",
+        "lastModified": 1769009237,
+        "narHash": "sha256-s8ALTwXJlPBcgxOYyojEVK1/EzmZsHjbJNOlANYOyRA=",
         "ref": "refs/heads/main",
-        "rev": "c705cac94c810ac6643d1a4ea78a7c2a9d2ea032",
-        "revCount": 486,
+        "rev": "92a24457bf0509ec4622bbda4f724d580564086b",
+        "revCount": 541,
         "type": "git",
         "url": "http://dandelion:3000/jeremiealcaraz/j12zdotcom"
       },
@@ -253,7 +253,7 @@
       "inputs": {
         "darwin": "darwin",
         "home-manager": "home-manager",
-        "j12z-site": "j12z-site",
+        "j12zdotcom": "j12zdotcom",
         "nix-yazi-plugins": "nix-yazi-plugins",
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-unstable": "nixpkgs-unstable",

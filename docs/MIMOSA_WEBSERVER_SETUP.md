@@ -63,7 +63,7 @@ mimosa = nixpkgs.lib.nixosSystem {
     ./modules/ssh.nix
     ./hosts/mimosa/configuration.nix
     ./hosts/mimosa/webserver.nix  # Config webserver
-    j12z-site.nixosModules.j12z-webserver  # Module du site
+    j12zdotcom.nixosModules.j12z-webserver  # Module du site
     sops-nix.nixosModules.sops
     home-manager.nixosModules.home-manager
     # ...
@@ -229,7 +229,7 @@ Pour un vrai build Nix reproductible, il faudrait:
 Exemple avec désactivation sandbox (dans `flake.nix` du site):
 ```nix
 # Dans j12zdotcom/flake.nix
-j12z-site = stdenv.mkDerivation {
+j12zdotcom = stdenv.mkDerivation {
   # ...
   __noChroot = true;  # Désactive la sandbox (DANGER: non reproductible!)
 };
