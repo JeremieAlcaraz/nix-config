@@ -1,22 +1,27 @@
-# Plan de migration Astro Hybrid (Mimosa)
+# Plan de migration Astro SSR/Static (Mimosa)
 
-Checklist des étapes réalisées et restantes pour passer du site statique à un mode hybride (SSR partiel), sans casser l'infra.
+Checklist des étapes réalisées et restantes pour passer du site statique à un mode SSR partiel (Astro 5+), sans casser l'infra.
 
-## ✅ Fait (aujourd'hui)
+## ✅ Fait (validé le 2026-01-21)
 
-- [x] Build Astro en local sur macOS (marigold).
-- [x] Vérification du dossier `dist/` avec `client/` et `server/`.
-- [x] Test local du serveur Node (`node dist/server/entry.mjs`) OK.
+### Côté projet Astro (repo j12zdotcom)
+
+- [x] Adaptateur Node (`@astrojs/node` v9.5.1) déjà installé et configuré.
+- [x] Configuration Astro 5+ validée : `output: 'static'` + `adapter: node({ mode: 'standalone' })`.
+- [x] Page de test SSR créée (`/test-ssr.astro`) avec `export const prerender = false`.
+- [x] Page de test statique créée (`/test-static.astro`) pour comparaison.
+- [x] Build local réussi : `dist/server/entry.mjs` généré correctement.
+- [x] Test serveur Node local : `node dist/server/entry.mjs` fonctionne sur port 4321.
+- [x] Validation SSR : date change à chaque refresh sur `/test-ssr`.
+- [x] Validation static : date figée sur `/test-static`.
+
+### Prochaine étape immédiate
+
+- [ ] Commit + push sur le repo `j12zdotcom` (pages de test + validation SSR).
 
 ## ⏳ À faire (prochaines étapes)
 
-### 1) Côté projet Astro (repo j12zdotcom)
-
-- [ ] Ajouter l'adaptateur Node (`@astrojs/node`).
-- [ ] Configurer `astro.config.mjs` en mode hybride (output par défaut statique + SSR pour les pages dynamiques).
-- [ ] Identifier les pages dynamiques et ajouter `export const prerender = false`.
-- [ ] Rebuild local pour vérifier que `dist/server/entry.mjs` existe toujours.
-- [ ] Commit + push sur le repo `j12zdotcom`.
+### 2) Côté infra Nix (repo nix-config)
 
 ### 2) Côté infra Nix (repo nix-config)
 
