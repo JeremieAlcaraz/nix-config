@@ -169,7 +169,7 @@ in {
     
     gdrivePath = mkOption {
       type = types.str;
-      default = "backups/gitea";
+      default = "gitea";
     };
     
     schedule = mkOption {
