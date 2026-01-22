@@ -743,8 +743,8 @@ in {
 
     gdrivePath = mkOption {
       type = types.str;
-      default = "backups/gitea";
-      description = "Chemin dans Google Drive où stocker les backups";
+      default = "gitea";
+      description = "Chemin dans Google Drive où stocker les backups (relatif au folder_id)";
     };
 
     schedule = mkOption {
