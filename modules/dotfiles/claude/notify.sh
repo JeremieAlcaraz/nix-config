@@ -10,7 +10,13 @@ if [[ -n "$repo_root" ]]; then
   repo_name="$(basename "$repo_root")"
 fi
 
-WEZTERM_BUNDLE_ID="com.github.wez.wezterm"
+if [[ -n "${WEZTERM_PANE:-}" ]]; then
+  cache_root="${XDG_CACHE_HOME:-$HOME/.cache}/wezterm"
+  queue_file="${cache_root}/claude-notify"
+  mkdir -p "$cache_root"
+  printf '%s\t%s\t%s\n' "$title" "$msg" "$repo_name" >> "$queue_file"
+  exit 0
+fi
 
 if command -v terminal-notifier >/dev/null 2>&1; then
   args=(

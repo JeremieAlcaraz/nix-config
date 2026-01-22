@@ -79,8 +79,6 @@ in
   # === ENVIRONMENT VARIABLES ===
   # Force XDG compliance for tools that support it via env vars
   home.sessionVariables = {
-    CLAUDE_CONFIG_DIR = "${config.home.homeDirectory}/.config/claude";
-    CODEX_HOME = "${config.home.homeDirectory}/.config/codex";
     GLOW_CONFIG_PATH = "${config.xdg.configHome}/glow/glow.yml";
     RIPGREP_CONFIG_PATH = "${config.home.homeDirectory}/.config/ripgrep/config";
     SSH_AUTH_SOCK = "${config.home.homeDirectory}/.1password/agent.sock";
@@ -92,6 +90,7 @@ in
   };
 
   home.sessionPath = [
+    "${config.home.homeDirectory}/.local/bin"  # Wrappers custom (claude, etc.)
     "/opt/homebrew/bin"
     "/opt/homebrew/sbin"
     "${bunInstall}/bin"
@@ -147,10 +146,6 @@ in
     # Bun
     bun
 
-    # AI coding assistants (depuis nixpkgs-unstable)
-    unstable.claude-code
-    unstable.codex
-
     # Try - Fresh directories for every vibe
     try.packages.${pkgs.system}.default
 
@@ -180,6 +175,9 @@ in
     ".ssh/authorized_keys".source = ../modules/dotfiles/ssh/public/authorized_keys;
     ".ssh/public".source = ../modules/dotfiles/ssh/public;
 
+    # terminal-notifier.app registered in ~/Applications for macOS notifications.
+    "Applications/terminal-notifier.app".source = "${pkgs.terminal-notifier}/Applications/terminal-notifier.app";
+
     # TPM (Tmux Plugin Manager) - installation déclarative (XDG-compliant)
     ".config/tmux/plugins/tpm" = {
       source = pkgs.fetchFromGitHub {
@@ -189,6 +187,29 @@ in
         sha256 = "sha256-CeI9Wq6tHqV68woE11lIY4cLoNY8XWyXyMHTDmFKJKI=";
       };
       recursive = true;
+    };
+
+    # Claude Code wrapper - utilise le binaire Homebrew (toujours à jour)
+    ".local/bin/claude" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        HOMEBREW_CLAUDE="/opt/homebrew/bin/claude"
+
+        if [[ -x "$HOMEBREW_CLAUDE" ]]; then
+          exec "$HOMEBREW_CLAUDE" "$@"
+        fi
+
+        echo "❌ Claude Code n'est pas installé via Homebrew."
+        echo ""
+        echo "Installe-le avec:"
+        echo "  brew install --cask claude-code"
+        echo ""
+        echo "Puis redémarre ton shell."
+        exit 1
+      '';
+      executable = true;
     };
   };
 
@@ -268,19 +289,6 @@ in
     # Broot configuration
     "broot/conf.hjson".source = ../modules/dotfiles/broot/conf.hjson;
     "broot/verbs.hjson".source = ../modules/dotfiles/broot/verbs.hjson;
-
-    # Claude Code configuration (XDG-compliant via CLAUDE_CONFIG_DIR)
-    "claude/settings.json".source = ../modules/dotfiles/claude/settings.json;
-    "claude/notify.sh" = {
-      source = ../modules/dotfiles/claude/notify.sh;
-      executable = true;
-    };
-
-    # Codex configuration (XDG-compliant via CODEX_HOME)
-    "codex/config.toml" = {
-      source = ../modules/dotfiles/codex/config.toml;
-      force = true;
-    };
 
     # Ripgrep configuration
     "ripgrep".source = ../modules/dotfiles/ripgrep;
