@@ -70,6 +70,12 @@
         HTTP_ADDR = "0.0.0.0";  # Écoute sur toutes les interfaces (accessible via Tailscale)
         HTTP_PORT = projectConfig.gitForge.gitea.port;
         ROOT_URL = "${projectConfig.gitForge.gitea.url}/";
+
+        # Configuration SSH
+        START_SSH_SERVER = true;
+        SSH_DOMAIN = projectConfig.gitForge.gitea.host;
+        SSH_PORT = 22;  # Port SSH exposé dans les URLs (le vrai SSH système)
+        SSH_LISTEN_PORT = 2222;  # Port d'écoute interne de Gitea
       };
 
       service = {
@@ -112,6 +118,7 @@
     allowedTCPPorts = [
       3000  # Gitea HTTP
       22    # SSH (pour git push/pull via SSH)
+      2222  # Gitea SSH server interne
     ];
     # Autoriser le DNS interne des réseaux Podman (Gitea Actions)
     # Note: iptables est utilisé sur dandelion, donc on injecte des règles dédiées.
