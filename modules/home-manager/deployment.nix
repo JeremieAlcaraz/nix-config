@@ -54,5 +54,30 @@
 
     [safe]
       directory = /home/jeremie/nixos
+
+    # ============================================================
+    # URL REWRITING : HTTP Gitea → SSH automatique
+    # ============================================================
+    # Toutes les URLs HTTP vers Gitea sont automatiquement converties en SSH.
+    #
+    # Exemple :
+    #   git clone http://dandelion:3000/user/repo.git
+    #   → Utilise ssh://gitea@dandelion:2222/user/repo.git
+    #
+    # Avantages :
+    #   - Pas besoin de changer les remotes manuellement
+    #   - Push/pull fonctionnent automatiquement avec la clé SSH
+    #
+    # Inconvénients :
+    #   - Transparent = peut être confusant lors du debug
+    #   - Nécessite la clé SSH (/run/secrets/private-ssh-key)
+    #   - Affecte TOUS les repos Gitea (pas juste nix-config)
+    #
+    # Note : L'utilisateur SSH est "gitea" (pas "git")
+    #        Le port SSH de Gitea est 2222 (pas 22)
+    # ============================================================
+    [url "ssh://gitea@dandelion:2222/"]
+      insteadOf = http://dandelion:3000/
+      insteadOf = http://100.96.250.43:3000/
   '';
 }
