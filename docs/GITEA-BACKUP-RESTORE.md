@@ -299,26 +299,103 @@ sudo cat /var/log/gitea-backup.log
 
 ---
 
-### Méthode 1 : Restauration automatique (recommandée)
+### Méthode 1 : Restauration interactive avec fzf (recommandée)
 
-C'est la méthode la plus simple et la plus sûre.
+C'est la méthode la plus simple : le script liste automatiquement les backups sur Google Drive, vous laisse choisir avec fzf, télécharge et restaure.
 
-#### Étape 1 : Télécharger le backup (si nécessaire)
-
-Si le backup est sur Google Drive :
+#### Étape unique : Lancer le script
 
 ```bash
-# Se connecter à dandelion
+# Depuis ton Mac (dans le dossier nix-config)
 ssh jeremie@dandelion
 
-# Télécharger depuis GDrive
-rclone copy gdrive:gitea/gitea_backup_20260122_120000.tar.gz \
-  /tmp/ \
-  --config /run/gitea-backup/rclone.conf \
-  --progress
+# Cloner le repo si pas déjà fait
+cd /tmp
+git clone http://dandelion:3000/jeremiealcaraz/nix-config.git
+cd nix-config
+
+# Lancer le script de restauration interactif
+sudo nix-shell -p sops rclone fzf jq yq-go --run ./scripts/restore-gitea.sh
 ```
 
-#### Étape 2 : Extraire le backup
+**Le script va automatiquement** :
+1. 🔓 Déchiffrer les credentials Google Drive (via sops)
+2. ☁️ Lister les 10 backups les plus récents sur Google Drive
+3. 🎯 Te laisser choisir avec **fzf** (flèches haut/bas + Enter)
+4. ⬇️ Télécharger le backup sélectionné
+5. 🔍 Vérifier l'intégrité (SHA256)
+6. 📋 Afficher les métadonnées du backup
+7. ⚠️ Demander confirmation (taper `restore`)
+8. 🛑 Arrêter Gitea
+9. 🗄️ Restaurer la base PostgreSQL
+10. 📂 Restaurer les données + clés SSH
+11. 👤 Corriger les permissions
+12. ⚡ Redémarrer Gitea
+13. 🧪 Vérifier que tout fonctionne (HTTP + SSH)
+
+**Sortie typique** :
+```
+╔════════════════════════════════════════╗
+║   🔄 RESTAURATION GITEA               ║
+╚════════════════════════════════════════╝
+
+[RESTORE] 🔓 Déchiffrement des accès Google Drive...
+[RESTORE] ☁️  Récupération de la liste des backups...
+
+╭──────────────────────────────────────────────────────────╮
+│ 🔽 SÉLECTIONNEZ LE BACKUP À RESTAURER (Enter)           │
+├──────────────────────────────────────────────────────────┤
+│ > gitea_backup_20260122_120000.tar.gz                    │
+│   gitea_backup_20260121_120000.tar.gz                    │
+│   gitea_backup_20260120_120000.tar.gz                    │
+│   gitea_backup_20260119_120000.tar.gz                    │
+│   gitea_backup_20260118_120000.tar.gz                    │
+╰──────────────────────────────────────────────────────────╯
+
+✅ Backup sélectionné : gitea_backup_20260122_120000.tar.gz
+[RESTORE] ⬇️  Téléchargement de l'archive...
+[RESTORE] 🔍 Vérification de l'intégrité...
+✅ Intégrité vérifiée (SHA256 OK)
+[RESTORE] 📦 Extraction de l'archive principale...
+[RESTORE] 📋 Informations du backup :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Date backup: 20260122_120000
+Hostname source: dandelion
+Gitea version: 1.21.5
+PostgreSQL version: 16
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  ATTENTION : Vous êtes sur le point d'écraser la base de données et les fichiers Gitea actuels.
+⚠️  Une fois lancé, ce processus est irréversible.
+
+Êtes-vous sûr de vouloir continuer ? (taper 'restore') : restore
+
+[RESTORE] 🛑 Arrêt de Gitea...
+[RESTORE] 🗄️  Restauration de PostgreSQL...
+✅ Base de données restaurée
+[RESTORE] 📂 Restauration des données Gitea (/var/lib/gitea)...
+✅ Données restaurées
+[RESTORE] 🔑 Restauration des clés SSH...
+✅ Clés SSH restaurées
+[RESTORE] 👤 Correction des permissions...
+[RESTORE] ⚡ Redémarrage de Gitea...
+✅ Service Gitea redémarré avec succès !
+[RESTORE] 🧪 Vérifications post-restauration...
+✅ HTTP accessible (port 3000)
+✅ SSH accessible (port 2222)
+
+╔════════════════════════════════════════╗
+║   ✅ RESTAURATION TERMINÉE            ║
+╚════════════════════════════════════════╝
+```
+
+---
+
+### Méthode 2 : Restauration avec le script inclus dans le backup
+
+Si tu as déjà téléchargé et extrait un backup manuellement :
+
+#### Étape 1 : Extraire le backup
 
 ```bash
 cd /tmp
@@ -326,43 +403,7 @@ tar xzf gitea_backup_20260122_120000.tar.gz
 cd gitea_backup_20260122_120000/
 ```
 
-#### Étape 3 : Vérifier le contenu
-
-```bash
-# Lister les fichiers
-ls -lh
-
-# Voir les métadonnées
-cat restore_config.txt
-```
-
-**Sortie typique** :
-```
-# ================================================================
-# CONFIGURATION GITEA - BACKUP DU 20260122_120000
-# ================================================================
-
-Date backup: 20260122_120000
-Hostname source: dandelion
-
-# ----------------------------------------------------------------
-# Versions
-# ----------------------------------------------------------------
-Gitea version: 1.21.5
-PostgreSQL version: 16
-NixOS generation: 42
-
-# ----------------------------------------------------------------
-# Base de données PostgreSQL
-# ----------------------------------------------------------------
-DB_TYPE=postgres
-DB_HOST=/run/postgresql
-DB_NAME=gitea
-DB_USER=gitea
-...
-```
-
-#### Étape 4 : Exécuter le script de restauration
+#### Étape 2 : Exécuter le script de restauration
 
 ```bash
 sudo ./restore_script.sh
@@ -430,7 +471,7 @@ ssh -p 2222 -T gitea@localhost
 
 ---
 
-### Méthode 2 : Restauration manuelle
+### Méthode 3 : Restauration manuelle
 
 Si tu veux plus de contrôle ou si le script automatique échoue.
 
