@@ -34,35 +34,48 @@ Checklist des étapes réalisées et restantes pour passer du site statique à u
 
 **Chemin validé** : `${sitePackage}/server/entry.mjs` (PAS dans dist/)
 
-## ⏳ À faire (prochaines étapes)
-
-### Phase 3 : Déploiement sur Mimosa
+### Phase 3 : Déploiement sur Mimosa ✅
 
 #### Étape 1 : Modifier hosts/mimosa/webserver.nix
 
-- [ ] Mettre à jour `hosts/mimosa/webserver.nix` :
-  - [ ] Ajouter service systemd `j12zdotcom` qui lance Node
-  - [ ] Modifier Caddy : `file_server` → `reverse_proxy 127.0.0.1:4321`
-  - [ ] Garder `cloudflared` et `sops` inchangés
-- [ ] Commit + push sur le repo `nix-config`
+- [x] Mettre à jour `hosts/mimosa/webserver.nix` :
+  - [x] Ajouter service systemd `j12zdotcom` qui lance Node
+  - [x] Modifier Caddy : `file_server` → `reverse_proxy 127.0.0.1:4321`
+  - [x] Garder `cloudflared` et `sops` inchangés
+- [x] Commit + push sur le repo `nix-config` (commit `5afad1d`)
 
-#### Étape 2 : Déploiement sur Magnolia
+#### Étape 2 : Build avec node_modules
 
-- [ ] Sur Magnolia : `gu` (update repo depuis Gitea)
-- [ ] Sur Magnolia : `ra` (rebuild all + cache j12zdotcom)
-- [ ] Sur Magnolia : `da` (deploy sur Mimosa)
+- [x] Modifier `j12zdotcom/flake.nix` pour copier node_modules de production
+- [x] Fix erreur patch-shebangs (retirer `-u` flag)
+- [x] Update flake.lock sur Magnolia
+- [x] Build réussi avec package complet
 
-#### Étape 3 : Vérifications sur Mimosa
+#### Étape 3 : Déploiement
 
-- [ ] `systemctl status j12zdotcom` (service Node actif)
-- [ ] `journalctl -u j12zdotcom -f` (logs serveur)
-- [ ] `curl http://127.0.0.1:4321/test-ssr` (date dynamique)
-- [ ] `curl http://127.0.0.1:4321/test-static` (date figée)
-- [ ] Tester URL publique : https://jeremiealcaraz.com/test-ssr
+- [x] Push vers Gitea pour sync `origin/main`
+- [x] Déploiement via `da` sur Mimosa
+- [x] Service `j12zdotcom` actif et fonctionnel
 
-#### Étape 4 : Rollback (si besoin)
+#### Étape 4 : Vérifications
 
-- [ ] Sur Mimosa : `sudo nixos-rebuild switch --rollback`
+- [x] `systemctl status j12zdotcom` → Active (running) ✅
+- [x] Node.js écoute sur `127.0.0.1:4321`
+- [x] Test SSR : https://jeremiealcaraz.com/test-ssr → Date dynamique ✅
+- [x] Test static : https://jeremiealcaraz.com/test-static → Date figée ✅
+- [x] Pas d'erreurs dans les logs
+
+**Tag créé** : `v1.2.0-mimosa-ssr-stable` 🎉
+
+## 🎯 Résultat final
+
+✅ **Migration réussie** : Le site jeremiealcaraz.com fonctionne maintenant en mode **Astro SSR/Hybrid** !
+
+- Pages statiques pré-rendues (SSG) : build-time
+- Pages dynamiques SSR : runtime avec Node.js
+- Architecture : Cloudflare → Caddy (reverse proxy) → Node.js (port 4321)
+- Package Nix complet avec node_modules de production
+- Déploiement déclaratif NixOS validé
 
 ---
 
