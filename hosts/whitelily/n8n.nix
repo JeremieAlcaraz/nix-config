@@ -451,10 +451,24 @@ EOF
   systemd.services."n8n-healthcheck" = {
     description = "Check n8n health";
     script = ''
-      ${pkgs.curl}/bin/curl -f http://127.0.0.1:5678/healthz || {
-        echo "n8n healthcheck failed!"
-        exit 1
-      }
+      # Retry logic: wait up to 30 seconds for n8n to be ready
+      MAX_ATTEMPTS=15
+      SLEEP_TIME=2
+
+      for i in $(seq 1 $MAX_ATTEMPTS); do
+        if ${pkgs.curl}/bin/curl -sf http://127.0.0.1:5678/healthz > /dev/null 2>&1; then
+          echo "n8n healthcheck passed (attempt $i/$MAX_ATTEMPTS)"
+          exit 0
+        fi
+
+        if [ $i -lt $MAX_ATTEMPTS ]; then
+          echo "n8n not ready yet, retrying in ''${SLEEP_TIME}s (attempt $i/$MAX_ATTEMPTS)..."
+          sleep $SLEEP_TIME
+        fi
+      done
+
+      echo "n8n healthcheck failed after $MAX_ATTEMPTS attempts!"
+      exit 1
     '';
     serviceConfig = {
       Type = "oneshot";
