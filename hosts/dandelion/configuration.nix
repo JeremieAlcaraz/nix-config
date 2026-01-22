@@ -4,6 +4,7 @@
   imports = [
     ./hardware-configuration.nix
     ./gitea-runner.nix
+    ./gitea-backup.nix  # Module de backup automatisé Gitea
     (import ../../modules/home-manager/sops.nix { defaultSopsFile = ../../secrets/dandelion.yaml; })
     ../../modules/home-manager/tailscale.nix
     ../../modules/home-manager/tailscale-dns.nix   # Configuration DNS pour MagicDNS
@@ -137,6 +138,16 @@
     htop
     git
   ];
+
+  ########################################
+  # Gitea Backup - Backup automatisé vers Google Drive
+  ########################################
+  services.gitea-backup = {
+    enable = true;
+    schedule = "*-*-* 02:00:00";  # Tous les jours à 2h du matin
+    retentionLocal = 7;  # Garder 7 backups locaux
+    retentionGdrive = 90;  # Garder 90 jours sur Google Drive (plus critique que n8n)
+  };
 
   # Service systemd pour créer l'utilisateur admin Gitea avec mot de passe depuis sops
   # Ce service s'exécute après le premier démarrage de Gitea

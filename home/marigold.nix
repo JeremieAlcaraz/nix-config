@@ -127,6 +127,7 @@ in
     glow
     navi
     ripgrep
+    terminal-notifier
     sops
     pnpm
 
@@ -270,6 +271,10 @@ in
 
     # Claude Code configuration (XDG-compliant via CLAUDE_CONFIG_DIR)
     "claude/settings.json".source = ../modules/dotfiles/claude/settings.json;
+    "claude/notify.sh" = {
+      source = ../modules/dotfiles/claude/notify.sh;
+      executable = true;
+    };
 
     # Codex configuration (XDG-compliant via CODEX_HOME)
     "codex/config.toml" = {
