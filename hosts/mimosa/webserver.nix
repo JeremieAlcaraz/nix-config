@@ -24,16 +24,7 @@ in
       # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
       virtualHosts."http://jeremiealcaraz.com" = {
         extraConfig = ''
-          root * ${sitePackage}
-          file_server
-
-          handle_errors {
-            @404 {
-              expression {http.error.status_code} == 404
-            }
-            rewrite @404 /404.html
-            file_server
-          }
+          reverse_proxy 127.0.0.1:4321
 
           encode gzip zstd
 
@@ -59,6 +50,27 @@ in
             level INFO
           }
         '';
+      };
+    };
+
+    # Service Node.js pour Astro SSR/Hybrid
+    systemd.services.j12zdotcom = {
+      description = "J12z Astro Site Server";
+      wantedBy = [ "multi-user.target" ];
+      restartTriggers = [ sitePackage ];
+
+      serviceConfig = {
+        ExecStart = "${pkgs.nodejs_20}/bin/node ${sitePackage}/server/entry.mjs";
+        WorkingDirectory = "${sitePackage}";
+        Environment = [
+          "HOST=127.0.0.1"
+          "PORT=4321"
+          "NODE_ENV=production"
+        ];
+
+        DynamicUser = true;
+        Restart = "always";
+        RestartSec = "5s";
       };
     };
 
