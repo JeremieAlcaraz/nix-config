@@ -333,8 +333,8 @@ tailscale = {
 - [x] Modifier `scripts/install-nixos.sh` - validation des hosts
 
 ### Phase 5 : Vérification
-- [ ] `nix flake check` - syntaxe OK
-- [ ] `nix build .#nixosConfigurations.rhizanthella.config.system.build.toplevel` - build OK
+- [ ] `nix flake check` - syntaxe OK (bloqué: fichier manquant `scripts/diagnose-network.sh` référencé par l'installer)
+- [ ] `nix build .#nixosConfigurations.rhizanthella.config.system.build.toplevel` - build OK (timeout, relancer)
 
 ---
 
@@ -346,16 +346,23 @@ nix flake check
 nix build .#nixosConfigurations.rhizanthella.config.system.build.toplevel
 ```
 
-### Checklist post-déploiement
-- [ ] VM créée dans Proxmox
-- [ ] Installation NixOS via `install-nixos.sh rhizanthella`
-- [ ] Clé age copiée dans `/var/lib/sops-nix/key.txt`
-- [ ] Secrets configurés via `manage-secrets.sh`
+### Phase 6 : Déploiement VM
+- [ ] Créer une nouvelle VM dans Proxmox
+- [ ] Lancer `install-nixos.sh` et choisir `rhizanthella`
+- [ ] Valider que la VM boot correctement après installation
+
+### Phase 7 : Services locaux
+- [ ] Copier la clé age dans `/var/lib/sops-nix/key.txt`
+- [ ] Configurer les secrets via `manage-secrets.sh`
+- [ ] `systemctl status postgresql` - PostgreSQL running
 - [ ] `systemctl status podman-bknd` - conteneur running
 - [ ] `curl http://localhost:1337` - bknd répond
 - [ ] Tailscale connecté - IP assignée
 - [ ] `config.nix` mis à jour avec IP Tailscale
+
+### Phase 8 : Accès inter-VM (Tailscale)
 - [ ] Accès `http://rhizanthella:1337` via Tailscale OK
+- [ ] PostgreSQL accessible depuis une autre VM via Tailscale
 
 ---
 
