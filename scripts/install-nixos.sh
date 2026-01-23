@@ -125,7 +125,8 @@ fi
 
 # Configuration
 DISK="/dev/sda"
-REPO_URL="${NIX_CONFIG_REPO_URL:-http://dandelion:3000/jeremiealcaraz/nix-config.git}"
+GITEA_IP="100.96.250.43"  # IP Tailscale de dandelion
+REPO_URL="${NIX_CONFIG_REPO_URL:-http://${GITEA_IP}:3000/jeremiealcaraz/nix-config.git}"
 
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════════════╗${NC}"
@@ -251,6 +252,58 @@ info "Placement de hardware-configuration.nix pour ${HOST}..."
 mkdir -p "/mnt/etc/nixos/hosts/${HOST_DIR}"
 cp /tmp/hardware-configuration.nix "/mnt/etc/nixos/hosts/${HOST_DIR}/hardware-configuration.nix"
 info "Hardware configuration placée dans hosts/${HOST_DIR}/"
+
+# ========================================
+# Push du hardware-configuration.nix vers Gitea (optionnel)
+# ========================================
+echo ""
+prompt "Voulez-vous push le hardware-configuration.nix vers Gitea ? (oui/non, défaut: non):"
+read -r push_to_gitea
+
+if [[ "$push_to_gitea" == "oui" ]]; then
+    echo ""
+    info "Pour push vers Gitea, vous avez besoin d'un token d'accès."
+    info "Créez-le dans Gitea : Settings > Applications > Generate New Token"
+    echo ""
+    prompt "Token Gitea (ne sera pas affiché) :"
+    read -rs GITEA_TOKEN
+    echo ""
+
+    if [[ -n "$GITEA_TOKEN" ]]; then
+        cd /mnt/etc/nixos
+
+        # Configuration git pour le commit
+        git config user.email "installer@nix-config.local"
+        git config user.name "NixOS Installer"
+
+        # Ajouter et commiter le hardware-configuration.nix
+        git add "hosts/${HOST_DIR}/hardware-configuration.nix"
+
+        if git diff --cached --quiet; then
+            info "Aucun changement à commiter (hardware-configuration.nix identique)"
+        else
+            git commit -m "Add hardware-configuration.nix for ${HOST}
+
+Generated during NixOS installation on $(date '+%Y-%m-%d %H:%M')"
+
+            # Push avec le token (utilise l'IP Tailscale pour éviter les problèmes DNS)
+            GITEA_PUSH_URL="http://jeremiealcaraz:${GITEA_TOKEN}@${GITEA_IP}:3000/jeremiealcaraz/nix-config.git"
+
+            if git push "$GITEA_PUSH_URL" "${BRANCH}"; then
+                info "hardware-configuration.nix pushé vers Gitea avec succès"
+            else
+                warning "Échec du push vers Gitea (vérifiez le token et la connectivité)"
+                warning "Le fichier est toujours présent localement"
+            fi
+        fi
+
+        cd /
+    else
+        info "Aucun token fourni, push ignoré"
+    fi
+else
+    info "Push vers Gitea ignoré"
+fi
 
 # Vérifier et configurer la clé age pour sops
 if [[ ! -f /var/lib/sops-nix/key.txt ]]; then
