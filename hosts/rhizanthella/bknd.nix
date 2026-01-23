@@ -75,7 +75,7 @@
 
       # Générer le fichier d'environnement
       # DEFAULT_ARGS surcharge les arguments par défaut de l'image (qui pointent vers SQLite)
-      DB_URL="postgres://bknd:$DB_PASSWORD@127.0.0.1:5432/bknd"
+      DB_URL="postgresql://bknd:$DB_PASSWORD@127.0.0.1:5432/bknd"
       cat > /run/bknd/env << 'ENVFILE'
 HOST=0.0.0.0
 PORT=1337
@@ -90,36 +90,52 @@ ENVFILE
   };
 
   ########################################
-  # Service de build de l'image bknd depuis GitHub
+  # Service de build de l'image bknd avec support PostgreSQL
   ########################################
   systemd.services."bknd-image-build" = {
-    description = "Build bknd container image from GitHub";
+    description = "Build bknd container image with PostgreSQL support";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      TimeoutStartSec = "30min";  # Le build peut prendre du temps
+      TimeoutStartSec = "30min";
     };
-    path = [ pkgs.git pkgs.podman pkgs.coreutils ];
-    script = ''
+    path = [ pkgs.podman pkgs.coreutils ];
+    script = let
+      # Dockerfile personnalisé avec support PostgreSQL
+      dockerfile = pkgs.writeText "Dockerfile" ''
+        FROM node:24-alpine
+        WORKDIR /app
+        RUN npm install -g bknd pg
+        RUN mkdir -p /data
+        ENV HOST=0.0.0.0
+        ENV PORT=1337
+        EXPOSE 1337
+        CMD ["bknd", "run"]
+      '';
+    in ''
       set -euo pipefail
 
-      echo "[bknd-image-build] Vérification de l'image bknd..."
+      echo "[bknd-image-build] Vérification de l'image bknd-pg..."
 
-      # Vérifier si l'image existe déjà
-      if podman image exists localhost/bknd:latest || podman image exists bknd:latest; then
-        echo "[bknd-image-build] L'image bknd:latest existe déjà"
-        exit 0
-      fi
+      # Toujours reconstruire pour s'assurer que PostgreSQL est inclus
+      # (on peut ajouter un tag version plus tard pour éviter les rebuilds)
 
-      echo "[bknd-image-build] Build de l'image depuis GitHub..."
+      echo "[bknd-image-build] Build de l'image avec support PostgreSQL..."
+
+      # Créer un contexte de build temporaire
+      BUILD_DIR=$(mktemp -d)
+      cp ${dockerfile} "$BUILD_DIR/Dockerfile"
+
       podman build \
         -t localhost/bknd:latest \
-        https://github.com/bknd-io/bknd.git#main:docker
+        "$BUILD_DIR"
 
-      echo "[bknd-image-build] Build terminé !"
+      rm -rf "$BUILD_DIR"
+
+      echo "[bknd-image-build] Build terminé avec support PostgreSQL !"
     '';
   };
 
