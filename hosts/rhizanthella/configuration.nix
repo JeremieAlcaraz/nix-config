@@ -44,12 +44,17 @@
     # L'utilisateur bknd est créé par postgresql-bknd-setup avec mot de passe
     # (ensureUsers ne supporte pas les mots de passe)
 
+    settings = {
+      listen_addresses = lib.mkForce "*";
+    };
+
     # Authentification par mot de passe pour les connexions TCP
     authentication = pkgs.lib.mkOverride 10 ''
       # TYPE  DATABASE        USER            ADDRESS                 METHOD
       local   all             all                                     trust
       host    all             all             127.0.0.1/32            md5
       host    all             all             ::1/128                 md5
+      host    bknd            bknd            100.64.0.0/10           md5
     '';
   };
 
@@ -64,11 +69,9 @@
     compression = "zstd";
   };
 
-  # Firewall : Ouvrir les ports nécessaires
+  # Firewall : limiter l'exposition aux interfaces Tailscale
   networking.firewall = {
-    allowedTCPPorts = [
-      1337  # bknd HTTP + Admin UI
-    ];
+    interfaces."tailscale0".allowedTCPPorts = [ 1337 5432 ];
   };
 
   # Paquets système essentiels

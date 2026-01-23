@@ -76,6 +76,8 @@
       # Générer le fichier d'environnement
       cat > /run/bknd/env <<EOF
       DB_URL=postgres://bknd:$DB_PASSWORD@127.0.0.1:5432/bknd
+      HOST=0.0.0.0
+      PORT=1337
       EOF
 
       chmod 600 /run/bknd/env
