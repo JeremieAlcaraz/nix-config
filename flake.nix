@@ -143,6 +143,24 @@
           ];
         };
 
+        # Rhizanthella - VM bknd (Backend-as-a-Service)
+        rhizanthella = nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit projectConfig; };
+          modules = [
+            ./modules/home-manager/base.nix
+            ./modules/home-manager/ssh.nix
+            ./hosts/rhizanthella/configuration.nix
+            sops-nix.nixosModules.sops
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremie = import ./home/jeremie.nix;
+            }
+          ];
+        };
+
         # Minimal - VM de démonstration minimale
         minimal = nixpkgs.lib.nixosSystem {
           inherit system;
