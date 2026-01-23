@@ -113,7 +113,7 @@
       echo "[bknd-image-build] Build de l'image depuis GitHub..."
       ${pkgs.podman}/bin/podman build \
         -t bknd:latest \
-        github.com/bknd-io/bknd#main:docker
+        https://github.com/bknd-io/bknd.git#main:docker
 
       echo "[bknd-image-build] Build terminé !"
     '';
