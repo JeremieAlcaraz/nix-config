@@ -125,8 +125,8 @@ fi
 
 # Configuration
 DISK="/dev/sda"
-GITEA_IP="100.96.250.43"  # IP Tailscale de dandelion
-REPO_URL="${NIX_CONFIG_REPO_URL:-http://${GITEA_IP}:3000/jeremiealcaraz/nix-config.git}"
+GITEA_HOST="dandelion"  # Résolu via DNS (la VM n'a pas encore Tailscale)
+REPO_URL="${NIX_CONFIG_REPO_URL:-http://${GITEA_HOST}:3000/jeremiealcaraz/nix-config.git}"
 
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════════════╗${NC}"
@@ -286,8 +286,8 @@ if [[ "$push_to_gitea" == "oui" ]]; then
 
 Generated during NixOS installation on $(date '+%Y-%m-%d %H:%M')"
 
-            # Push avec le token (utilise l'IP Tailscale pour éviter les problèmes DNS)
-            GITEA_PUSH_URL="http://jeremiealcaraz:${GITEA_TOKEN}@${GITEA_IP}:3000/jeremiealcaraz/nix-config.git"
+            # Push avec le token
+            GITEA_PUSH_URL="http://jeremiealcaraz:${GITEA_TOKEN}@${GITEA_HOST}:3000/jeremiealcaraz/nix-config.git"
 
             if git push "$GITEA_PUSH_URL" "${BRANCH}"; then
                 info "hardware-configuration.nix pushé vers Gitea avec succès"
