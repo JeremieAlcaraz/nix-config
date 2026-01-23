@@ -11,7 +11,7 @@ Ce dépôt centralise la configuration de plusieurs VMs NixOS, des secrets via S
 | Hôte | Type | Rôle principal |
 |------|------|---------------|
 | **magnolia** 🌸 | Hyperviseur | Proxmox + base système |
-| **mimosa** 🌼 | Web | Caddy + Cloudflare Tunnel |
+| **mimosa** 🌼 | Site web | jeremiealcaraz.com (Caddy + Cloudflare Tunnel) |
 | **whitelily** 🤍 | Automation | n8n + PostgreSQL + backups |
 | **dandelion** 🌾 | Git | Gitea + PostgreSQL |
 | **rhizanthella** 🌺 | BaaS | bknd + PostgreSQL |
@@ -22,18 +22,18 @@ Ce dépôt centralise la configuration de plusieurs VMs NixOS, des secrets via S
 ```mermaid
 flowchart TD
     Internet((Internet))
-    Proxmox[magnolia\n(Proxmox)]
+    Proxmox["magnolia<br/>Proxmox"]
 
-    subgraph VMs[VMs NixOS]
-        Mimosa[mimosa\nCaddy + Cloudflare Tunnel]
-        WhiteLily[whitelily\nn8n + PostgreSQL]
-        Dandelion[dandelion\nGitea + PostgreSQL]
-        Rhizanthella[rhizanthella\nbknd + PostgreSQL]
-        Minimal[minimal\nVM demo]
+    subgraph VMs["VMs NixOS"]
+        Mimosa["mimosa<br/>Caddy + Cloudflare Tunnel"]
+        WhiteLily["whitelily<br/>n8n + PostgreSQL"]
+        Dandelion["dandelion<br/>Gitea + PostgreSQL"]
+        Rhizanthella["rhizanthella<br/>bknd + PostgreSQL"]
+        Minimal["minimal<br/>VM demo"]
     end
 
-    Tailscale[Tailscale mesh]
-    Cloudflare[Cloudflare Tunnel]
+    Tailscale["Tailscale mesh"]
+    Cloudflare["Cloudflare Tunnel"]
 
     Proxmox --> Mimosa
     Proxmox --> WhiteLily
