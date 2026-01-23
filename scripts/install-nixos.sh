@@ -83,7 +83,11 @@ if [[ -z "$HOST" ]]; then
     echo -e "   🔧 VM de démonstration minimale"
     echo -e "   → Configuration basique pour tests et démonstration"
     echo ""
-    prompt "Choisissez un host (1-5) :"
+    echo -e "${GREEN}6)${NC} ${YELLOW}rhizanthella${NC}"
+    echo -e "   🌺 bknd Backend-as-a-Service"
+    echo -e "   → bknd + PostgreSQL 16 (accès via Tailscale)"
+    echo ""
+    prompt "Choisissez un host (1-6) :"
     read -r choice
 
     case "$choice" in
@@ -102,8 +106,11 @@ if [[ -z "$HOST" ]]; then
         5)
             HOST="minimal"
             ;;
+        6)
+            HOST="rhizanthella"
+            ;;
         *)
-            error "Choix invalide. Utilisez 1, 2, 3, 4 ou 5"
+            error "Choix invalide. Utilisez 1, 2, 3, 4, 5 ou 6"
             ;;
     esac
 
@@ -112,8 +119,8 @@ if [[ -z "$HOST" ]]; then
 fi
 
 # Vérifier que l'host est valide
-if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa-bootstrap" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "dandelion" && "$HOST" != "minimal" ]]; then
-    error "Host invalide. Utilisez 'magnolia', 'mimosa-bootstrap', 'mimosa', 'whitelily', 'dandelion' ou 'minimal'"
+if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa-bootstrap" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "dandelion" && "$HOST" != "minimal" && "$HOST" != "rhizanthella" ]]; then
+    error "Host invalide. Utilisez 'magnolia', 'mimosa-bootstrap', 'mimosa', 'whitelily', 'dandelion', 'minimal' ou 'rhizanthella'"
 fi
 
 # Configuration

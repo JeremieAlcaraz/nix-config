@@ -315,22 +315,22 @@ tailscale = {
 ## Checklist d'implémentation
 
 ### Phase 1 : Structure de base
-- [ ] Créer le dossier `hosts/rhizanthella/`
-- [ ] Créer `hosts/rhizanthella/hardware-configuration.nix` (template QEMU)
-- [ ] Créer `hosts/rhizanthella/configuration.nix`
-- [ ] Créer `hosts/rhizanthella/bknd.nix`
+- [x] Créer le dossier `hosts/rhizanthella/`
+- [x] Créer `hosts/rhizanthella/hardware-configuration.nix` (copie de dandelion)
+- [x] Créer `hosts/rhizanthella/configuration.nix`
+- [x] Créer `hosts/rhizanthella/bknd.nix`
 
 ### Phase 2 : Configuration flake
-- [ ] Modifier `flake.nix` - ajouter nixosConfiguration rhizanthella
+- [x] Modifier `flake.nix` - ajouter nixosConfiguration rhizanthella
 
 ### Phase 3 : Secrets
-- [ ] Modifier `.sops.yaml` - ajouter règle rhizanthella
-- [ ] Créer `secrets/rhizanthella.yaml` (copie dandelion.yaml + bknd/db_password)
+- [x] Modifier `.sops.yaml` - ajouter règle rhizanthella
+- [x] Créer `secrets/rhizanthella.yaml` (copie dandelion.yaml + bknd/db_password)
 
 ### Phase 4 : Script d'installation
-- [ ] Modifier `scripts/install-nixos.sh` - menu interactif (option 6)
-- [ ] Modifier `scripts/install-nixos.sh` - case switch
-- [ ] Modifier `scripts/install-nixos.sh` - validation des hosts
+- [x] Modifier `scripts/install-nixos.sh` - menu interactif (option 6)
+- [x] Modifier `scripts/install-nixos.sh` - case switch
+- [x] Modifier `scripts/install-nixos.sh` - validation des hosts
 
 ### Phase 5 : Vérification
 - [ ] `nix flake check` - syntaxe OK
