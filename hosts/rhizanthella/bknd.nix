@@ -74,13 +74,11 @@
       mkdir -p /run/bknd
 
       # Générer le fichier d'environnement
-      # DEFAULT_ARGS surcharge les arguments par défaut de l'image (qui pointent vers SQLite)
-      DB_URL="postgresql://bknd:$DB_PASSWORD@127.0.0.1:5432/bknd"
-      cat > /run/bknd/env << 'ENVFILE'
-HOST=0.0.0.0
+      # DATABASE_URL est lu par notre script start.mjs personnalisé
+      cat > /run/bknd/env << ENVFILE
+DATABASE_URL=postgresql://bknd:$DB_PASSWORD@127.0.0.1:5432/bknd
 PORT=1337
 ENVFILE
-      echo "DEFAULT_ARGS=--db-url $DB_URL" >> /run/bknd/env
 
       chmod 600 /run/bknd/env
 
@@ -104,16 +102,40 @@ ENVFILE
     };
     path = [ pkgs.podman pkgs.coreutils ];
     script = let
+      # Script d'entrée qui configure PostgreSQL programmatiquement
+      entryScript = pkgs.writeText "start.mjs" ''
+        import { serve } from "bknd/adapter/node";
+        import { pg } from "bknd";
+        import pg_module from "pg";
+        const { Pool } = pg_module;
+
+        const dbUrl = process.env.DATABASE_URL;
+        if (!dbUrl) {
+          console.error("DATABASE_URL environment variable is required");
+          process.exit(1);
+        }
+
+        console.log("[bknd] Starting with PostgreSQL connection...");
+
+        serve({
+          connection: pg({
+            pool: new Pool({
+              connectionString: dbUrl,
+            }),
+          }),
+          port: parseInt(process.env.PORT || "1337"),
+        });
+      '';
+
       # Dockerfile personnalisé avec support PostgreSQL
       dockerfile = pkgs.writeText "Dockerfile" ''
         FROM node:24-alpine
         WORKDIR /app
-        RUN npm install -g bknd pg
-        RUN mkdir -p /data
-        ENV HOST=0.0.0.0
+        RUN npm install bknd pg
+        COPY start.mjs .
         ENV PORT=1337
         EXPOSE 1337
-        CMD ["bknd", "run"]
+        CMD ["node", "start.mjs"]
       '';
     in ''
       set -euo pipefail
@@ -121,13 +143,12 @@ ENVFILE
       echo "[bknd-image-build] Vérification de l'image bknd-pg..."
 
       # Toujours reconstruire pour s'assurer que PostgreSQL est inclus
-      # (on peut ajouter un tag version plus tard pour éviter les rebuilds)
-
       echo "[bknd-image-build] Build de l'image avec support PostgreSQL..."
 
       # Créer un contexte de build temporaire
       BUILD_DIR=$(mktemp -d)
       cp ${dockerfile} "$BUILD_DIR/Dockerfile"
+      cp ${entryScript} "$BUILD_DIR/start.mjs"
 
       podman build \
         -t localhost/bknd:latest \
