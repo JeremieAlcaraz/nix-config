@@ -99,19 +99,20 @@
       RemainAfterExit = true;
       TimeoutStartSec = "30min";  # Le build peut prendre du temps
     };
+    path = [ pkgs.git pkgs.podman pkgs.coreutils ];
     script = ''
       set -euo pipefail
 
       echo "[bknd-image-build] Vérification de l'image bknd..."
 
       # Vérifier si l'image existe déjà
-      if ${pkgs.podman}/bin/podman image exists bknd:latest; then
+      if podman image exists bknd:latest; then
         echo "[bknd-image-build] L'image bknd:latest existe déjà"
         exit 0
       fi
 
       echo "[bknd-image-build] Build de l'image depuis GitHub..."
-      ${pkgs.podman}/bin/podman build \
+      podman build \
         -t bknd:latest \
         https://github.com/bknd-io/bknd.git#main:docker
 
