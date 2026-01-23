@@ -30,7 +30,7 @@
     };
     secrets = {
       # Secrets bknd - accessible par root pour générer l'envfile
-      "bknd/db_password" = { owner = "root"; group = "root"; mode = "0400"; };
+      "bknd/db_password" = { owner = "postgres"; group = "postgres"; mode = "0400"; };
     };
   };
 
