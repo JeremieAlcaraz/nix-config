@@ -132,8 +132,12 @@
       # network=host pour accéder à PostgreSQL sur 127.0.0.1
       extraOptions = [ "--network=host" ];
 
-      # Variables d'environnement (DB_URL est passé via fichier)
+      # Variables d'environnement
       environmentFiles = [ "/run/bknd/env" ];
+
+      # Commande : surcharger DEFAULT_ARGS pour utiliser PostgreSQL
+      # La variable DB_URL est lue depuis le fichier env
+      cmd = [ "--db-url" "env:DB_URL" ];
 
       # Le port 1337 est exposé directement via network=host
       # ports = [ "1337:1337" ];  # Pas nécessaire avec network=host
