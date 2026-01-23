@@ -74,15 +74,18 @@
       mkdir -p /run/bknd
 
       # Générer le fichier d'environnement
-      cat > /run/bknd/env <<EOF
-      DB_URL=postgres://bknd:$DB_PASSWORD@127.0.0.1:5432/bknd
-      HOST=0.0.0.0
-      PORT=1337
-      EOF
+      # DEFAULT_ARGS surcharge les arguments par défaut de l'image (qui pointent vers SQLite)
+      DB_URL="postgres://bknd:$DB_PASSWORD@127.0.0.1:5432/bknd"
+      cat > /run/bknd/env << 'ENVFILE'
+HOST=0.0.0.0
+PORT=1337
+ENVFILE
+      echo "DEFAULT_ARGS=--db-url $DB_URL" >> /run/bknd/env
 
       chmod 600 /run/bknd/env
 
-      echo "[bknd-envfile] Fichier d'environnement généré"
+      echo "[bknd-envfile] Fichier d'environnement généré :"
+      cat /run/bknd/env
     '';
   };
 
@@ -132,12 +135,8 @@
       # network=host pour accéder à PostgreSQL sur 127.0.0.1
       extraOptions = [ "--network=host" ];
 
-      # Variables d'environnement
+      # Variables d'environnement (incluant DEFAULT_ARGS pour PostgreSQL)
       environmentFiles = [ "/run/bknd/env" ];
-
-      # Commande : surcharger DEFAULT_ARGS pour utiliser PostgreSQL
-      # La variable DB_URL est lue depuis le fichier env
-      cmd = [ "--db-url" "env:DB_URL" ];
 
       # Le port 1337 est exposé directement via network=host
       # ports = [ "1337:1337" ];  # Pas nécessaire avec network=host
