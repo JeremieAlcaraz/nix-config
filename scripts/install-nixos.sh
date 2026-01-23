@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Script d'installation NixOS all-in-one
-# Usage: sudo ./install-nixos.sh [magnolia|mimosa|whitelily|dandelion|minimal]
+# Usage: sudo ./install-nixos.sh [magnolia|mimosa-bootstrap|mimosa|whitelily|dandelion|rhizanthella|minimal]
 #
 # Ce script installe NixOS :
 # - Partitionnement et formatage
@@ -125,7 +125,7 @@ fi
 
 # Configuration
 DISK="/dev/sda"
-REPO_URL="https://github.com/JeremieAlcaraz/nix-config.git"
+REPO_URL="${NIX_CONFIG_REPO_URL:-http://dandelion:3000/jeremiealcaraz/nix-config.git}"
 
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════════════╗${NC}"
