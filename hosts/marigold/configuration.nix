@@ -58,6 +58,9 @@ in {
     MJConfigFile = "${config.users.users.jeremiealcaraz.home}/.config/hammerspoon/init.lua";
   };
 
+  programs.direnv.enable = true;
+  programs.direnv.nix-direnv.enable = true;
+
   # Obligatoire pour ne pas casser l'install Determinate
   nix.enable = false;
 
