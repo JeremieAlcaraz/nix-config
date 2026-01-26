@@ -2,9 +2,10 @@
 # Script pour rebuilder toutes les configurations et remplir le cache binaire
 #
 # Usage:
-#   ./scripts/rebuild-all.sh              # Rebuild tout et met à jour j12zdotcom
-#   ./scripts/rebuild-all.sh --skip-site  # Rebuild tout sans mettre à jour j12zdotcom
-#   ./scripts/rebuild-all.sh --help       # Affiche l'aide
+#   ./scripts/rebuild-all.sh                  # Rebuild tout et met à jour j12zdotcom
+#   ./scripts/rebuild-all.sh --skip-site      # Rebuild tout sans mettre à jour j12zdotcom
+#   ./scripts/rebuild-all.sh --update-unstable # Rebuild tout + met à jour nixpkgs-unstable
+#   ./scripts/rebuild-all.sh --help           # Affiche l'aide
 
 set -euo pipefail
 
@@ -53,18 +54,21 @@ Rebuild toutes les configurations NixOS et remplit le cache binaire magnolia.
 
 Ce script va :
   1. Synchroniser le repo depuis Gitea (origin)
-  2. Mettre à jour j12zdotcom (optionnel)
-  3. Builder mimosa, whitelily, dandelion, minimal pour le cache
-  4. Builder et appliquer la config magnolia
-  5. Commit et push le flake.lock (si modifié)
+  2. Mettre à jour nixpkgs-unstable (si --update-unstable)
+  3. Mettre à jour j12zdotcom (sauf si --skip-site)
+  4. Builder mimosa, whitelily, dandelion, minimal pour le cache
+  5. Builder et appliquer la config magnolia
+  6. Commit et push le flake.lock (si modifié)
 
 OPTIONS:
-    --skip-site    Ne pas mettre à jour j12zdotcom
-    --help         Affiche cette aide
+    --skip-site        Ne pas mettre à jour j12zdotcom
+    --update-unstable  Mettre à jour nixpkgs-unstable (Gitea, etc.)
+    --help             Affiche cette aide
 
 EXAMPLES:
-    $0                # Rebuild tout et met à jour j12zdotcom
-    $0 --skip-site    # Rebuild tout sans toucher à j12zdotcom
+    $0                    # Rebuild tout et met à jour j12zdotcom
+    $0 --skip-site        # Rebuild tout sans toucher à j12zdotcom
+    $0 --update-unstable  # Rebuild tout + dernière version de nixpkgs-unstable
 
 NOTE:
     Ce script est conçu pour être exécuté sur magnolia.
@@ -75,11 +79,16 @@ EOF
 
 # Parse arguments
 SKIP_SITE=false
+UPDATE_UNSTABLE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --skip-site)
             SKIP_SITE=true
+            shift
+            ;;
+        --update-unstable)
+            UPDATE_UNSTABLE=true
             shift
             ;;
         --help)
@@ -122,7 +131,16 @@ git fetch origin
 git reset --hard origin/main
 log_success "Repo synchronisé"
 
-# Étape 2: Update j12zdotcom (optionnel)
+# Étape 2a: Update nixpkgs-unstable (optionnel)
+if $UPDATE_UNSTABLE; then
+    log_info "Mise à jour de nixpkgs-unstable..."
+    nix flake update nixpkgs-unstable
+    log_success "nixpkgs-unstable mis à jour"
+else
+    log_info "nixpkgs-unstable non mis à jour (utiliser --update-unstable pour forcer)"
+fi
+
+# Étape 2b: Update j12zdotcom (optionnel)
 if $SKIP_SITE; then
     log_warning "Mise à jour de j12zdotcom ignorée (--skip-site)"
 else
@@ -210,6 +228,10 @@ echo "  • Minimal:   ${GREEN}✓${NC} Cached"
 
 if ! $SKIP_SITE; then
     echo "  • j12zdotcom: ${GREEN}✓${NC} Latest version"
+fi
+
+if $UPDATE_UNSTABLE; then
+    echo "  • nixpkgs-unstable: ${GREEN}✓${NC} Updated"
 fi
 
 echo ""
