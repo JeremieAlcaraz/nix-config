@@ -128,8 +128,13 @@ in
 
       # Thèmes UI
       ui = {
-        DEFAULT_THEME = "catppuccin-auto";
-        THEMES = "";
+        DEFAULT_THEME = "catppuccin-mauve-auto";
+        THEMES = "gitea,auto,arc-green,"
+          + "catppuccin-blue-auto,catppuccin-flamingo-auto,catppuccin-green-auto,catppuccin-lavender-auto,catppuccin-maroon-auto,catppuccin-mauve-auto,catppuccin-peach-auto,catppuccin-pink-auto,catppuccin-red-auto,catppuccin-rosewater-auto,catppuccin-sapphire-auto,catppuccin-sky-auto,catppuccin-teal-auto,catppuccin-yellow-auto,"
+          + "catppuccin-latte-blue,catppuccin-latte-flamingo,catppuccin-latte-green,catppuccin-latte-lavender,catppuccin-latte-maroon,catppuccin-latte-mauve,catppuccin-latte-peach,catppuccin-latte-pink,catppuccin-latte-red,catppuccin-latte-rosewater,catppuccin-latte-sapphire,catppuccin-latte-sky,catppuccin-latte-teal,catppuccin-latte-yellow,"
+          + "catppuccin-frappe-blue,catppuccin-frappe-flamingo,catppuccin-frappe-green,catppuccin-frappe-lavender,catppuccin-frappe-maroon,catppuccin-frappe-mauve,catppuccin-frappe-peach,catppuccin-frappe-pink,catppuccin-frappe-red,catppuccin-frappe-rosewater,catppuccin-frappe-sapphire,catppuccin-frappe-sky,catppuccin-frappe-teal,catppuccin-frappe-yellow,"
+          + "catppuccin-macchiato-blue,catppuccin-macchiato-flamingo,catppuccin-macchiato-green,catppuccin-macchiato-lavender,catppuccin-macchiato-maroon,catppuccin-macchiato-mauve,catppuccin-macchiato-peach,catppuccin-macchiato-pink,catppuccin-macchiato-red,catppuccin-macchiato-rosewater,catppuccin-macchiato-sapphire,catppuccin-macchiato-sky,catppuccin-macchiato-teal,catppuccin-macchiato-yellow,"
+          + "catppuccin-mocha-blue,catppuccin-mocha-flamingo,catppuccin-mocha-green,catppuccin-mocha-lavender,catppuccin-mocha-maroon,catppuccin-mocha-mauve,catppuccin-mocha-peach,catppuccin-mocha-pink,catppuccin-mocha-red,catppuccin-mocha-rosewater,catppuccin-mocha-sapphire,catppuccin-mocha-sky,catppuccin-mocha-teal,catppuccin-mocha-yellow";
       };
     };
   };
