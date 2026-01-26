@@ -5,6 +5,12 @@ let
   unstablePkgs = import nixpkgs-unstable {
     system = "x86_64-linux";
   };
+
+  catppuccinGiteaTheme = pkgs.fetchzip {
+    url = "https://github.com/catppuccin/gitea/releases/download/v1.0.1/catppuccin-gitea.tar.gz";
+    sha256 = "18r9v90047j836wfryq8qnskddiv35izjjs2nbm2y2x3347vmw2f";
+    stripRoot = false;
+  };
 in
 
 {
@@ -119,8 +125,21 @@ in
       session = {
         PROVIDER = "db";  # Stocker les sessions en base de données
       };
+
+      # Thèmes UI
+      ui = {
+        DEFAULT_THEME = "catppuccin-auto";
+        THEMES = "";
+      };
     };
   };
+
+  # Catppuccin theme pour Gitea
+  systemd.tmpfiles.rules = [
+    "d ${config.services.gitea.stateDir}/custom/public 0755 gitea gitea -"
+    "d ${config.services.gitea.stateDir}/custom/public/assets 0755 gitea gitea -"
+    "L+ ${config.services.gitea.stateDir}/custom/public/assets/css - - - - ${catppuccinGiteaTheme}"
+  ];
 
   # Firewall : Ouvrir les ports nécessaires
   networking.firewall = {
