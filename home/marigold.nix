@@ -143,8 +143,7 @@ in
     # 1Password CLI (op)
     _1password-cli
 
-    # Bun
-    bun
+    # Bun: géré via wrapper (voir .local/bin/bun) pour permettre bun upgrade
 
     # Try - Fresh directories for every vibe
     try.packages.${pkgs.system}.default
@@ -208,6 +207,28 @@ in
         echo ""
         echo "Puis redémarre ton shell."
         exit 1
+      '';
+      executable = true;
+    };
+
+    # Bun wrapper - installation manuelle pour permettre bun upgrade
+    ".local/bin/bun" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        BUN_BIN="${bunInstall}/bin/bun"
+
+        if [[ -x "$BUN_BIN" ]]; then
+          exec "$BUN_BIN" "$@"
+        fi
+
+        echo "⚡ Bun n'est pas installé. Installation en cours..."
+        echo ""
+        curl -fsSL https://bun.sh/install | bash
+        echo ""
+        echo "✅ Bun installé ! Relance ta commande."
+        exit 0
       '';
       executable = true;
     };
