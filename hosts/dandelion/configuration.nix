@@ -145,7 +145,7 @@ in
     "d ${config.services.gitea.stateDir}/custom/public/assets 0755 gitea gitea -"
     "L+ ${config.services.gitea.stateDir}/custom/public/assets/css - - - - ${catppuccinGiteaTheme}"
     "d ${config.services.gitea.stateDir}/custom/public/assets/img 0755 gitea gitea -"
-    "L+ ${config.services.gitea.stateDir}/custom/public/assets/img/logo.svg - - - - ${./assets/logo.svg}"
+    "L+ ${config.services.gitea.stateDir}/custom/public/assets/img/logo.svg - - - - ${../../assets/logo.svg}"
   ];
 
   # Firewall : Ouvrir les ports nécessaires
