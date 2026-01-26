@@ -1,4 +1,11 @@
-{ config, pkgs, lib, projectConfig, ... }:
+{ config, pkgs, lib, projectConfig, nixpkgs-unstable, ... }:
+
+let
+  # Gitea depuis nixpkgs-unstable pour avoir la dernière version
+  unstablePkgs = import nixpkgs-unstable {
+    system = "x86_64-linux";
+  };
+in
 
 {
   imports = [
@@ -54,6 +61,7 @@
   ########################################
   services.gitea = {
     enable = true;
+    package = unstablePkgs.gitea;  # Dernière version depuis nixpkgs-unstable
     appName = "Dandelion";  # Nom affiché sur la page d'accueil
 
     # Base de données

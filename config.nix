@@ -11,9 +11,10 @@
 
     gitea = {
       # HTTP URL - Pour les VMs qui font seulement du pull (read-only)
-      url = "http://100.96.250.43:3000";
-      domain = "100.96.250.43:3000";
-      host = "100.96.250.43";
+      # Utilise le hostname MagicDNS Tailscale (résolu automatiquement)
+      url = "http://dandelion:3000";
+      domain = "dandelion:3000";
+      host = "dandelion";
       port = 3000;
 
       # SSH URLs - Pour Magnolia et Mac qui peuvent push

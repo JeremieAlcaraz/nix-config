@@ -128,7 +128,7 @@
         # Dandelion - VM Gitea (serveur Git auto-hébergé)
         dandelion = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit projectConfig; };
+          specialArgs = { inherit projectConfig nixpkgs-unstable; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix
