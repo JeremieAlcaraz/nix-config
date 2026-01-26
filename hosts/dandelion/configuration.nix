@@ -8,7 +8,7 @@ let
 
   catppuccinGiteaTheme = pkgs.fetchzip {
     url = "https://github.com/catppuccin/gitea/releases/download/v1.0.1/catppuccin-gitea.tar.gz";
-    sha256 = "18r9v90047j836wfryq8qnskddiv35izjjs2nbm2y2x3347vmw2f";
+    sha256 = "sha256-et5luA3SI7iOcEIQ3CVIu0+eiLs8C/8mOitYlWQa/uI=";
     stripRoot = false;
   };
 in
