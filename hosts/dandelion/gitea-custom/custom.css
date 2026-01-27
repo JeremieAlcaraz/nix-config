@@ -2,24 +2,28 @@
  * Corrige le problème de texte blanc sur fond rose/mauve difficile à lire
  */
 
-/* IMPORTANT: Forcer un texte TRÈS SOMBRE sur tous les éléments code inline
+/* IMPORTANT: Forcer un texte TRÈS SOMBRE sur les codes inline
  * pour qu'ils soient lisibles sur les backgrounds colorés (rose, mauve, etc.)
  */
-.markup code {
-  color: #1e1e2e !important;  /* Texte très sombre (presque noir) */
-  font-weight: 500 !important;
-  text-shadow: none !important;
-}
-
-/* S'assurer que le texte dans les listes à puces avec code est aussi sombre */
 .markup li code,
 .markup p code,
 .markup td code,
 .markup th code,
 .markup dd code,
-.markup dt code {
+.markup dt code,
+.markup span code,
+.markup em code,
+.markup strong code,
+.markup a code,
+.markup h1 code,
+.markup h2 code,
+.markup h3 code,
+.markup h4 code,
+.markup h5 code,
+.markup h6 code {
   color: #1e1e2e !important;  /* Texte très sombre */
   font-weight: 500 !important;
+  text-shadow: none !important;
 }
 
 /* Pour les éléments code avec des styles inline (backgrounds colorés) */
@@ -31,17 +35,12 @@
 }
 
 /* Si Gitea utilise des classes spécifiques pour le code coloré */
-.markup .code-inline,
-.markup span code,
-.markup em code,
-.markup strong code {
-  color: #1e1e2e !important;
-}
-
-/* Améliorer aussi le contraste dans les pre > code (blocs de code) */
+/* Ne pas toucher aux blocs de code : laisser la coloration syntaxique intacte */
 .markup pre code {
-  /* On garde la coloration syntaxique mais on s'assure que le texte de base est lisible */
-  filter: brightness(0.85) contrast(1.1);
+  color: inherit !important;
+  font-weight: inherit !important;
+  filter: none !important;
+  text-shadow: inherit !important;
 }
 
 /* Pour les labels et badges */
