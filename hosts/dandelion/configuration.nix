@@ -144,10 +144,16 @@ in
     "d ${config.services.gitea.stateDir}/custom/public 0755 gitea gitea -"
     "d ${config.services.gitea.stateDir}/custom/public/assets 0755 gitea gitea -"
     "L+ ${config.services.gitea.stateDir}/custom/public/assets/css - - - - ${catppuccinGiteaTheme}"
-    # CSS personnalisé pour corriger les problèmes de contraste
-    "L+ ${config.services.gitea.stateDir}/custom/public/assets/css/custom.css - - - - ${./gitea-custom/custom.css}"
     "d ${config.services.gitea.stateDir}/custom/public/assets/img 0755 gitea gitea -"
     "L+ ${config.services.gitea.stateDir}/custom/public/assets/img/logo.svg - - - - ${../../assets/logo.svg}"
+    # CSS personnalisé pour corriger les problèmes de contraste
+    # Placé dans un répertoire séparé car assets/css est un symlink vers le nix store
+    "d ${config.services.gitea.stateDir}/custom/public/css 0755 gitea gitea -"
+    "L+ ${config.services.gitea.stateDir}/custom/public/css/custom.css - - - - ${./gitea-custom/custom.css}"
+    # Template personnalisé pour charger le CSS custom
+    "d ${config.services.gitea.stateDir}/custom/templates 0755 gitea gitea -"
+    "d ${config.services.gitea.stateDir}/custom/templates/custom 0755 gitea gitea -"
+    "L+ ${config.services.gitea.stateDir}/custom/templates/custom/header.tmpl - - - - ${./gitea-custom/custom-header.tmpl}"
   ];
 
   # Firewall : Ouvrir les ports nécessaires
