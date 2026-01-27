@@ -2,64 +2,56 @@
  * Corrige le problème de texte blanc sur fond rose/mauve difficile à lire
  */
 
-/* Code inline dans le markdown - forcer un texte plus sombre */
-.markup code,
+/* IMPORTANT: Forcer un texte TRÈS SOMBRE sur tous les éléments code inline
+ * pour qu'ils soient lisibles sur les backgrounds colorés (rose, mauve, etc.)
+ */
+.markup code {
+  color: #1e1e2e !important;  /* Texte très sombre (presque noir) */
+  font-weight: 500 !important;
+  text-shadow: none !important;
+}
+
+/* S'assurer que le texte dans les listes à puces avec code est aussi sombre */
+.markup li code,
+.markup p code,
+.markup td code,
+.markup th code,
+.markup dd code,
+.markup dt code {
+  color: #1e1e2e !important;  /* Texte très sombre */
+  font-weight: 500 !important;
+}
+
+/* Pour les éléments code avec des styles inline (backgrounds colorés) */
+.markup code[style],
+.markup li code[style],
+.markup p code[style] {
+  color: #1e1e2e !important;  /* Forcer texte sombre même avec style inline */
+  font-weight: 600 !important;  /* Plus gras pour encore plus de contraste */
+}
+
+/* Si Gitea utilise des classes spécifiques pour le code coloré */
+.markup .code-inline,
+.markup span code,
+.markup em code,
+.markup strong code {
+  color: #1e1e2e !important;
+}
+
+/* Améliorer aussi le contraste dans les pre > code (blocs de code) */
 .markup pre code {
-  color: var(--color-text) !important;
-  background-color: var(--color-secondary-bg) !important;
+  /* On garde la coloration syntaxique mais on s'assure que le texte de base est lisible */
+  filter: brightness(0.85) contrast(1.1);
 }
 
-/* Pour les backticks dans le contenu markdown */
-.ui.table code,
-.repository .diff-file-box .code-diff tbody tr td.lines-code code,
-.repository .diff-file-box .code-diff tbody tr td.lines-code pre {
-  color: var(--color-text) !important;
+/* Pour les labels et badges */
+.ui.label {
+  filter: contrast(1.15);
 }
 
-/* Améliorer le contraste des éléments de code inline avec fond coloré */
+/* S'assurer que même les spans avec background-color ont du texte sombre */
+.markup span[style*="background"],
 .markup code[style*="background"] {
-  color: var(--color-text-dark) !important;
-  filter: contrast(1.3) brightness(0.9);
-}
-
-/* Pour les labels et badges avec fond coloré */
-.ui.label,
-.ui.basic.label {
-  /* S'assurer que le texte est lisible sur les backgrounds colorés */
-  filter: contrast(1.2);
-}
-
-/* Améliorer la lisibilité des code blocks avec syntax highlighting */
-.chroma .s,   /* String */
-.chroma .s1,  /* String single quote */
-.chroma .s2,  /* String double quote */
-.chroma .k,   /* Keyword */
-.chroma .kc,  /* Keyword constant */
-.chroma .kd,  /* Keyword declaration */
-.chroma .n,   /* Name */
-.chroma .na,  /* Name attribute */
-.chroma .nb,  /* Name builtin */
-.chroma .nc,  /* Name class */
-.chroma .nf,  /* Name function */
-.chroma .p,   /* Punctuation */
-.chroma .o,   /* Operator */
-.chroma .m,   /* Number */
-.chroma .mf,  /* Number float */
-.chroma .mi   /* Number integer */ {
-  /* Augmenter légèrement le contraste des couleurs de syntaxe */
-  filter: contrast(1.15) saturate(0.95);
-}
-
-/* Fix spécifique pour le texte dans les rectangles/boxes rose/mauve */
-.markup p code[style*="rgb"],
-.markup li code[style*="rgb"],
-.markup td code[style*="rgb"] {
-  color: var(--color-text-dark) !important;
-  text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
-}
-
-/* Améliorer la lisibilité générale des éléments inline code */
-code {
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  color: #1e1e2e !important;
+  font-weight: 600 !important;
 }
