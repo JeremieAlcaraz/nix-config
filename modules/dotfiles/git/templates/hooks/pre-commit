@@ -48,7 +48,7 @@ sensitive_files=(
 )
 
 for pattern in "${sensitive_files[@]}"; do
-    if git diff --cached --name-only | grep -qE "$pattern"; then
+    if git diff --cached --name-only | grep -vE '\.envrc$' | grep -qE "$pattern"; then
         echo -e "${RED}✗${NC} Sensitive file detected: files matching '$pattern'"
         echo -e "${YELLOW}Warning:${NC} You're about to commit a potentially sensitive file!"
         echo -e "${YELLOW}Tip:${NC} Add it to .gitignore if it should never be committed"
