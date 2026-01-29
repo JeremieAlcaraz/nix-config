@@ -94,6 +94,7 @@ in
     "${config.home.homeDirectory}/.local/bin"  # Wrappers custom (claude, etc.)
     "/opt/homebrew/bin"
     "/opt/homebrew/sbin"
+    "/opt/zerobrew/prefix/bin"  # Zerobrew packages
     "${bunInstall}/bin"
     pnpmHome
   ];
@@ -170,6 +171,13 @@ in
       fi
     '';
 
+    # Fix PATH after macOS path_helper (loaded in /etc/zprofile)
+    ".zprofile".text = ''
+      # Restore paths that might be reordered/removed by /etc/zprofile's path_helper
+      [[ -d "/opt/zerobrew/prefix/bin" ]] && export PATH="/opt/zerobrew/prefix/bin:$PATH"
+      [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+    '';
+
     # SSH configuration
     ".ssh/config".source = ../modules/dotfiles/ssh/config;
     ".ssh/authorized_keys".source = ../modules/dotfiles/ssh/public/authorized_keys;
@@ -240,17 +248,18 @@ in
         #!/usr/bin/env bash
         set -euo pipefail
 
-        ZEROBREW_BIN="/opt/homebrew/bin/zerobrew"
+        ZB_BIN="$HOME/.local/bin/zb"
 
-        if [[ -x "$ZEROBREW_BIN" ]]; then
-          exec "$ZEROBREW_BIN" "$@"
+        if [[ -x "$ZB_BIN" ]]; then
+          exec "$ZB_BIN" "$@"
         fi
 
         echo "🍺 Zerobrew n'est pas installé. Installation en cours..."
         echo ""
         curl -sSL https://raw.githubusercontent.com/lucasgelfond/zerobrew/main/install.sh | bash
         echo ""
-        echo "✅ Zerobrew installé ! Relance ta commande."
+        echo "✅ Zerobrew installé dans $ZB_BIN"
+        echo "   Relance ta commande."
         exit 0
       '';
       executable = true;
@@ -269,6 +278,11 @@ in
 
     # Configuration ZSH principale
     "zsh/.zshenv".source = ../modules/dotfiles/zsh/.zshenv.marigold;
+    "zsh/.zprofile".text = ''
+      # Fix PATH after macOS /etc/zprofile's path_helper
+      [[ -d "/opt/zerobrew/prefix/bin" ]] && export PATH="/opt/zerobrew/prefix/bin:$PATH"
+      [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+    '';
     "zsh/.zshrc".source = ../modules/dotfiles/zsh/.zshrc.marigold;
 
     # Modules ZSH (tous sauf 06-tools.zsh qu'on remplace par la version marigold)
