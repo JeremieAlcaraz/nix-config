@@ -46,6 +46,9 @@ alias e="emacs -nw" # lance emacs dans mon terminal
 # === AI ASSISTANT ===
 alias moltbot="clawdbot" # Alias pour le nouveau nom du projet
 
+# === TOOLS ===
+alias zb="zerobrew" # Zerobrew - Homebrew package manager
+
 
 
 

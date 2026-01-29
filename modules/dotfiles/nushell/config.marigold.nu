@@ -946,6 +946,7 @@ alias v = nvim
 alias as = aerospace
 alias asr = atuin scripts run
 alias drs = darwin-rebuild switch --flake .#marigold
+alias zb = zerobrew
 
 def ff [] {
     aerospace list-windows --all | fzf --bind 'enter:execute(bash -c "aerospace focus --window-id {1}")+abort'

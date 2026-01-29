@@ -233,6 +233,28 @@ in
       '';
       executable = true;
     };
+
+    # Zerobrew wrapper - installation lazy à la première utilisation
+    ".local/bin/zerobrew" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        ZEROBREW_BIN="/opt/homebrew/bin/zerobrew"
+
+        if [[ -x "$ZEROBREW_BIN" ]]; then
+          exec "$ZEROBREW_BIN" "$@"
+        fi
+
+        echo "🍺 Zerobrew n'est pas installé. Installation en cours..."
+        echo ""
+        curl -sSL https://raw.githubusercontent.com/lucasgelfond/zerobrew/main/install.sh | bash
+        echo ""
+        echo "✅ Zerobrew installé ! Relance ta commande."
+        exit 0
+      '';
+      executable = true;
+    };
   };
 
   # === DOTFILES ZSH ===
