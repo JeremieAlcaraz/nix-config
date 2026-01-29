@@ -20,7 +20,6 @@ in
     ./sketchybar.nix
     ./wezterm.nix
     ./yazi.nix
-    ./gemini-cli.nix
   ];
 
   # === GIT CONFIGURATION ===

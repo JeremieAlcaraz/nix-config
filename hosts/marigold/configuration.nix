@@ -22,7 +22,7 @@ in {
     ];
     casks = [
       "1password"
-      "nikitabobko/tap/aerospace@0.19.2"
+      "nikitabobko/tap/aerospace"  # Version beta 0.20.2 (compatible macOS Sequoia)
       "font-sf-mono"
       "font-sf-pro"
       "hammerspoon"

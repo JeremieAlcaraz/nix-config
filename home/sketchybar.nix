@@ -3,6 +3,9 @@
 {
   xdg.configFile."sketchybar".source = ../modules/dotfiles/sketchybar;
 
+  # Crée le dossier de logs pour la redirection dans aerospace.toml
+  home.file.".sketchybar/.keep".text = "";
+
   home.activation.sketchybarDependencies = lib.hm.dag.entryAfter ["writeBoundary"] ''
     set -euo pipefail
 

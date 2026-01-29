@@ -33,7 +33,8 @@ on-focus-changed = [
 ]
 
 # Start AeroSpace at login
-start-at-login = true
+# Désactivé car géré par LaunchAgent (home-manager)
+start-at-login = false
 
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
 enable-normalization-flatten-containers = true
@@ -208,9 +209,9 @@ alt-shift-right = [
 if.app-name-regex-substring = '^wezterm-gui$'
 run = 'move-node-to-workspace 1'
 
-[[on-window-detected]]
-if.app-id = 'company.thebrowser.Browser'
-run = 'move-node-to-workspace 1'
+# [[on-window-detected]]
+# if.app-id = 'company.thebrowser.Browser'
+# run = 'move-node-to-workspace 1'
 
 [[on-window-detected]]
 if.app-id = 'com.todesktop.230313mzl4w4u92'
