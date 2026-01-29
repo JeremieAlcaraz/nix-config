@@ -5,6 +5,7 @@ let
   bunCache = "${config.xdg.cacheHome}/bun";
   pnpmHome = "${config.xdg.dataHome}/pnpm";
   pnpmStore = "${config.xdg.dataHome}/pnpm/store";
+  fnmDir = "${config.xdg.dataHome}/fnm";
 in
 
 {
@@ -86,6 +87,7 @@ in
     BUN_INSTALL_CACHE_DIR = bunCache;
     PNPM_HOME = pnpmHome;
     PNPM_STORE_DIR = pnpmStore;
+    FNM_DIR = fnmDir;
   };
 
   home.sessionPath = [
@@ -129,8 +131,8 @@ in
     sops
     pnpm
 
-    # Node.js (Copilot.lua requires >= 22)
-    unstable.nodejs_22
+    # fnm (Fast Node Manager) - gère Node.js hors du Nix store
+    fnm
 
     # Modern ls replacement
     eza

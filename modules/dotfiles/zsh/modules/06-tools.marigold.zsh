@@ -79,6 +79,12 @@ if command -v direnv &> /dev/null; then
     eval "$(direnv hook zsh)"
 fi
 
+# === FNM - Fast Node Manager ===
+# Géré par Home Manager
+if command -v fnm &> /dev/null; then
+    eval "$(fnm env --use-on-cd)"
+fi
+
 # === SCRIPTS PERSONNELS ===
 # Scripts dans ~/.config/zsh/scripts (gérés par Home Manager)
 if [[ -d "$HOME/.config/zsh/scripts" ]]; then
