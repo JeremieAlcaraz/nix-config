@@ -3,7 +3,7 @@
 -- ══════════════════════════════════════════════════════════════════════
 
 local wezterm = require("wezterm")
-local modal = wezterm.plugin.require("https://github.com/JeremieAlcaraz/modal.wezterm")
+local modal = require("modal")
 
 local M = {}
 

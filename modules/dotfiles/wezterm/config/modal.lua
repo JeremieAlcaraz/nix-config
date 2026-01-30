@@ -1,36 +1,14 @@
 -- ══════════════════════════════════════════════════════════════════════
--- ~/.config/wezterm/config/modal.lua - Modal plugin setup
+-- ~/.config/wezterm/config/modal.lua - Modal setup (local module)
 -- ══════════════════════════════════════════════════════════════════════
 
 local wezterm = require("wezterm")
 
 local M = {}
 
-local MODAL_URL = "https://github.com/JeremieAlcaraz/modal.wezterm"
-local UPSTREAM_URL = "https://github.com/MLFlexer/modal.wezterm"
-
-local function with_modal_require(fn)
-	local original_require = wezterm.plugin.require
-	wezterm.plugin.require = function(url)
-		if url == UPSTREAM_URL then
-			url = MODAL_URL
-		end
-		return original_require(url)
-	end
-
-	local ok, result = pcall(fn)
-	wezterm.plugin.require = original_require
-
-	if not ok then
-		error(result)
-	end
-
-	return result
-end
-
 function M.apply(config)
-	local modal = wezterm.plugin.require(MODAL_URL)
-	modal.enable_defaults(MODAL_URL)
+	local modal = require("modal")
+	modal.enable_defaults()
 
 	if not config.colors then
 		if config.color_scheme then
@@ -56,55 +34,47 @@ function M.apply(config)
 
 	local fg_status_color = config.colors.background
 
-	local defaults = with_modal_require(function()
-		return {
-			ui_mode = require("ui_mode"),
-			scroll_mode = require("scroll_mode"),
-			copy_mode = require("copy_mode"),
-			search_mode = require("search_mode"),
-			visual_mode = require("visual_mode"),
-		}
-	end)
+	local defaults = {
+		ui_mode = require("ui_mode"),
+		scroll_mode = require("scroll_mode"),
+		copy_mode = require("copy_mode"),
+		search_mode = require("search_mode"),
+		visual_mode = require("visual_mode"),
+	}
 
-	local status_text = defaults.ui_mode.get_hint_status_text(
-		icons,
-		colors,
-		{ bg = config.colors.ansi[2], fg = fg_status_color }
-	)
-	modal.add_mode("UI", defaults.ui_mode.key_table, status_text)
+	-- Fonction pour créer un badge propre style LazyVim (juste le badge, pas de hints)
+	local function create_mode_badge(mode_name, bg_color)
+		return wezterm.format({
+			{ Attribute = { Intensity = "Bold" } },
+			{ Background = { Color = bg_color } },
+			{ Foreground = { Color = fg_status_color } },
+			{ Text = " " .. mode_name .. " " },
+		})
+	end
 
-	status_text = defaults.scroll_mode.get_hint_status_text(
-		icons,
-		colors,
-		{ bg = config.colors.ansi[7], fg = fg_status_color }
-	)
-	modal.add_mode("Scroll", defaults.scroll_mode.key_table, status_text)
+	modal.add_mode("UI", defaults.ui_mode.key_table,
+		create_mode_badge("UI", config.colors.ansi[2]))
 
-	status_text = defaults.copy_mode.get_hint_status_text(
-		icons,
-		colors,
-		{ bg = config.colors.ansi[4], fg = fg_status_color }
-	)
-	modal.add_mode("copy_mode", defaults.copy_mode.key_table, status_text)
+	modal.add_mode("Scroll", defaults.scroll_mode.key_table,
+		create_mode_badge("SCROLL", config.colors.ansi[7]))
 
-	status_text = defaults.search_mode.get_hint_status_text(
-		icons,
-		colors,
-		{ bg = config.colors.ansi[6], fg = fg_status_color }
-	)
-	modal.add_mode("search_mode", defaults.search_mode.key_table, status_text)
+	modal.add_mode("copy_mode", defaults.copy_mode.key_table,
+		create_mode_badge("COPY", config.colors.ansi[4]))
 
-	status_text = defaults.visual_mode.get_hint_status_text(
-		icons,
-		colors,
-		{ bg = config.colors.ansi[3], fg = fg_status_color }
-	)
-	modal.add_mode("Visual", {}, status_text)
+	modal.add_mode("search_mode", defaults.search_mode.key_table,
+		create_mode_badge("SEARCH", config.colors.ansi[6]))
+
+	modal.add_mode("Visual", {},
+		create_mode_badge("VISUAL", config.colors.ansi[3]))
 
 	config.key_tables = modal.key_tables
 
-	wezterm.on("modal.enter", function(name, window, _pane)
-		modal.set_right_status(window, name)
+	-- Utiliser update-status pour afficher le badge en haut à droite
+	wezterm.on("update-status", function(window, _pane)
+		local mode = modal.get_mode(window)
+		if mode and mode.status_text then
+			window:set_right_status(mode.status_text)
+		end
 	end)
 
 	wezterm.on("modal.exit", function(_name, window, _pane)
