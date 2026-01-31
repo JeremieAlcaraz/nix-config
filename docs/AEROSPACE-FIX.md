@@ -58,7 +58,7 @@ launchd.agents.aerospace = {
 
 ### 2. Version Stable
 
-La configuration utilise `aerospace@0.19.2` (dernière version stable) au lieu de la beta.
+La configuration utilise `aerospace@0.19.2` (dernière version stable) au lieu de la beta. Dans `hosts/marigold/configuration.nix`, la liste `homebrew.casks` installe maintenant explicitement `nikitabobko/tap/aerospace@0.19.2`, donc `darwin-rebuild switch --flake .#marigold` retélécharge et installe toujours cette version.
 
 ## Procédure d'Application
 
