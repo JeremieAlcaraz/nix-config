@@ -22,7 +22,7 @@ in {
     ];
     casks = [
       "1password"
-      "nikitabobko/tap/aerospace"  # Version beta 0.20.2 (compatible macOS Sequoia)
+      "aerospace" # Version actuelle pour éviter les blocages TCC sur 0.19.2-Beta
       "font-sf-mono"
       "font-sf-pro"
       "hammerspoon"

@@ -264,6 +264,38 @@ in
       '';
       executable = true;
     };
+
+    # AeroSpace wrapper - installe le cask si absent et tente de lancer l'app
+    ".local/bin/aerospace" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        AEROSPACE_BIN="/opt/homebrew/bin/aerospace"
+        AEROSPACE_APP="/Applications/AeroSpace.app"
+
+        if [[ ! -x "$AEROSPACE_BIN" ]]; then
+          echo "🪟 AeroSpace n'est pas installé. Installation en cours..."
+          echo ""
+          brew install --cask aerospace
+          echo ""
+          echo "✅ AeroSpace installé."
+        fi
+
+        if [[ -d "$AEROSPACE_APP" ]]; then
+          if ! pgrep -x "AeroSpace" >/dev/null 2>&1; then
+            open "$AEROSPACE_APP" >/dev/null 2>&1 || true
+            for _ in {1..10}; do
+              pgrep -x "AeroSpace" >/dev/null 2>&1 && break
+              sleep 0.3
+            done
+          fi
+        fi
+
+        exec "$AEROSPACE_BIN" "$@"
+      '';
+      executable = true;
+    };
   };
 
   # === DOTFILES ZSH ===
