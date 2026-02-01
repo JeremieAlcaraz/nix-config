@@ -52,6 +52,13 @@ in {
     AppleIconAppearanceCustomTintColor = "0.819608 0.466667 0.603922 1.000000"; # #d1779a RGBA
   };
 
+  # Disable automatic macOS Software Update steps so they stay under manual control.
+  system.defaults.SoftwareUpdate = {
+    AutomaticallyInstallMacOSUpdates = false;
+    AutomaticCheckEnabled = false;
+    AutomaticDownload = false;
+  };
+
   users.users.jeremiealcaraz.home = "/Users/jeremiealcaraz";
 
   system.defaults.CustomUserPreferences."org.hammerspoon.Hammerspoon" = {
