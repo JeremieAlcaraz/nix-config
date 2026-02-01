@@ -20,6 +20,9 @@
 history.txt
 navi.log
 
+# Karabiner backups (générés par l'app quand le dossier est géré par Home Manager)
+modules/dotfiles/karabiner/.config/karabiner/automatic_backups
+modules/dotfiles/karabiner/.config/karabiner/.DS_Store
 # Claude Code - Fichiers dynamiques (sessions, historique, stats)
 modules/dotfiles/claude/history.jsonl
 modules/dotfiles/claude/stats-cache.json

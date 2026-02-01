@@ -414,6 +414,8 @@ in
     };
     "television/shell/integration.zsh".source = ../modules/dotfiles/television/shell/integration.zsh;
 
+    "karabiner".source = ../modules/dotfiles/karabiner/.config/karabiner;
+
     # Tmux configuration
     "tmux/tmux.conf".source = ../modules/dotfiles/tmux/tmux.conf;
     "tmux/tmux.reset.conf".source = ../modules/dotfiles/tmux/tmux.reset.conf;
