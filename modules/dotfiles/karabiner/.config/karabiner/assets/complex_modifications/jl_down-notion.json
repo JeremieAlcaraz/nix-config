@@ -1,0 +1,32 @@
+{
+  "title": "jl rapide (<200 ms) → Ctrl+Shift+J",
+  "rules": [
+    {
+      "description": "jl rapide (<200 ms) → Ctrl+Shift+J",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "simultaneous": [
+              { "key_code": "j" },
+              { "key_code": "l" }
+            ],
+            "simultaneous_options": {
+              "key_down_order": "insensitive",
+              "key_up_order": "insensitive"
+            }
+          },
+          "parameters": { 
+            "basic.simultaneous_threshold_milliseconds": 200 
+          },
+          "to": [
+            { 
+              "key_code": "j", 
+              "modifiers": ["left_control", "left_shift"] 
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

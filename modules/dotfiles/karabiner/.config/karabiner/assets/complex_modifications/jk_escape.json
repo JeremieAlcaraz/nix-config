@@ -1,0 +1,25 @@
+{
+  "title": "jk rapide (<200 ms) → Escape",
+  "rules": [
+    {
+    "description": "jk rapide (<200 ms) → Escape",
+    "manipulators": [
+        {
+            "from": {
+                "simultaneous": [
+                    { "key_code": "j" },
+                    { "key_code": "k" }
+                ],
+                "simultaneous_options": {
+                    "key_down_order": "insensitive",
+                    "key_up_order": "insensitive"
+                }
+            },
+            "parameters": { "basic.simultaneous_threshold_milliseconds": 200 },
+            "to": [{ "key_code": "escape" }],
+            "type": "basic"
+        }
+    ]
+}
+  ]
+}

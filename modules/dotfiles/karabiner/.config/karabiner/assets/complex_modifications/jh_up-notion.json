@@ -1,0 +1,32 @@
+{
+  "title": "jh rapide (<200 ms) → Ctrl+Shift+k",
+  "rules": [
+    {
+      "description": "jh rapide (<200 ms) → Ctrl+Shift+K",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "simultaneous": [
+              { "key_code": "j" },
+              { "key_code": "h" }
+            ],
+            "simultaneous_options": {
+              "key_down_order": "insensitive",
+              "key_up_order": "insensitive"
+            }
+          },
+          "parameters": { 
+            "basic.simultaneous_threshold_milliseconds": 200 
+          },
+          "to": [
+            { 
+              "key_code": "k", 
+              "modifiers": ["left_control", "left_shift"] 
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
