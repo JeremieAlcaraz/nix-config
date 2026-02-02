@@ -71,6 +71,21 @@
             usbutils
           ];
 
+          environment.etc."installer/justfile" = {
+            text = ''
+              set shell := ["bash", "-lc"]
+
+              install:
+              	# Clone le repo sur dandelion et lance l'installation
+              	git clone http://dandelion:3000/jeremiealcaraz/nix-config
+              	cd nix-config/scripts
+              	sudo ./install-nixos.sh
+            '';
+            mode = "0644";
+          };
+          environment.etc."justfile".source = "/etc/installer/justfile";
+          environment.variables.JUSTFILE = "/etc/installer/justfile";
+
           # 🐚 Configuration de ZSH comme shell par défaut
           programs.zsh = {
             enable = true;
@@ -134,6 +149,7 @@
             echo "  Pour démarrer X11 : startx"
             echo "  User : nixos / Pass : nixos"
             echo "  SSH activé sur port 22"
+            echo "  Install : just install"
             echo ""
           '';
 
