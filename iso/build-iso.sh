@@ -56,7 +56,7 @@ Exemples:
   $0 --sync           # Même chose (explicite)
   $0 --update         # Dernière version nixpkgs
 
-Le résultat sera dans: result/iso/nixos-minimal-ttyS0.iso
+Le résultat sera dans: result/iso/nixos-installer-ttyS0.iso
 EOF
     exit 0
 fi
@@ -154,7 +154,7 @@ echo ""
 START_TIME=$(date +%s)
 
 # Build avec logs
-nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage \
+nix build .#nixosConfigurations.iso-installer-ttyS0.config.system.build.isoImage \
     --print-build-logs
 
 END_TIME=$(date +%s)
@@ -169,9 +169,9 @@ info "Build terminé en ${BUILD_TIME_MIN}m ${BUILD_TIME_SEC}s"
 # ========================================
 step "Étape 4/4 : Vérification du résultat"
 
-if [[ -f result/iso/nixos-minimal-ttyS0.iso ]]; then
-    ISO_SIZE=$(du -h result/iso/nixos-minimal-ttyS0.iso | cut -f1)
-    ISO_PATH=$(realpath result/iso/nixos-minimal-ttyS0.iso)
+if [[ -f result/iso/nixos-installer-ttyS0.iso ]]; then
+    ISO_SIZE=$(du -h result/iso/nixos-installer-ttyS0.iso | cut -f1)
+    ISO_PATH=$(realpath result/iso/nixos-installer-ttyS0.iso)
 
     info "ISO créée avec succès !"
     info "Taille: $ISO_SIZE"
@@ -222,12 +222,12 @@ else
 fi
 
 # Vérifier que l'ISO existe avant de continuer
-if [[ ! -f result/iso/nixos-minimal-ttyS0.iso ]]; then
+if [[ ! -f result/iso/nixos-installer-ttyS0.iso ]]; then
     error "ISO introuvable, impossible de continuer"
 fi
 
-ISO_SIZE=$(du -h result/iso/nixos-minimal-ttyS0.iso | cut -f1)
-ISO_PATH=$(realpath result/iso/nixos-minimal-ttyS0.iso)
+ISO_SIZE=$(du -h result/iso/nixos-installer-ttyS0.iso | cut -f1)
+ISO_PATH=$(realpath result/iso/nixos-installer-ttyS0.iso)
 
 # ========================================
 # Étape 5 : Copier l'ISO
@@ -237,7 +237,7 @@ step "Étape 5/7 : Copier l'ISO"
 
 # Générer un nom d'ISO avec la date
 BUILD_DATE=$(date '+%Y-%m-%d')
-ISO_NAME_DATED="nixos-minimal-ttyS0-${BUILD_DATE}.iso"
+ISO_NAME_DATED="nixos-installer-ttyS0-${BUILD_DATE}.iso"
 
 info "Nom de l'ISO : $ISO_NAME_DATED"
 
@@ -256,14 +256,14 @@ COPIED_TO_PROXMOX=false
 case "$COPY_CHOICE" in
     1)
         info "Copie vers Mac (marigold)..."
-        scp result/iso/nixos-minimal-ttyS0.iso marigold:~/Downloads/$ISO_NAME_DATED
+        scp result/iso/nixos-installer-ttyS0.iso marigold:~/Downloads/$ISO_NAME_DATED
         info "✅ Copié vers marigold:~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
         ;;
     2)
         # Scanner Proxmox pour les anciennes ISO avant de copier
         info "Scan des ISO existantes sur Proxmox..."
-        EXISTING_ISOS=$(ssh root@192.168.1.50 "ls -1t /var/lib/vz/template/iso/nixos-minimal-ttyS0-*.iso 2>/dev/null" || echo "")
+        EXISTING_ISOS=$(ssh root@192.168.1.50 "ls -1t /var/lib/vz/template/iso/nixos-installer-ttyS0-*.iso 2>/dev/null" || echo "")
 
         if [[ -n "$EXISTING_ISOS" ]]; then
             ISO_COUNT=$(echo "$EXISTING_ISOS" | wc -l)
@@ -293,20 +293,20 @@ case "$COPY_CHOICE" in
 
         echo ""
         info "Copie vers Proxmox..."
-        scp result/iso/nixos-minimal-ttyS0.iso root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
+        scp result/iso/nixos-installer-ttyS0.iso root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
         info "✅ Copié vers root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED"
         COPIED_TO_PROXMOX=true
         ;;
     3)
         info "Copie vers Mac (marigold)..."
-        scp result/iso/nixos-minimal-ttyS0.iso marigold:~/Downloads/$ISO_NAME_DATED
+        scp result/iso/nixos-installer-ttyS0.iso marigold:~/Downloads/$ISO_NAME_DATED
         info "✅ Copié vers marigold:~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
 
         echo ""
         # Scanner Proxmox pour les anciennes ISO
         info "Scan des ISO existantes sur Proxmox..."
-        EXISTING_ISOS=$(ssh root@192.168.1.50 "ls -1t /var/lib/vz/template/iso/nixos-minimal-ttyS0-*.iso 2>/dev/null" || echo "")
+        EXISTING_ISOS=$(ssh root@192.168.1.50 "ls -1t /var/lib/vz/template/iso/nixos-installer-ttyS0-*.iso 2>/dev/null" || echo "")
 
         if [[ -n "$EXISTING_ISOS" ]]; then
             ISO_COUNT=$(echo "$EXISTING_ISOS" | wc -l)
@@ -336,7 +336,7 @@ case "$COPY_CHOICE" in
 
         echo ""
         info "Copie vers Proxmox..."
-        scp result/iso/nixos-minimal-ttyS0.iso root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
+        scp result/iso/nixos-installer-ttyS0.iso root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
         info "✅ Copié vers root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED"
         COPIED_TO_PROXMOX=true
         ;;
@@ -402,8 +402,8 @@ if [[ "$COPIED_TO_PROXMOX" == true ]]; then
     echo -e "${YELLOW}2.${NC} Démarrer et installer:"
     echo "   ${CYAN}qm start <VMID>${NC}"
     echo ""
-    echo -e "${YELLOW}3.${NC} Dans l'ISO, installer minimal:"
-    echo "   ${CYAN}sudo ./scripts/install-nixos.sh minimal${NC}"
+    echo -e "${YELLOW}3.${NC} Dans l'ISO, lancer l'installation:"
+    echo "   ${CYAN}sudo ./scripts/install-nixos.sh${NC}"
     echo ""
 fi
 

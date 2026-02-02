@@ -95,11 +95,11 @@ jq -r '.nodes.nixpkgs.locked | "\(.lastModified) = \(.rev)"' flake.lock
 cd ~/nix-config/iso
 
 # Builder l'ISO (peut prendre 5-10 minutes la première fois)
-nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage
+nix build .#nixosConfigurations.iso-installer-ttyS0.config.system.build.isoImage
 
 # Si succès, l'ISO sera dans:
 ls -lh result/iso/*.iso
-# Exemple: result/iso/nixos-minimal-ttyS0.iso (~800 MB)
+# Exemple: result/iso/nixos-installer-ttyS0.iso (~800 MB)
 ```
 
 **Si tu obtiens une erreur** du genre "platform mismatch" ou "unsupported system", passe à l'Étape 5 (build sur magnolia).
@@ -131,7 +131,7 @@ cd /etc/nixos/iso
 git pull
 
 # Builder l'ISO (10-15 minutes première fois)
-nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage \
+nix build .#nixosConfigurations.iso-installer-ttyS0.config.system.build.isoImage \
   --option sandbox false
 
 # Vérifier le résultat
@@ -149,17 +149,17 @@ ls -lh result/iso/*.iso
 cd ~/Downloads
 
 # Copier l'ISO depuis magnolia
-scp magnolia:/etc/nixos/iso/result/iso/nixos-minimal-ttyS0.iso ./
+scp magnolia:/etc/nixos/iso/result/iso/nixos-installer-ttyS0.iso ./
 
 # Vérifier la taille (~600-900 MB)
-ls -lh nixos-minimal-ttyS0.iso
+ls -lh nixos-installer-ttyS0.iso
 ```
 
 ### Depuis ton Mac (si build local a marché)
 
 ```bash
 # L'ISO est déjà dans result/iso/
-cp ~/nix-config/iso/result/iso/nixos-minimal-ttyS0.iso ~/Downloads/
+cp ~/nix-config/iso/result/iso/nixos-installer-ttyS0.iso ~/Downloads/
 ```
 
 ---
@@ -177,17 +177,17 @@ cp ~/nix-config/iso/result/iso/nixos-minimal-ttyS0.iso ~/Downloads/
 
 3. **Upload**
    - Cliquer sur "Upload"
-   - Sélectionner `nixos-minimal-ttyS0.iso`
+   - Sélectionner `nixos-installer-ttyS0.iso`
    - Attendre la fin de l'upload (~2-5 min selon connexion)
 
 ### Via SCP (plus rapide si tu as accès SSH à Proxmox)
 
 ```bash
 # Sur ton Mac
-scp ~/Downloads/nixos-minimal-ttyS0.iso root@proxmox:/var/lib/vz/template/iso/
+scp ~/Downloads/nixos-installer-ttyS0.iso root@proxmox:/var/lib/vz/template/iso/
 
 # Vérifier que c'est bien arrivé
-ssh root@proxmox "ls -lh /var/lib/vz/template/iso/nixos-minimal-ttyS0.iso"
+ssh root@proxmox "ls -lh /var/lib/vz/template/iso/nixos-installer-ttyS0.iso"
 ```
 
 ---
@@ -204,25 +204,11 @@ ssh root@proxmox
 qm list
 
 # Attacher la nouvelle ISO (remplace 100 par ton VMID)
-qm set 100 --ide2 local:iso/nixos-minimal-ttyS0.iso,media=cdrom
+qm set 100 --ide2 local:iso/nixos-installer-ttyS0.iso,media=cdrom
 
 # Démarrer la VM
 qm start 100
 ```
-
-### 8.2 : Installer minimal
-
-Une fois dans l'ISO :
-
-```bash
-# Lancer l'installation
-sudo ./scripts/install-nixos.sh minimal
-
-# Quand demandé, utilise la branche:
-# claude/rename-demo-minimal-01FJuak6GBW28EmCkaTVNvJd
-```
-
----
 
 ## ⏱️ Gains de temps attendus
 
@@ -253,8 +239,8 @@ Premier install: ~5-8 minutes ⚠️
 Après l'installation avec la nouvelle ISO :
 
 ```bash
-# Sur la VM minimal fraîchement installée
-ssh root@<IP-minimal>
+# Sur la VM fraîchement installée
+ssh root@<IP-VM>
 
 # Vérifier la version nixpkgs
 nix-info -m | grep nixpkgs
@@ -300,7 +286,7 @@ jobs:
         run: |
           cd iso
           nix flake update
-          nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage
+          nix build .#nixosConfigurations.iso-installer-ttyS0.config.system.build.isoImage
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
@@ -347,7 +333,6 @@ nix build ... --print-build-logs 2>&1 | grep -E 'copying|building'
 - [ ] ISO uploadée sur Proxmox
 - [ ] ISO testée (boote correctement)
 - [ ] Version nixpkgs match le flake principal
-- [ ] Installation de minimal en ~2-3 minutes ✅
 
 ---
 

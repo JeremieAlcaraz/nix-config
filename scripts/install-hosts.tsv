@@ -1,0 +1,7 @@
+# id	target	label	description	hidden	tailscale_ip
+dandelion	dandelion	Dandelion	Forge Git auto-hebergee avec Gitea, PostgreSQL et runners. Acces via Tailscale, sauvegardes quotidiennes, themes personnalises et creation automatique de l'admin depuis sops.	false	100.96.250.43
+magnolia	magnolia	Magnolia	Hyperviseur Proxmox et noeud d'infra principal. Fournit Tailscale, DNS MagicDNS, cache Nix via nix-serve, cles de deploiement et d'automatisation CI.	false	100.108.60.92
+marigold	marigold	Marigold	Hote macOS gere par nix-darwin, Homebrew et preferences systeme. Sert de poste principal avec outils de dev, fonts, et automatisations locales.	false	100.109.137.116
+mimosa	mimosa	Mimosa	Serveur web principal pour jeremiealcaraz.com. Utilise Caddy et Cloudflare Tunnel, cache Nix local, et Tailscale. Mode bootstrap possible pour eviter la compilation initiale.	false	100.88.163.121
+rhizanthella	rhizanthella	Rhizanthella	Backend-as-a-Service bknd avec PostgreSQL dedie, sauvegardes quotidiennes, acces limite aux interfaces Tailscale et secrets geres par sops-nix.	false	100.127.41.93
+whitelily	whitelily	Whitelily	VM d'automations n8n avec PostgreSQL, Cloudflare Tunnel et sauvegardes planifiees. Gere les secrets via sops-nix et s'appuie sur Tailscale pour le reseau prive.	false	100.123.2.97

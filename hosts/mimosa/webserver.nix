@@ -1,6 +1,6 @@
 # Configuration du serveur web j12zdotcom
 # Ce fichier est importé uniquement dans la configuration "mimosa" complète
-# Pour éviter les erreurs, il n'est PAS importé dans "mimosa-minimal"
+# Pour éviter les erreurs, il n'est PAS importé dans "mimosa-bootstrap"
 
 { config, lib, pkgs, j12zdotcom, ... }:
 

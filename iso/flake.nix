@@ -6,7 +6,7 @@
   };
 
   outputs = { self, nixpkgs }: {
-    nixosConfigurations.iso-minimal-ttyS0 = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.iso-installer-ttyS0 = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
 
       modules = [
@@ -16,7 +16,7 @@
         # Configuration personnalisée
         ({ pkgs, lib, ... }: {
           # 🧠 Nom de l'hôte ISO
-          networking.hostName = "nixos-iso-ttyS0";
+          networking.hostName = "nixos-installer-ttyS0";
 
           # 🖥️ Configuration du boot pour console série
           # console=ttyS0,115200n8 : active la console série (parfait pour Proxmox/NoVNC)
@@ -134,7 +134,7 @@
 
           # 🎯 ISO metadata
           isoImage = {
-            isoName = lib.mkForce "nixos-minimal-ttyS0.iso";
+            isoName = lib.mkForce "nixos-installer-ttyS0.iso";
             volumeID = lib.mkForce "NIXOS_TTYS0";
             appendToMenuLabel = lib.mkForce " (avec support TTY série)";
           };

@@ -15,7 +15,7 @@ ISO personnalisée NixOS optimisée pour Proxmox avec console série (ttyS0) et 
 ./build-iso.sh --help
 ```
 
-**Résultat** : `result/iso/nixos-minimal-ttyS0.iso` (~600-900 MB)
+**Résultat** : `result/iso/nixos-installer-ttyS0.iso` (~600-900 MB)
 
 ## 📋 Pourquoi rebuilder l'ISO ?
 
@@ -23,7 +23,7 @@ ISO personnalisée NixOS optimisée pour Proxmox avec console série (ttyS0) et 
 ```
 ISO ancienne (novembre 2024)
      ↓
-Installation minimal (janvier 2025)
+Installation VM (janvier 2025)
      ↓
 Gap de 2+ mois = Télécharge TOUS les packages mis à jour
      ↓
@@ -34,7 +34,7 @@ Temps: 5-8 minutes ⚠️
 ```
 ISO récente (même version que le flake)
      ↓
-Installation minimal
+Installation VM
      ↓
 Pas de gap = Télécharge uniquement les nouveaux packages
      ↓
@@ -80,7 +80,7 @@ MAIN_REV=$(cd .. && jq -r '.nodes.nixpkgs.locked.rev' flake.lock)
 nix flake lock --override-input nixpkgs "github:NixOS/nixpkgs/$MAIN_REV"
 
 # Builder l'ISO
-nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage
+nix build .#nixosConfigurations.iso-installer-ttyS0.config.system.build.isoImage
 
 # Résultat
 ls -lh result/iso/*.iso
@@ -92,10 +92,10 @@ ls -lh result/iso/*.iso
 
 ```bash
 # Copier vers Downloads
-cp result/iso/nixos-minimal-ttyS0.iso ~/Downloads/
+cp result/iso/nixos-installer-ttyS0.iso ~/Downloads/
 
 # Upload vers Proxmox
-scp ~/Downloads/nixos-minimal-ttyS0.iso root@proxmox:/var/lib/vz/template/iso/
+scp ~/Downloads/nixos-installer-ttyS0.iso root@proxmox:/var/lib/vz/template/iso/
 ```
 
 ### Via Web UI
@@ -109,13 +109,13 @@ scp ~/Downloads/nixos-minimal-ttyS0.iso root@proxmox:/var/lib/vz/template/iso/
 
 ```bash
 # Attacher à une VM (remplace 100 par ton VMID)
-qm set 100 --ide2 local:iso/nixos-minimal-ttyS0.iso,media=cdrom
+qm set 100 --ide2 local:iso/nixos-installer-ttyS0.iso,media=cdrom
 
 # Démarrer la VM
 qm start 100
 
-# Une fois dans l'ISO, installer minimal
-sudo ./scripts/install-nixos.sh minimal
+# Une fois dans l'ISO, lancer l'install
+sudo ./scripts/install-nixos.sh
 ```
 
 ## ⏱️ Performances

@@ -76,8 +76,6 @@
           echo "🌼 Mimosa - Serveur web"
         '' else if osConfig.networking.hostName == "dandelion" then ''
           echo "🌾 Dandelion - Serveur Git Gitea"
-        '' else if osConfig.networking.hostName == "minimal" then ''
-          echo "🔧 Minimal - VM de démonstration minimale"
         '' else ""}
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""

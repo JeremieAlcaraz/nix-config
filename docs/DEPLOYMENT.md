@@ -702,7 +702,7 @@ git clone https://github.com/JeremieAlcaraz/nix-config.git
 cd nix-config/iso
 
 # 2. Builder l'ISO (10-30 minutes)
-nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage
+nix build .#nixosConfigurations.iso-installer-ttyS0.config.system.build.isoImage
 
 # 3. L'ISO est dans result/iso/
 ls -lh result/iso/*.iso
@@ -772,7 +772,7 @@ users.users.nixos = {
 
 **Rebuild après modification :**
 ```bash
-nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage
+nix build .#nixosConfigurations.iso-installer-ttyS0.config.system.build.isoImage
 ```
 
 ### 🔬 Détails techniques

@@ -28,7 +28,7 @@ Pour comprendre pourquoi un build est lent :
 
 ```bash
 # Pendant un build, voir ce qui est téléchargé vs compilé
-nix build .#nixosConfigurations.minimal.config.system.build.toplevel --print-build-logs
+nix build .#nixosConfigurations.mimosa.config.system.build.toplevel --print-build-logs
 
 # Vérifier si un package est dans le cache
 nix path-info --store https://cache.nixos.org nixpkgs#hello
@@ -141,11 +141,11 @@ nix.settings = {
 
 ```bash
 # Avant optimisation
-time sudo nixos-rebuild switch --flake .#minimal
+time sudo nixos-rebuild switch --flake .#mimosa
 # real    15m32.541s  ❌
 
 # Après optimisation (avec caches)
-time sudo nixos-rebuild switch --flake .#minimal
+time sudo nixos-rebuild switch --flake .#mimosa
 # real    2m18.123s   ✅
 ```
 

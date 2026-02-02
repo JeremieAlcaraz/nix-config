@@ -19,7 +19,7 @@ Voir le guide complet: [`../docs/MIMOSA_WEBSERVER_SETUP.md`](../docs/MIMOSA_WEBS
 ./scripts/rebuild-all.sh --help
 ```
 
-Ce script construit toutes les configurations (mimosa, whitelily, minimal) et les rend disponibles via le cache binaire de magnolia. Les déploiements ultérieurs seront beaucoup plus rapides !
+Ce script construit toutes les configurations (mimosa, whitelily, dandelion, rhizanthella) et les rend disponibles via le cache binaire de magnolia. Les déploiements ultérieurs seront beaucoup plus rapides !
 
 ### Déployer le site j12zdotcom
 

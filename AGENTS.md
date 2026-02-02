@@ -23,7 +23,7 @@ Run from repo root unless noted.
 - Darwin switch (macOS): `darwin-rebuild switch --flake .#marigold`
 - Flake validation (optional): `nix flake check`
 - Build installer ISO (root flake): `nix build .#nixosConfigurations.installer.config.system.build.isoImage`
-- Build ISO (iso flake): `cd iso && nix build .#nixosConfigurations.iso-minimal-ttyS0.config.system.build.isoImage`
+- Build ISO (iso flake): `cd iso && nix build .#nixosConfigurations.iso-installer-ttyS0.config.system.build.isoImage`
 
 ## Secrets and safety
 - Do not edit `secrets/*.yaml` in plain text. Use `sops` with the correct age key.

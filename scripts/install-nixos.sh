@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Script d'installation NixOS all-in-one
-# Usage: sudo ./install-nixos.sh [magnolia|mimosa-bootstrap|mimosa|whitelily|dandelion|rhizanthella|minimal]
+# Usage: sudo ./install-nixos.sh [host|--list|--help]
 #
 # Ce script installe NixOS :
 # - Partitionnement et formatage
@@ -43,19 +43,157 @@ step() {
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 }
 
+# Prompt helper
 prompt() {
     echo -e "${YELLOW}❓ $1${NC}"
 }
 
-# Vérifications initiales
-[[ $EUID -ne 0 ]] && error "Ce script doit être exécuté en tant que root (sudo)"
-[[ ! -d /sys/firmware/efi ]] && error "Ce script nécessite un système UEFI"
+# Chemins relatifs et catalogues
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+HOSTS_ROOT="${REPO_ROOT}/hosts"
+INSTALL_HOSTS_FILE="${SCRIPT_DIR}/install-hosts.tsv"
 
-# Récupérer le nom de l'host ou afficher le menu
-HOST="${1:-}"
+declare -A METADATA_TARGET=()
+declare -A METADATA_LABEL=()
+declare -A METADATA_DESC=()
+declare -A METADATA_HIDDEN=()
 
-if [[ -z "$HOST" ]]; then
-    # Menu interactif
+declare -A INSTALL_TARGET=()
+declare -A INSTALL_LABEL=()
+declare -A INSTALL_DESC=()
+declare -A INSTALL_HIDDEN=()
+declare -A INSTALL_EXISTS=()
+
+declare -a METADATA_ORDER=()
+declare -a AUTO_HOSTS=()
+declare -a MENU_ORDER=()
+declare -a VISIBLE_HOST_IDS=()
+
+usage() {
+    echo ""
+    echo -e "${CYAN}Usage:${NC} sudo ./scripts/install-nixos.sh [host|--list|--help]"
+    echo "Sans argument, un menu interactif liste les hôtes décrits dans ${INSTALL_HOSTS_FILE}."
+    echo "Utilisez ${YELLOW}--list${NC} pour afficher toutes les cibles (y compris les masquées) ou ${YELLOW}--help${NC} pour ce message."
+    echo ""
+}
+
+list_install_hosts() {
+    if [[ ${#MENU_ORDER[@]} -eq 0 ]]; then
+        error "Aucun host disponible (répertoire ${HOSTS_ROOT} vide ou catalogue invalide)."
+    fi
+    echo ""
+    echo -e "${BLUE}Hosts reconnus pour l'installation :${NC}"
+    for id in "${MENU_ORDER[@]}"; do
+        local label="${INSTALL_LABEL[$id]:-$id}"
+        local desc="${INSTALL_DESC[$id]}"
+        local hidden="${INSTALL_HIDDEN[$id]:-false}"
+        local marker=""
+        if [[ "${hidden,,}" == "true" ]]; then
+            marker=" (masqué)"
+        fi
+        echo -e "  ${YELLOW}${id}${marker}${NC} → ${label}"
+        [[ -n "$desc" ]] && echo "       ${desc}"
+    done
+    echo ""
+}
+
+load_install_catalog() {
+    METADATA_TARGET=()
+    METADATA_LABEL=()
+    METADATA_DESC=()
+    METADATA_HIDDEN=()
+    INSTALL_TARGET=()
+    INSTALL_LABEL=()
+    INSTALL_DESC=()
+    INSTALL_HIDDEN=()
+    INSTALL_EXISTS=()
+    METADATA_ORDER=()
+    AUTO_HOSTS=()
+    MENU_ORDER=()
+    VISIBLE_HOST_IDS=()
+
+    if [[ ! -d "$HOSTS_ROOT" ]]; then
+        error "Répertoire des hosts introuvable : ${HOSTS_ROOT}"
+    fi
+
+    if [[ -f "$INSTALL_HOSTS_FILE" ]]; then
+        while IFS=$'\t' read -r id target label description hidden tailscale_ip; do
+            [[ -z "$id" || "${id:0:1}" == "#" ]] && continue
+            METADATA_ORDER+=("$id")
+            METADATA_TARGET["$id"]="${target:-$id}"
+            METADATA_LABEL["$id"]="${label:-$id}"
+            METADATA_DESC["$id"]="${description:-}"
+            METADATA_HIDDEN["$id"]="${hidden:-false}"
+        done < <(sed 's/\r$//' "$INSTALL_HOSTS_FILE")
+    fi
+
+    set +e
+    local nullglob_backup
+    nullglob_backup="$(shopt -p nullglob)"
+    set -e
+
+    shopt -s nullglob
+    for host_path in "${HOSTS_ROOT}"/*; do
+        [[ -d "$host_path" ]] || continue
+        local host_name
+        host_name="$(basename "$host_path")"
+        [[ -f "${host_path}/configuration.nix" ]] || continue
+        INSTALL_TARGET["$host_name"]="${METADATA_TARGET[$host_name]:-$host_name}"
+        INSTALL_LABEL["$host_name"]="${METADATA_LABEL[$host_name]:-$host_name}"
+        INSTALL_DESC["$host_name"]="${METADATA_DESC[$host_name]:-}"
+        INSTALL_HIDDEN["$host_name"]="${METADATA_HIDDEN[$host_name]:-false}"
+        INSTALL_EXISTS["$host_name"]=1
+        AUTO_HOSTS+=("$host_name")
+    done
+
+    if [[ -n "$nullglob_backup" ]]; then
+        eval "$nullglob_backup"
+    else
+        shopt -u nullglob
+    fi
+
+    for id in "${METADATA_ORDER[@]}"; do
+        [[ -n "${INSTALL_EXISTS[$id]:-}" ]] && continue
+        local target="${METADATA_TARGET[$id]:-$id}"
+        INSTALL_TARGET["$id"]="$target"
+        INSTALL_LABEL["$id"]="${METADATA_LABEL[$id]:-$id}"
+        INSTALL_DESC["$id"]="${METADATA_DESC[$id]:-}"
+        INSTALL_HIDDEN["$id"]="${METADATA_HIDDEN[$id]:-false}"
+        INSTALL_EXISTS["$id"]=1
+        if [[ "$target" != "$id" && -z "${INSTALL_EXISTS[$target]:-}" ]]; then
+            warning "La cible ${id} référence l'hôte ${target} qui n'existe pas sous ${HOSTS_ROOT}"
+        fi
+    done
+
+    for id in "${METADATA_ORDER[@]}"; do
+        [[ -n "${INSTALL_EXISTS[$id]:-}" ]] && MENU_ORDER+=("$id")
+    done
+
+    for host_name in "${AUTO_HOSTS[@]}"; do
+        if [[ ! " ${MENU_ORDER[*]} " =~ " ${host_name} " ]]; then
+            MENU_ORDER+=("$host_name")
+        fi
+    done
+
+    for id in "${MENU_ORDER[@]}"; do
+        local hidden="${INSTALL_HIDDEN[$id]:-false}"
+        if [[ "${hidden,,}" == "true" ]]; then
+            continue
+        fi
+        VISIBLE_HOST_IDS+=("$id")
+    done
+
+    if [[ ${#MENU_ORDER[@]} -eq 0 ]]; then
+        error "Aucun host valide trouvé dans ${HOSTS_ROOT}"
+    fi
+}
+
+select_host_interactively() {
+    if [[ ${#VISIBLE_HOST_IDS[@]} -eq 0 ]]; then
+        error "Aucun host visible disponible. Utilisez --list pour voir les cibles cachées."
+    fi
+
     echo ""
     echo -e "${CYAN}╔════════════════════════════════════════════════════╗${NC}"
     echo -e "${CYAN}║     🌸 Installation NixOS - Sélection de l'host   ║${NC}"
@@ -63,65 +201,60 @@ if [[ -z "$HOST" ]]; then
     echo ""
     echo -e "${BLUE}Hosts disponibles :${NC}"
     echo ""
-    echo -e "${GREEN}1)${NC} ${YELLOW}magnolia${NC}"
-    echo -e "   🌸 Infrastructure Proxmox"
-    echo -e "   → VM de base pour l'infrastructure"
-    echo ""
-    echo -e "${GREEN}2)${NC} ${YELLOW}mimosa-bootstrap${NC}"
-    echo -e "   🌼 Serveur web - Installation (SANS webserver)"
-    echo -e "   → Installation légère, activer webserver après avec: nixos-rebuild switch --flake .#mimosa"
-    echo ""
-    echo -e "${GREEN}3)${NC} ${YELLOW}whitelily${NC}"
-    echo -e "   🤍 n8n automation"
-    echo -e "   → Stack complète : n8n + PostgreSQL + Caddy + Cloudflare Tunnel"
-    echo ""
-    echo -e "${GREEN}4)${NC} ${YELLOW}dandelion${NC}"
-    echo -e "   🌾 Serveur Git Gitea"
-    echo -e "   → Gitea + PostgreSQL 16 (accès via Tailscale)"
-    echo ""
-    echo -e "${GREEN}5)${NC} ${YELLOW}minimal${NC}"
-    echo -e "   🔧 VM de démonstration minimale"
-    echo -e "   → Configuration basique pour tests et démonstration"
-    echo ""
-    echo -e "${GREEN}6)${NC} ${YELLOW}rhizanthella${NC}"
-    echo -e "   🌺 bknd Backend-as-a-Service"
-    echo -e "   → bknd + PostgreSQL 16 (accès via Tailscale)"
-    echo ""
-    prompt "Choisissez un host (1-6) :"
+
+    for idx in "${!VISIBLE_HOST_IDS[@]}"; do
+        local id="${VISIBLE_HOST_IDS[idx]}"
+        local label="${INSTALL_LABEL[$id]:-$id}"
+        local desc="${INSTALL_DESC[$id]}"
+        echo -e "${GREEN}$((idx+1)))${NC} ${YELLOW}${label}${NC}"
+        [[ -n "$desc" ]] && echo "   ${desc}"
+        echo ""
+    done
+
+    prompt "Choisissez un host (1-${#VISIBLE_HOST_IDS[@]}) :"
     read -r choice
+    if ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 1 || choice > ${#VISIBLE_HOST_IDS[@]} )); then
+        error "Choix invalide. Utilisez un numéro entre 1 et ${#VISIBLE_HOST_IDS[@]}."
+    fi
 
-    case "$choice" in
-        1)
-            HOST="magnolia"
-            ;;
-        2)
-            HOST="mimosa-bootstrap"
-            ;;
-        3)
-            HOST="whitelily"
-            ;;
-        4)
-            HOST="dandelion"
-            ;;
-        5)
-            HOST="minimal"
-            ;;
-        6)
-            HOST="rhizanthella"
-            ;;
-        *)
-            error "Choix invalide. Utilisez 1, 2, 3, 4, 5 ou 6"
-            ;;
-    esac
-
-    info "Host sélectionné : ${HOST}"
+    HOST="${VISIBLE_HOST_IDS[choice-1]}"
     echo ""
+}
+
+HOST_ARG="${1:-}"
+load_install_catalog
+
+case "$HOST_ARG" in
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    -l|--list)
+        list_install_hosts
+        exit 0
+        ;;
+    "")
+        select_host_interactively
+        ;;
+    *)
+        HOST="${HOST_ARG,,}"
+        ;;
+esac
+
+if [[ -z "${HOST:-}" ]]; then
+    select_host_interactively
 fi
 
-# Vérifier que l'host est valide
-if [[ "$HOST" != "magnolia" && "$HOST" != "mimosa-bootstrap" && "$HOST" != "mimosa" && "$HOST" != "whitelily" && "$HOST" != "dandelion" && "$HOST" != "minimal" && "$HOST" != "rhizanthella" ]]; then
-    error "Host invalide. Utilisez 'magnolia', 'mimosa-bootstrap', 'mimosa', 'whitelily', 'dandelion', 'minimal' ou 'rhizanthella'"
+if [[ -z "${INSTALL_EXISTS[$HOST]:-}" ]]; then
+    error "Host '${HOST}' inconnu. Utilisez --list pour voir les cibles disponibles."
 fi
+
+HOST_DIR="${INSTALL_TARGET[$HOST]:-$HOST}"
+
+info "Host sélectionné : ${HOST}"
+
+[[ $EUID -ne 0 ]] && error "Ce script doit être exécuté en tant que root (sudo)"
+[[ ! -d /sys/firmware/efi ]] && error "Ce script nécessite un système UEFI"
 
 # Configuration
 DISK="/dev/sda"

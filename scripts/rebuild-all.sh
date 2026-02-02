@@ -56,7 +56,7 @@ Ce script va :
   1. Synchroniser le repo depuis Gitea (origin)
   2. Mettre à jour nixpkgs-unstable (si --update-unstable)
   3. Mettre à jour j12zdotcom (sauf si --skip-site)
-  4. Builder mimosa, whitelily, dandelion, minimal pour le cache
+  4. Builder mimosa, whitelily, dandelion pour le cache
   5. Builder et appliquer la config magnolia
   6. Commit et push le flake.lock (si modifié)
 
@@ -175,15 +175,6 @@ if nix build .#nixosConfigurations.dandelion.config.system.build.toplevel; then
     log_success "Dandelion built!"
 else
     log_error "Dandelion build failed!"
-    exit 1
-fi
-
-echo ""
-echo -e "${BLUE}📦 Building minimal...${NC}"
-if nix build .#nixosConfigurations.minimal.config.system.build.toplevel; then
-    log_success "Minimal built!"
-else
-    log_error "Minimal build failed!"
     exit 1
 fi
 
