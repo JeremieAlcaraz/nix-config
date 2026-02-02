@@ -76,9 +76,10 @@
               set shell := ["bash", "-lc"]
 
               install:
-              	# Clone le repo sur dandelion et lance l'installation
-              	git clone http://dandelion:3000/jeremiealcaraz/nix-config
-              	cd nix-config/scripts
+              	# Clone le repo sur dandelion et lance l'installation depuis /tmp
+              	rm -rf /tmp/nix-config
+              	git clone http://dandelion:3000/jeremiealcaraz/nix-config /tmp/nix-config
+              	cd /tmp/nix-config/scripts
               	sudo ./install-nixos.sh
             '';
             mode = "0644";
@@ -87,9 +88,10 @@
             set shell := ["bash", "-lc"]
 
             install:
-            	# Clone le repo sur dandelion et lance l'installation
-            	git clone http://dandelion:3000/jeremiealcaraz/nix-config
-            	cd nix-config/scripts
+            	# Clone le repo sur dandelion et lance l'installation depuis /tmp
+            	rm -rf /tmp/nix-config
+            	git clone http://dandelion:3000/jeremiealcaraz/nix-config /tmp/nix-config
+            	cd /tmp/nix-config/scripts
             	sudo ./install-nixos.sh
           '';
 
