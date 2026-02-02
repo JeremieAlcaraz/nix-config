@@ -254,7 +254,7 @@ COPIED_TO_PROXMOX=false
 case "$COPY_CHOICE" in
     1)
         info "Copie vers Mac (marigold)..."
-        scp "$DATED_ISO" marigold:~/Downloads/$ISO_NAME_DATED
+        scp "$DATED_ISO" jeremie@marigold:~/Downloads/$ISO_NAME_DATED
         info "✅ Copié vers marigold:~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
         ;;
@@ -297,7 +297,7 @@ case "$COPY_CHOICE" in
         ;;
     3)
         info "Copie vers Mac (marigold)..."
-        scp "$DATED_ISO" marigold:~/Downloads/$ISO_NAME_DATED
+        scp "$DATED_ISO" jeremie@marigold:~/Downloads/$ISO_NAME_DATED
         info "✅ Copié vers marigold:~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
 
