@@ -15,7 +15,7 @@ ISO personnalisée NixOS optimisée pour Proxmox avec console série (ttyS0) et 
 ./build-iso.sh --help
 ```
 
-**Résultat** : `result/iso/nixos-installer-ttyS0.iso` (~600-900 MB)
+**Résultat** : `nixos-installer-ttyS0-YYYY-MM-DD.iso` (~600-900 MB) dans le dossier `iso/`.
 
 ## 📋 Pourquoi rebuilder l'ISO ?
 
@@ -92,10 +92,10 @@ ls -lh result/iso/*.iso
 
 ```bash
 # Copier vers Downloads
-cp result/iso/nixos-installer-ttyS0.iso ~/Downloads/
+cp nixos-installer-ttyS0-YYYY-MM-DD.iso ~/Downloads/
 
 # Upload vers Proxmox
-scp ~/Downloads/nixos-installer-ttyS0.iso root@proxmox:/var/lib/vz/template/iso/
+scp ~/Downloads/nixos-installer-ttyS0-YYYY-MM-DD.iso root@proxmox:/var/lib/vz/template/iso/
 ```
 
 ### Via Web UI
@@ -109,7 +109,7 @@ scp ~/Downloads/nixos-installer-ttyS0.iso root@proxmox:/var/lib/vz/template/iso/
 
 ```bash
 # Attacher à une VM (remplace 100 par ton VMID)
-qm set 100 --ide2 local:iso/nixos-installer-ttyS0.iso,media=cdrom
+qm set 100 --ide2 local:iso/nixos-installer-ttyS0-YYYY-MM-DD.iso,media=cdrom
 
 # Démarrer la VM
 qm start 100
@@ -184,13 +184,13 @@ df -h
 - ✅ Après une mise à jour majeure (24.11 → 25.05)
 - ❌ Pas besoin à chaque petit changement
 
-## 📚 Documentation complète
+## 📚 Documentation
 
-Voir [docs/REBUILD-ISO.md](../docs/REBUILD-ISO.md) pour le guide détaillé avec toutes les étapes.
+Voir [docs/BUILD-ISO.md](../docs/BUILD-ISO.md) pour le guide concis.
 
 ## 🆘 Besoin d'aide ?
 
-- Guide complet : `docs/REBUILD-ISO.md`
+- Guide : `docs/BUILD-ISO.md`
 - Optimisation builds : `docs/BUILD-OPTIMIZATION.md`
 - Config ISO : `iso/custom-installer.nix`
 

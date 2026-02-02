@@ -56,7 +56,7 @@ Exemples:
   $0 --sync           # Même chose (explicite)
   $0 --update         # Dernière version nixpkgs
 
-Le résultat sera dans: result/iso/nixos-installer-ttyS0.iso
+Le résultat sera copié en: nixos-installer-ttyS0-YYYY-MM-DD.iso
 EOF
     exit 0
 fi
@@ -169,13 +169,10 @@ info "Build terminé en ${BUILD_TIME_MIN}m ${BUILD_TIME_SEC}s"
 # ========================================
 step "Étape 4/4 : Vérification du résultat"
 
-if [[ -f result/iso/nixos-installer-ttyS0.iso ]]; then
-    ISO_SIZE=$(du -h result/iso/nixos-installer-ttyS0.iso | cut -f1)
-    ISO_PATH=$(realpath result/iso/nixos-installer-ttyS0.iso)
-
+BASE_ISO="result/iso/nixos-installer-ttyS0.iso"
+if [[ -f "$BASE_ISO" ]]; then
     info "ISO créée avec succès !"
-    info "Taille: $ISO_SIZE"
-    info "Chemin: $ISO_PATH"
+    info "Source: $BASE_ISO"
 
     echo ""
     echo -e "${CYAN}╔════════════════════════════════════════════════════╗${NC}"
@@ -221,23 +218,24 @@ else
     fi
 fi
 
-# Vérifier que l'ISO existe avant de continuer
-if [[ ! -f result/iso/nixos-installer-ttyS0.iso ]]; then
-    error "ISO introuvable, impossible de continuer"
-fi
+# Générer un nom d'ISO avec la date
+BUILD_DATE=$(date '+%Y-%m-%d')
+ISO_NAME_DATED="nixos-installer-ttyS0-${BUILD_DATE}.iso"
+DATED_ISO="./${ISO_NAME_DATED}"
 
-ISO_SIZE=$(du -h result/iso/nixos-installer-ttyS0.iso | cut -f1)
-ISO_PATH=$(realpath result/iso/nixos-installer-ttyS0.iso)
+info "Copie locale de l'ISO : $DATED_ISO"
+cp "$BASE_ISO" "$DATED_ISO"
+
+ISO_SIZE=$(du -h "$DATED_ISO" | cut -f1)
+ISO_PATH=$(realpath "$DATED_ISO")
+info "Taille: $ISO_SIZE"
+info "Chemin: $ISO_PATH"
 
 # ========================================
 # Étape 5 : Copier l'ISO
 # ========================================
 echo ""
 step "Étape 5/7 : Copier l'ISO"
-
-# Générer un nom d'ISO avec la date
-BUILD_DATE=$(date '+%Y-%m-%d')
-ISO_NAME_DATED="nixos-installer-ttyS0-${BUILD_DATE}.iso"
 
 info "Nom de l'ISO : $ISO_NAME_DATED"
 
@@ -256,7 +254,7 @@ COPIED_TO_PROXMOX=false
 case "$COPY_CHOICE" in
     1)
         info "Copie vers Mac (marigold)..."
-        scp result/iso/nixos-installer-ttyS0.iso marigold:~/Downloads/$ISO_NAME_DATED
+        scp "$DATED_ISO" marigold:~/Downloads/$ISO_NAME_DATED
         info "✅ Copié vers marigold:~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
         ;;
@@ -293,13 +291,13 @@ case "$COPY_CHOICE" in
 
         echo ""
         info "Copie vers Proxmox..."
-        scp result/iso/nixos-installer-ttyS0.iso root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
+        scp "$DATED_ISO" root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
         info "✅ Copié vers root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED"
         COPIED_TO_PROXMOX=true
         ;;
     3)
         info "Copie vers Mac (marigold)..."
-        scp result/iso/nixos-installer-ttyS0.iso marigold:~/Downloads/$ISO_NAME_DATED
+        scp "$DATED_ISO" marigold:~/Downloads/$ISO_NAME_DATED
         info "✅ Copié vers marigold:~/Downloads/$ISO_NAME_DATED"
         COPIED_TO_MAC=true
 
@@ -336,7 +334,7 @@ case "$COPY_CHOICE" in
 
         echo ""
         info "Copie vers Proxmox..."
-        scp result/iso/nixos-installer-ttyS0.iso root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
+        scp "$DATED_ISO" root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED
         info "✅ Copié vers root@192.168.1.50:/var/lib/vz/template/iso/$ISO_NAME_DATED"
         COPIED_TO_PROXMOX=true
         ;;

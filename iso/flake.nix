@@ -60,6 +60,7 @@
             wget
             htop
             tree
+            just
 
             # Outils réseau
             inetutils
@@ -100,6 +101,10 @@
             extraGroups = [ "wheel" "networkmanager" ];
             shell = pkgs.zsh;
             initialPassword = "nixos";  # Mot de passe par défaut
+            password = lib.mkForce null;
+            hashedPassword = lib.mkForce null;
+            hashedPasswordFile = lib.mkForce null;
+            initialHashedPassword = lib.mkForce null;
           };
 
           # 🔓 Permet sudo sans mot de passe pour l'utilisateur nixos
