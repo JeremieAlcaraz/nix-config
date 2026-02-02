@@ -166,6 +166,7 @@
             isoName = lib.mkForce "nixos-installer-ttyS0.iso";
             volumeID = lib.mkForce "NIXOS_TTYS0";
             appendToMenuLabel = lib.mkForce " (avec support TTY série)";
+            imageSize = lib.mkForce (800 * 1024 * 1024);  # 800 MiB
           };
         })
       ];
