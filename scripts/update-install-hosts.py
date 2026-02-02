@@ -209,6 +209,30 @@ def main() -> int:
 
     tsv_path.write_text(output, encoding="utf-8")
     print(f"TSV mis à jour: {tsv_path}")
+
+    if args.tailscale:
+        try:
+            status = subprocess.run(
+                ["git", "status", "--porcelain", str(tsv_path)],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            print("warning: git indisponible, commit/push ignorés", file=sys.stderr)
+            return 0
+
+        if status:
+            try:
+                subprocess.run(["git", "add", str(tsv_path)], check=True)
+                subprocess.run(
+                    ["git", "commit", "-m", "chore(install): update install-hosts.tsv"],
+                    check=True,
+                )
+                subprocess.run(["git", "push"], check=True)
+                print("Commit + push effectués.")
+            except subprocess.CalledProcessError:
+                print("warning: échec du commit/push", file=sys.stderr)
     return 0
 
 
