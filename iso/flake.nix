@@ -167,7 +167,6 @@
             volumeID = lib.mkForce "NIXOS_TTYS0";
             appendToMenuLabel = lib.mkForce " (avec support TTY série)";
           };
-          system.build.isoImage.imageSize = lib.mkForce (800 * 1024 * 1024);
         })
       ];
     };
