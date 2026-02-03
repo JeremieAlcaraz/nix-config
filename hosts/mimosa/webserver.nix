@@ -29,6 +29,12 @@ in
       '';
       # Config pour accepter HTTP du tunnel Cloudflare sans redirection
       # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
+      # Accès dev direct via Tailscale — bypass maintenance, pas de headers
+      virtualHosts."http://100.88.163.121" = {
+        extraConfig = ''
+          reverse_proxy 127.0.0.1:4321
+        '';
+      };
       virtualHosts."http://jeremiealcaraz.com" = {
         extraConfig = ''
           encode gzip zstd
