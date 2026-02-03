@@ -130,7 +130,8 @@ in
     ripgrep
     terminal-notifier
     sops
-    pnpm
+
+    # pnpm: géré via wrapper (voir .local/bin/pnpm) pour permettre l'auto-install
 
     # fnm (Fast Node Manager) - gère Node.js hors du Nix store
     fnm
@@ -237,6 +238,29 @@ in
         curl -fsSL https://bun.sh/install | bash
         echo ""
         echo "✅ Bun installé ! Relance ta commande."
+        exit 0
+      '';
+      executable = true;
+    };
+
+    # pnpm wrapper - installation lazy à la première utilisation
+    ".local/bin/pnpm" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        PNPM_BIN="${pnpmHome}/pnpm"
+
+        if [[ -x "$PNPM_BIN" ]]; then
+          exec "$PNPM_BIN" "$@"
+        fi
+
+        echo "📦 pnpm n'est pas installé. Installation en cours..."
+        echo ""
+        export PNPM_HOME="${pnpmHome}"
+        curl -fsSL https://get.pnpm.io/install.sh | sh
+        echo ""
+        echo "✅ pnpm installé ! Relance ta commande."
         exit 0
       '';
       executable = true;

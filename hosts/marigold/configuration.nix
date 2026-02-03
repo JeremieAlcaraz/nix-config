@@ -53,8 +53,9 @@ in {
   };
 
   # Disable automatic macOS Software Update steps so they stay under manual control.
-  system.defaults.SoftwareUpdate = {
-    AutomaticallyInstallMacOSUpdates = false;
+  system.defaults.SoftwareUpdate.AutomaticallyInstallMacOSUpdates = false;
+  # AutomaticCheckEnabled et AutomaticDownload n'existent plus dans nix-darwin 24.11
+  system.defaults.CustomUserPreferences."com.apple.softwareupdate" = {
     AutomaticCheckEnabled = false;
     AutomaticDownload = false;
   };

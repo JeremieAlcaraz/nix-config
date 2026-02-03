@@ -19,13 +19,18 @@ in
       # Désactiver HTTPS automatique - Cloudflare gère le TLS
       globalConfig = ''
         auto_https off
+
+        # Faire confiance au tunnel Cloudflare pour obtenir la vraie IP client
+        # (permet remote_ip de fonctionner pour les règles d'accès)
+        servers {
+          trusted_proxies static 127.0.0.1/32
+          client_ip_headers CF-Connecting-IP X-Forwarded-For
+        }
       '';
       # Config pour accepter HTTP du tunnel Cloudflare sans redirection
       # Cloudflare gère déjà le HTTPS entre l'utilisateur et leur edge
       virtualHosts."http://jeremiealcaraz.com" = {
         extraConfig = ''
-          reverse_proxy 127.0.0.1:4321
-
           encode gzip zstd
 
           header {
@@ -48,6 +53,28 @@ in
             }
             format json
             level INFO
+          }
+
+          # WARN: Mode maintenance temporaire (à commenter/supprimer une fois le site prêt)
+          {
+            # Accès complet pour mes devices Tailscale
+            @allowed remote_ip 100.76.163.117 100.109.137.116
+
+            # Pages publiques pendant les travaux (WIP + assets nécessaires)
+            @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
+
+            handle @allowed {
+              reverse_proxy 127.0.0.1:4321
+            }
+
+            handle @wip {
+              reverse_proxy 127.0.0.1:4321
+            }
+
+            # Tout le reste → page WIP
+            handle {
+              redir https://jeremiealcaraz.com/wip 302
+            }
           }
         '';
       };
