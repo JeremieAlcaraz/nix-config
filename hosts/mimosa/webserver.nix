@@ -56,13 +56,10 @@ in
           }
 
           # WARN: Mode maintenance temporaire (à commenter/supprimer une fois le site prêt)
-          {
-            # Accès complet pour mes devices Tailscale
-            @allowed remote_ip 100.76.163.117 100.109.137.116
+          @allowed remote_ip 100.76.163.117 100.109.137.116
+          @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
 
-            # Pages publiques pendant les travaux (WIP + assets nécessaires)
-            @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
-
+          route {
             handle @allowed {
               reverse_proxy 127.0.0.1:4321
             }
