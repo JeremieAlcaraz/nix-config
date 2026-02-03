@@ -23,7 +23,7 @@ in
         # Faire confiance au tunnel Cloudflare pour obtenir la vraie IP client
         # (permet remote_ip de fonctionner pour les règles d'accès)
         servers {
-          trusted_proxies static 127.0.0.1/32
+          trusted_proxies static 127.0.0.1/32 ::1
           client_ip_headers CF-Connecting-IP X-Forwarded-For
         }
       '';
@@ -56,7 +56,7 @@ in
           }
 
           # WARN: Mode maintenance temporaire (à commenter/supprimer une fois le site prêt)
-          @allowed remote_ip 100.76.163.117 100.109.137.116
+          @allowed header Cf-Warp-Tag-Id 587ab6fe-1a0d-449b-a970-d9b67ac8ac31
           @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
 
           route {
