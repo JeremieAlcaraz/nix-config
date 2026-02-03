@@ -56,14 +56,9 @@ in
           }
 
           # WARN: Mode maintenance temporaire (à commenter/supprimer une fois le site prêt)
-          @allowed header Cf-Warp-Tag-Id 587ab6fe-1a0d-449b-a970-d9b67ac8ac31
           @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
 
           route {
-            handle @allowed {
-              reverse_proxy 127.0.0.1:4321
-            }
-
             handle @wip {
               reverse_proxy 127.0.0.1:4321
             }
