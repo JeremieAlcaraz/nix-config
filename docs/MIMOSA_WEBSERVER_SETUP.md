@@ -15,6 +15,48 @@ Ce guide explique comment reproduire complètement le setup du webserver j12zdot
 Utilisateur (HTTPS) → Cloudflare Edge (TLS) → Cloudflare Tunnel (HTTP) → Caddy (localhost:80) → Fichiers statiques
 ```
 
+## 🔐 Auth, proxy et mode maintenance (important)
+
+Cette section évite les surprises quand un module d'auth est ajouté (Better Auth, NextAuth, OAuth, etc.).
+
+### Définitions rapides
+- **IP cliente**: IP d'origine du visiteur.
+- **IP proxy**: IP du composant intermédiaire (Cloudflare / cloudflared).
+- **`X-Forwarded-*`**: en-têtes ajoutés par le proxy pour transmettre l'IP, le host et le protocole d'origine.
+  - `X-Forwarded-For`: IP cliente d'origine
+  - `X-Forwarded-Proto`: `http` ou `https` vu par l'utilisateur
+  - `X-Forwarded-Host`: host demandé par l'utilisateur
+- **`CF-Connecting-IP`**: IP cliente fournie par Cloudflare.
+- **`trust proxy`**: côté application, autorise l'usage de ces en-têtes comme source de vérité.
+
+### Pourquoi c'est critique pour l'auth
+- Sans `trust proxy`, l'app peut croire qu'elle tourne en HTTP local, et casser les cookies `Secure` ou les callbacks OAuth.
+- Une auth basée sur l'IP peut échouer si l'app voit le proxy au lieu du client.
+- En mode maintenance, les visiteurs non allowlist sont redirigés vers `/wip`: les routes d'auth ne seront pas atteignables tant qu'elles ne sont pas explicitement exemptées.
+
+### Cas Tailscale vs domaine public
+- **Sur `https://jeremiealcaraz.com` (public via Cloudflare)**: Caddy voit l'IP publique du client (ou de l'exit node), pas l'IP Tailscale.
+- **IP Tailscale visible** uniquement si le client résout le domaine vers l'IP Tailscale de `mimosa` (split-DNS / accès tailnet).
+
+### Checklist avant d'activer un module auth
+1. Définir l'URL canonique en `https://jeremiealcaraz.com`.
+2. Activer `trust proxy` dans l'app backend.
+3. Vérifier les cookies `Secure` et `SameSite` selon le flux de login.
+4. Ne pas dépendre exclusivement de l'IP pour autoriser une session.
+5. Si maintenance active, décider si `/api/auth/*` doit rester accessible.
+
+### Commandes de diagnostic utiles
+```bash
+# Voir ce que Caddy reçoit pendant un test
+sudo journalctl -u caddy -b --no-pager -n 200
+
+# Vérifier la résolution DNS côté client
+dig +short jeremiealcaraz.com
+
+# Vérifier les headers/proxy côté app (exemple)
+curl -I https://jeremiealcaraz.com
+```
+
 ## 🔧 État actuel et problèmes
 
 ### Problème: Build Nix sandbox
@@ -83,67 +125,7 @@ mimosa = nixpkgs.lib.nixosSystem {
 
 ### Étape 3: Build et déploiement du site
 
-#### Option A: Script automatique (Recommandé)
-
-Créer un script de déploiement:
-
-```bash
-#!/usr/bin/env bash
-# scripts/deploy-j12zdotcom.sh
-
-set -euo pipefail
-
-HOST="mimosa"
-SITE_DIR="/var/www/j12zdotcom"
-BUILD_DIR="/tmp/j12zdotcom-build"
-
-echo "🏗️  Building j12zdotcom site..."
-
-# Clone et build le site
-rm -rf "$BUILD_DIR"
-git clone https://github.com/JeremieAlcaraz/j12zdotcom.git "$BUILD_DIR"
-cd "$BUILD_DIR"
-
-# Build avec les dépendances nécessaires
-nix-shell -p nodejs_20 pnpm_9 vips --run "pnpm install && pnpm build"
-
-echo "📦 Deploying to $HOST..."
-
-# Option 1: Si tu es SUR mimosa
-if [ "$(hostname)" = "mimosa" ]; then
-  sudo mkdir -p "$SITE_DIR"
-  sudo cp -r dist/* "$SITE_DIR/"
-  echo "✅ Site deployed locally"
-
-# Option 2: Si tu déploies depuis magnolia via SSH
-else
-  ssh "$HOST" "sudo mkdir -p $SITE_DIR"
-  rsync -avz --delete dist/ "$HOST:$SITE_DIR/" --rsync-path="sudo rsync"
-  echo "✅ Site deployed to $HOST"
-fi
-
-# Rebuild NixOS
-echo "🔄 Rebuilding NixOS configuration..."
-if [ "$(hostname)" = "$HOST" ]; then
-  sudo nixos-rebuild switch --flake .#mimosa --impure
-else
-  ssh "$HOST" "cd /etc/nixos && sudo nixos-rebuild switch --flake .#mimosa --impure"
-fi
-
-echo "🎉 Deployment complete!"
-echo "🌐 Site: https://jeremiealcaraz.com"
-
-# Cleanup
-rm -rf "$BUILD_DIR"
-```
-
-Utilisation:
-```bash
-chmod +x scripts/deploy-j12zdotcom.sh
-./scripts/deploy-j12zdotcom.sh
-```
-
-#### Option B: GitHub Actions (Automatique sur push)
+#### Déploiement via deploy-website-action (Go)
 
 Créer `.github/workflows/deploy-site.yml`:
 
@@ -344,10 +326,8 @@ nix-config/
 │   ├── configuration.nix              # Config de base (réseau, users, etc)
 │   ├── webserver.nix                  # Config webserver (CELUI-CI!)
 │   └── hardware-configuration.nix     # Config matériel
-├── secrets/
-│   └── mimosa.yaml                    # Secret Cloudflare (SOPS)
-└── scripts/
-    └── deploy-j12zdotcom.sh           # Script de déploiement (à créer)
+└── secrets/
+    └── mimosa.yaml                    # Secret Cloudflare (SOPS)
 ```
 
 ### Contenu de `webserver.nix` (version finale)
@@ -482,5 +462,5 @@ curl http://localhost:39485/metrics
 ---
 
 **Créé le:** 2025-11-21
-**Dernière mise à jour:** 2025-11-21
+**Dernière mise à jour:** 2026-02-04
 **Auteur:** Jérémie Alcaraz (avec l'aide de Claude)

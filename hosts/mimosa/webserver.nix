@@ -85,7 +85,7 @@ in
       restartTriggers = [ sitePackage ];
 
       serviceConfig = {
-        ExecStart = "${pkgs.nodejs_20}/bin/node ${sitePackage}/server/entry.mjs";
+        ExecStart = "${pkgs.nodejs_22}/bin/node ${sitePackage}/server/entry.mjs";
         WorkingDirectory = "${sitePackage}";
         Environment = [
           "HOST=127.0.0.1"
