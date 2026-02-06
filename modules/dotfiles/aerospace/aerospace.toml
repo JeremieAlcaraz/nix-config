@@ -125,10 +125,10 @@ alt-comma = 'layout accordion horizontal vertical'
 # alt-right = 'focus right'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move
-alt-shift-left = 'move left'
-alt-shift-down = 'move down'
-alt-shift-up = 'move up'
-alt-shift-right = 'move right'
+alt-ctrl-left = 'move left'
+alt-ctrl-down = 'move down'
+alt-ctrl-up = 'move up'
+alt-ctrl-right = 'move right'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#resize
 alt-shift-minus = 'resize smart -50'
@@ -184,22 +184,22 @@ backspace = [
   'exec-and-forget sketchybar --trigger aerospace_leave_service_mode',
 ]
 
-alt-shift-left = [
+alt-ctrl-left = [
   'join-with left',
   'mode main',
   'exec-and-forget sketchybar --trigger aerospace_leave_service_mode',
 ]
-alt-shift-down = [
+alt-ctrl-down = [
   'join-with down',
   'mode main',
   'exec-and-forget sketchybar --trigger aerospace_leave_service_mode',
 ]
-alt-shift-up = [
+alt-ctrl-up = [
   'join-with up',
   'mode main',
   'exec-and-forget sketchybar --trigger aerospace_leave_service_mode',
 ]
-alt-shift-right = [
+alt-ctrl-right = [
   'join-with right',
   'mode main',
   'exec-and-forget sketchybar --trigger aerospace_leave_service_mode',

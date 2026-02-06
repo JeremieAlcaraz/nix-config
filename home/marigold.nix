@@ -156,7 +156,30 @@ in
     zsh-autocomplete
     zsh-syntax-highlighting
     zsh-autosuggestions
+
+    # any-nix-shell
+    any-nix-shell
   ];
+
+  # === ZSH CONFIGURATION ===
+  programs.zsh = {
+    enable = true;
+    initExtra = ''
+      if [[ -o interactive ]]; then
+        ${pkgs.any-nix-shell}/bin/any-nix-shell zsh --info-right | source /dev/stdin
+      fi
+    '';
+  };
+
+  # === FISH CONFIGURATION ===
+  programs.fish = {
+    enable = true;
+    shellInit = ''
+      if status is-interactive
+        ${pkgs.any-nix-shell}/bin/any-nix-shell fish --info-right | source
+      end
+    '';
+  };
 
   # === ZSH CONFIGURATION ===
   # Solution propre : un seul .zshenv minimal qui définit ZDOTDIR
@@ -438,7 +461,8 @@ in
     };
     "television/shell/integration.zsh".source = ../modules/dotfiles/television/shell/integration.zsh;
 
-    "karabiner".source = ../modules/dotfiles/karabiner/.config/karabiner;
+    "karabiner".source = config.lib.file.mkOutOfStoreSymlink
+      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/karabiner/.config/karabiner";
 
     # Tmux configuration
     "tmux/tmux.conf".source = ../modules/dotfiles/tmux/tmux.conf;

@@ -22,6 +22,11 @@ fi
 if [[ -d "$HOME/.local/bin" ]]; then
     export PATH="$HOME/.local/bin:$PATH"
 fi
+
+# === ANY-NIX-SHELL - auto load nix-shell/flake envs ===
+if command -v any-nix-shell &> /dev/null; then
+    any-nix-shell zsh --info-right | source /dev/stdin
+fi
 # === THEFUCK - Correction de commandes ===
 if command -v thefuck &> /dev/null; then
     eval $(thefuck --alias)

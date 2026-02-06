@@ -17,6 +17,7 @@
     htop
     direnv
     tree
+    any-nix-shell
   ];
 
   # Vim - Éditeur de texte
@@ -41,29 +42,39 @@
     };
   };
 
-  # ZSH - Shell pour magnolia et whitelily (COMMENTÉ - remplacé par Fish)
-  # programs.zsh = {
-  #   enable = (osConfig.networking.hostName == "magnolia" || osConfig.networking.hostName == "whitelily");
-  #   enableCompletion = true;
-  #   autosuggestion.enable = true;
-  #   syntaxHighlighting.enable = true;
-  #   initExtra = ''
-  #     echo ""
-  #     ${if osConfig.networking.hostName == "magnolia" then ''
-  #       echo "🌸 Magnolia - Infrastructure Proxmox"
-  #     '' else if osConfig.networking.hostName == "whitelily" then ''
-  #       echo "🤍 Whitelily - n8n Automation"
-  #     '' else ""}
-  #     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  #     echo ""
-  #   '';
-  # };
+  # ZSH - Shell pour tous les hosts
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+    autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
+    initExtra = ''
+      if [[ -o interactive ]]; then
+        ${pkgs.any-nix-shell}/bin/any-nix-shell zsh --info-right | source /dev/stdin
+      fi
+
+      echo ""
+      ${if osConfig.networking.hostName == "magnolia" then ''
+        echo "🌸 Magnolia - Infrastructure Proxmox"
+      '' else if osConfig.networking.hostName == "whitelily" then ''
+        echo "🤍 Whitelily - n8n Automation"
+      '' else if osConfig.networking.hostName == "mimosa" then ''
+        echo "🌼 Mimosa - Serveur web"
+      '' else if osConfig.networking.hostName == "dandelion" then ''
+        echo "🌾 Dandelion - Serveur Git Gitea"
+      '' else ""}
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo ""
+    '';
+  };
 
   # Fish - Shell pour toutes les VMs
   programs.fish = {
     enable = true;
     shellInit = ''
       if status is-interactive
+        ${pkgs.any-nix-shell}/bin/any-nix-shell fish --info-right | source
+
         # Changer automatiquement vers /etc/nixos
         cd /etc/nixos 2>/dev/null; or cd ~
 
