@@ -11,11 +11,11 @@ Contraintes:
 
 ## Suivi
 
-- **Phase active:** `P0`
-- **Dernière tâche terminée:** `-`
-- **Prochaine tâche:** `T01`
+- **Phase active:** `P1`
+- **Dernière tâche terminée:** `T04` (T03 et T04 faites ensemble - squelette + config base)
+- **Prochaine tâche:** `T05`
 - **Mode d'intégration:** `trunk-based + secrets sops`
-- **Dernier commit:** `-`
+- **Dernier commit:** En attente (T02 et T03 à committer)
 - **Date maj:** 2026-02-07
 
 ---

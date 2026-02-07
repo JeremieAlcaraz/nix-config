@@ -161,6 +161,24 @@
           ];
         };
 
+        # Hawthorn - Gateway (Caddy + Cloudflare Tunnel)
+        hawthorn = nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit projectConfig; };
+          modules = [
+            ./modules/home-manager/base.nix
+            ./modules/home-manager/ssh.nix
+            ./hosts/hawthorn/configuration.nix
+            sops-nix.nixosModules.sops
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jeremie = import ./home/jeremie.nix;
+            }
+          ];
+        };
+
         # ISO d'installation personnalisée
         # Build avec: nix build .#nixosConfigurations.installer.config.system.build.isoImage
         installer = nixpkgs.lib.nixosSystem {
