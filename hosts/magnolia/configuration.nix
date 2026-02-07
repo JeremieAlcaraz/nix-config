@@ -22,4 +22,11 @@
     useRoutingFeatures = "none";
     openFirewall = false;
   };
+
+  # Permissions pour le dépôt j12zdotcom
+  # jeremie doit pouvoir faire git fetch/reset sans sudo
+  systemd.tmpfiles.rules = [
+    "d /etc/j12zdotcom 0755 jeremie users - -"
+    "Z /etc/j12zdotcom 0755 jeremie users - -"  # Applique récursivement
+  ];
 }
