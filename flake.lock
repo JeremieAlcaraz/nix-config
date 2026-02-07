@@ -149,11 +149,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1770411619,
-        "narHash": "sha256-snBZwj15z54th0/YLGd2s48uo9yTrUBbRBqBt5QYIr0=",
+        "lastModified": 1770475237,
+        "narHash": "sha256-1LCJotIRaN5FBe9kDkzMKUmfDlSXHgUCVHLijfaAHWA=",
         "ref": "refs/heads/main",
-        "rev": "d6eec666da86c60143eb068366dc805ca42da18a",
-        "revCount": 637,
+        "rev": "8a72a68457d4510f7da95a7139a8ff1a74fecb14",
+        "revCount": 668,
         "type": "git",
         "url": "http://dandelion:3000/jeremiealcaraz/j12zdotcom"
       },
