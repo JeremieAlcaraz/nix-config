@@ -1,0 +1,12 @@
+# Placeholder pour hardware-configuration.nix
+#
+# Ce fichier sera généré automatiquement par le script install-nixos.sh
+# lors de l'installation de NixOS sur la VM hawthorn.
+#
+# Le script exécutera :
+#   nixos-generate-config --root /mnt
+#
+# Et copiera le fichier généré dans hosts/hawthorn/hardware-configuration.nix
+#
+# Ne PAS éditer ce fichier manuellement.
+# Pour référence, voir les autres hosts (mimosa, dandelion, etc.)

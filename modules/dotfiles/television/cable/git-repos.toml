@@ -1,12 +1,13 @@
 
 [metadata]
 name = "git-repos"
-requirements = [ "fd", "git",]
-description = "A channel to select from git repositories on your local machine.\n\nThis channel uses `fd` to find directories that contain a `.git` subdirectory, and then allows you to preview the git log of the selected repository.\n"
+requirements = [ "fd", "git" ]
+description = "Select from local git repositories (fast)."
 
 [source]
-command = "fd -g .git -HL -t d -d 10 --prune ~ -E 'Library' -E 'Application Support' --exec dirname '{}'"
-display = "{split:/:-1}"
+command = "fd -g .git -H -t d -d 8 --prune ~/Development -E node_modules -E .cache -E .pnpm-store -E .npm -E .yarn --exec dirname '{}'"
+display = "{split:/:-2}/{split:/:-1}"
 
 [preview]
-command = "cd '{}'; git log -n 200 --pretty=medium --all --graph --color"
+command = "cd '{}'; git --no-pager log -n 60 --oneline --decorate --graph --color=always 2>/dev/null || true"
+
