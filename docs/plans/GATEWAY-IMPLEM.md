@@ -11,12 +11,13 @@ Contraintes:
 
 ## Suivi
 
-- **Phase active:** `P3` (Configuration Caddy V1)
+- **Phase active:** `P4` ⚡ **ORDRE AJUSTÉ** : Install VM d'abord, Caddy ensuite (feedback loop + test réseau)
 - **Dernière tâche terminée:** `T07` (P0+P1+P2 complètes et committées ✅)
-- **Prochaine tâche:** `T11` (Créer gateway.nix avec config Caddy basique)
+- **Prochaine tâche:** `T17` (Créer VM hawthorn sur Proxmox)
 - **Mode d'intégration:** `trunk-based + secrets sops`
 - **Dernier commit:** `feat(hawthorn): add gateway host skeleton (P1+P2 complete)`
 - **Date maj:** 2026-02-07
+- **Note :** On fait P4 (install VM) avant P3 (Caddy) pour tester en live
 
 ---
 
