@@ -11,11 +11,11 @@ Contraintes:
 
 ## Suivi
 
-- **Phase active:** `P1` (retour pour finaliser T06)
-- **Dernière tâche terminée:** `T10` (P2 complète - secrets configurés)
-- **Prochaine tâche:** `T06` (débloquer le build, puis T07)
+- **Phase active:** `P3` (Configuration Caddy V1)
+- **Dernière tâche terminée:** `T07` (P0+P1+P2 complètes et committées ✅)
+- **Prochaine tâche:** `T11` (Créer gateway.nix avec config Caddy basique)
 - **Mode d'intégration:** `trunk-based + secrets sops`
-- **Dernier commit:** En attente (P1+P2 à committer ensemble)
+- **Dernier commit:** `feat(hawthorn): add gateway host skeleton (P1+P2 complete)`
 - **Date maj:** 2026-02-07
 
 ---
