@@ -123,7 +123,6 @@ in
     carapace
     fd
     unstable.tabiew
-    unstable.television
     direnv
     glow
     navi
@@ -289,6 +288,28 @@ in
       executable = true;
     };
 
+    # Television wrapper - utilise Homebrew pour permettre update à la demande
+    ".local/bin/tv" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        HOMEBREW_TV="/opt/homebrew/bin/tv"
+
+        if [[ -x "$HOMEBREW_TV" ]]; then
+          exec "$HOMEBREW_TV" "$@"
+        fi
+
+        echo "📺 Television n'est pas installé. Installation en cours..."
+        echo ""
+        brew install television
+        echo ""
+        echo "✅ Television installé."
+        exec "$HOMEBREW_TV" "$@"
+      '';
+      executable = true;
+    };
+
     # Zerobrew wrapper - installation lazy à la première utilisation
     ".local/bin/zerobrew" = {
       text = ''
@@ -448,18 +469,9 @@ in
       executable = true;
     };
 
-    # Television - Fuzzy finder
-    "television/config.toml".source = ../modules/dotfiles/television/config.toml;
-    "television/cable".source = ../modules/dotfiles/television/cable;
-    "television/scripts/recent-files-preview.zsh" = {
-      source = ../modules/dotfiles/television/scripts/recent-files-preview.zsh;
-      executable = true;
-    };
-    "television/scripts/recent-files-source.zsh" = {
-      source = ../modules/dotfiles/television/scripts/recent-files-source.zsh;
-      executable = true;
-    };
-    "television/shell/integration.zsh".source = ../modules/dotfiles/television/shell/integration.zsh;
+    # Television - config hors store (editable directement dans le repo)
+    "television".source = config.lib.file.mkOutOfStoreSymlink
+      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/television";
 
     "karabiner".source = config.lib.file.mkOutOfStoreSymlink
       "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/karabiner/.config/karabiner";
