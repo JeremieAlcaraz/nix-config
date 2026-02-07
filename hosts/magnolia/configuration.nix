@@ -23,6 +23,14 @@
     openFirewall = false;
   };
 
+  # Swapfile déclaratif (8 Go)
+  swapDevices = [
+    {
+      device = "/swapfile";
+      size = 8192; # MiB
+    }
+  ];
+
   # Permissions pour le dépôt j12zdotcom
   # jeremie doit pouvoir faire git fetch/reset sans sudo
   systemd.tmpfiles.rules = [
