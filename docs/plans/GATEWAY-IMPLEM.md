@@ -11,11 +11,11 @@ Contraintes:
 
 ## Suivi
 
-- **Phase active:** `P1`
-- **Dernière tâche terminée:** `T04` (T03 et T04 faites ensemble - squelette + config base)
-- **Prochaine tâche:** `T05`
+- **Phase active:** `P1` (retour pour finaliser T06)
+- **Dernière tâche terminée:** `T10` (P2 complète - secrets configurés)
+- **Prochaine tâche:** `T06` (débloquer le build, puis T07)
 - **Mode d'intégration:** `trunk-based + secrets sops`
-- **Dernier commit:** En attente (T02 et T03 à committer)
+- **Dernier commit:** En attente (P1+P2 à committer ensemble)
 - **Date maj:** 2026-02-07
 
 ---
@@ -61,10 +61,11 @@ Contraintes:
   **gain:** Le flake reconnaît hawthorn comme target de build
 
 - [ ] **T06** Valider le build complet de hawthorn
-  **depends_on:** `T05`
+  **depends_on:** `T10` ⚠️ **BLOQUÉ** : nécessite secrets/hawthorn.yaml (P2 doit être faite avant)
   **test:** `nix build .#nixosConfigurations.hawthorn.config.system.build.toplevel` réussit (exit 0)
   **commit:** `-` (pas de changement, juste validation)
   **gain:** Garantie que la config NixOS est syntaxiquement valide
+  **note:** En pratique, faire P2 (secrets) avant de valider ce test
 
 - [ ] **T07** Ajouter `hawthorn` dans `install-hosts.tsv`
   **depends_on:** `T06`
