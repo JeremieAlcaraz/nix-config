@@ -65,7 +65,37 @@
     allowedTCPPorts = [ 80 ];
   };
 
-  # Configuration Cloudflare Tunnel (à implémenter en P5)
-  # systemd.services.cloudflared = { ... };
+  # Secret Cloudflare Tunnel (même token que mimosa)
+  sops.secrets.cloudflare-tunnel-token = {
+    owner = "root";
+    group = "root";
+    mode = "0444";
+  };
+
+  # Configuration Cloudflare Tunnel
+  systemd.services.cloudflared = {
+    description = "Cloudflare Tunnel";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+
+    serviceConfig = {
+      Type = "simple";
+      DynamicUser = true;
+      # Charger le token comme credential systemd
+      LoadCredential = "tunnel-token:${config.sops.secrets.cloudflare-tunnel-token.path}";
+      # Utiliser bash pour lire le token depuis $CREDENTIALS_DIRECTORY
+      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $(cat $CREDENTIALS_DIRECTORY/tunnel-token)'";
+      Restart = "on-failure";
+      RestartSec = "5s";
+
+      # Hardening
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      ReadWritePaths = [];
+    };
+  };
 }
 
