@@ -90,7 +90,10 @@
 
         # Reverse proxy vers mimosa (Caddy actuel)
         reverse_proxy mimosa:80 {
-          # Headers X-Forwarded-*
+          # Réécrire Host pour que mimosa reconnaisse la requête
+          header_up Host jeremiealcaraz.com
+
+          # Headers X-Forwarded-* (garder l'original)
           header_up X-Forwarded-For {remote_host}
           header_up X-Forwarded-Proto {scheme}
           header_up X-Forwarded-Host {host}
