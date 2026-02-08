@@ -3,6 +3,32 @@
 
 { config, lib, pkgs, ... }:
 
+let
+  # Configuration commune pour tous les virtualHosts
+  commonSecurityHeaders = ''
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    X-XSS-Protection "1; mode=block"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https:; connect-src 'self' https:; media-src 'self' https:;"
+    Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Cache-Control "public, must-revalidate, max-age=0"
+    -Server
+  '';
+
+  # Fonction helper pour générer la config de logs
+  mkLogConfig = logFile: ''
+    log {
+      output file ${logFile} {
+        roll_size 100mb
+        roll_keep 10
+        roll_keep_for 720h
+      }
+      format json
+      level INFO
+    }
+  '';
+in
 {
   # Configuration Caddy - Gateway reverse proxy
   services.caddy = {
@@ -25,37 +51,16 @@
         # Compression
         encode gzip zstd
 
-        # Headers de sécurité (repris de mimosa)
+        # Headers de sécurité
         header {
-          X-Frame-Options "SAMEORIGIN"
-          X-Content-Type-Options "nosniff"
-          X-XSS-Protection "1; mode=block"
-          Referrer-Policy "strict-origin-when-cross-origin"
-          Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https:; connect-src 'self' https:; media-src 'self' https:;"
-          Permissions-Policy "geolocation=(), microphone=(), camera=()"
-          Cache-Control "public, must-revalidate, max-age=0"
-          -Server
+          ${commonSecurityHeaders}
         }
 
         # Logs JSON
-        log {
-          output file /var/log/caddy/jeremiealcaraz.com.log {
-            roll_size 100mb
-            roll_keep 10
-            roll_keep_for 720h
-          }
-          format json
-          level INFO
-        }
+        ${mkLogConfig "/var/log/caddy/jeremiealcaraz.com.log"}
 
         # Reverse proxy vers mimosa (Caddy actuel)
-        reverse_proxy mimosa:80 {
-          # Headers X-Forwarded-*
-          header_up X-Forwarded-For {remote_host}
-          header_up X-Forwarded-Proto {scheme}
-          header_up X-Forwarded-Host {host}
-          header_up X-Real-IP {remote_host}
-        }
+        reverse_proxy mimosa:80
       '';
     };
 
@@ -65,39 +70,18 @@
         # Compression
         encode gzip zstd
 
-        # Headers de sécurité (repris de mimosa)
+        # Headers de sécurité
         header {
-          X-Frame-Options "SAMEORIGIN"
-          X-Content-Type-Options "nosniff"
-          X-XSS-Protection "1; mode=block"
-          Referrer-Policy "strict-origin-when-cross-origin"
-          Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https:; connect-src 'self' https:; media-src 'self' https:;"
-          Permissions-Policy "geolocation=(), microphone=(), camera=()"
-          Cache-Control "public, must-revalidate, max-age=0"
-          -Server
+          ${commonSecurityHeaders}
         }
 
         # Logs JSON
-        log {
-          output file /var/log/caddy/hawthorn-preview.log {
-            roll_size 100mb
-            roll_keep 10
-            roll_keep_for 720h
-          }
-          format json
-          level INFO
-        }
+        ${mkLogConfig "/var/log/caddy/hawthorn-preview.log"}
 
         # Reverse proxy vers mimosa (Caddy actuel)
+        # Note: header_up Host nécessaire pour que mimosa reconnaisse la requête
         reverse_proxy mimosa:80 {
-          # Réécrire Host pour que mimosa reconnaisse la requête
           header_up Host jeremiealcaraz.com
-
-          # Headers X-Forwarded-* (garder l'original)
-          header_up X-Forwarded-For {remote_host}
-          header_up X-Forwarded-Proto {scheme}
-          header_up X-Forwarded-Host {host}
-          header_up X-Real-IP {remote_host}
         }
       '';
     };

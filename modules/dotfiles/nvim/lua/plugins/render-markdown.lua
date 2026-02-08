@@ -21,6 +21,10 @@ return {
         width = "block",
         right_pad = 2,
       },
+      -- Désactiver les règles horizontales (lignes ---)
+      dash = {
+        enabled = false,
+      },
     },
   },
 }

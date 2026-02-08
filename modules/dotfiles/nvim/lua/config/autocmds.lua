@@ -7,6 +7,9 @@
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
 
+-- Désactiver le spell checker de LazyVim pour markdown et text
+vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
+
 -- Auto-indentation pour les fichiers HJSON à la sauvegarde
 vim.api.nvim_create_autocmd("BufWritePre", {
   pattern = { "*.hjson" },
