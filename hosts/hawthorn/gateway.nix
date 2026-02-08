@@ -66,6 +66,33 @@ let
       }
     }
   '';
+
+  # Routage simplifié pour accès direct via Tailscale (pas de restriction IP)
+  # Si on accède via le hostname Tailscale, on est déjà authentifié
+  tailscaleDirectRouting = ''
+    # Matcher pour /docs (documentation)
+    @docs path /docs*
+
+    # Matcher pour /wip (site en construction)
+    @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
+
+    route {
+      # /docs : direct vers mimosa:4322
+      handle @docs {
+        reverse_proxy mimosa:4322
+      }
+
+      # /wip : direct vers mimosa:4321
+      handle @wip {
+        reverse_proxy mimosa:4321
+      }
+
+      # Tout le reste → redir vers /wip
+      handle {
+        redir http://hawthorn/wip 302
+      }
+    }
+  '';
 in
 {
   # Configuration Caddy - Gateway reverse proxy
@@ -118,6 +145,25 @@ in
 
         # Routage avec /docs (restreint) et /wip (public)
         ${wipAndDocsRouting}
+      '';
+    };
+
+    # VirtualHost pour accès direct via Tailscale (http://hawthorn)
+    virtualHosts."http://hawthorn" = {
+      extraConfig = ''
+        # Compression
+        encode gzip zstd
+
+        # Headers de sécurité
+        header {
+          ${commonSecurityHeaders}
+        }
+
+        # Logs JSON
+        ${mkLogConfig "/var/log/caddy/hawthorn-tailscale.log"}
+
+        # Routage direct (pas de restriction IP car déjà sur Tailscale)
+        ${tailscaleDirectRouting}
       '';
     };
   };
