@@ -6,14 +6,15 @@
 
 let
   cfg = config.mimosa.webserver;
-  # Package pré-buildé depuis la flake (téléchargé depuis le cache magnolia)
+  # Packages pré-buildés depuis la flake (téléchargés depuis le cache magnolia)
   sitePackage = j12zdotcom.packages.x86_64-linux.site;
+  docsPackage = j12zdotcom.packages.x86_64-linux.docs;
 in
 {
   options.mimosa.webserver.enable = lib.mkEnableOption "the j12z webserver for mimosa";
 
   config = lib.mkIf cfg.enable {
-    # Service Node.js pour Astro SSR/Hybrid
+    # Service Node.js pour Astro SSR/Hybrid (site vitrine)
     systemd.services.j12zdotcom = {
       description = "J12z Astro Site Server";
       wantedBy = [ "multi-user.target" ];
@@ -25,6 +26,27 @@ in
         Environment = [
           "HOST=0.0.0.0"
           "PORT=4321"
+          "NODE_ENV=production"
+        ];
+
+        DynamicUser = true;
+        Restart = "always";
+        RestartSec = "5s";
+      };
+    };
+
+    # Service Node.js pour la documentation (Fumadocs)
+    systemd.services.j12zdotcom-docs = {
+      description = "J12z Documentation Server (Fumadocs)";
+      wantedBy = [ "multi-user.target" ];
+      restartTriggers = [ docsPackage ];
+
+      serviceConfig = {
+        ExecStart = "${pkgs.nodejs_22}/bin/node ${docsPackage}/server/entry.mjs";
+        WorkingDirectory = "${docsPackage}";
+        Environment = [
+          "HOST=0.0.0.0"
+          "PORT=4322"
           "NODE_ENV=production"
         ];
 

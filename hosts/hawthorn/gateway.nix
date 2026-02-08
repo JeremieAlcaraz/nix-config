@@ -46,7 +46,7 @@ let
         @tailscale remote_ip 100.0.0.0/8
 
         handle @tailscale {
-          reverse_proxy mimosa:4321
+          reverse_proxy mimosa:4322
         }
 
         # Si pas Tailscale → 403 Forbidden
