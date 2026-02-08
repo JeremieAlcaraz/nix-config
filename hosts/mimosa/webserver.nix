@@ -88,7 +88,7 @@ in
         ExecStart = "${pkgs.nodejs_22}/bin/node ${sitePackage}/server/entry.mjs";
         WorkingDirectory = "${sitePackage}";
         Environment = [
-          "HOST=127.0.0.1"
+          "HOST=0.0.0.0"
           "PORT=4321"
           "NODE_ENV=production"
         ];
