@@ -28,6 +28,21 @@ let
       level INFO
     }
   '';
+
+  # Logique de routage WIP (mode maintenance)
+  # Seuls les chemins /wip* et assets sont accessibles, le reste redirige vers /wip
+  wipRouting = ''
+    @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
+
+    route {
+      handle @wip {
+        reverse_proxy mimosa:4321
+      }
+      handle {
+        redir https://jeremiealcaraz.com/wip 302
+      }
+    }
+  '';
 in
 {
   # Configuration Caddy - Gateway reverse proxy
@@ -59,8 +74,8 @@ in
         # Logs JSON
         ${mkLogConfig "/var/log/caddy/jeremiealcaraz.com.log"}
 
-        # Reverse proxy vers mimosa (Caddy actuel)
-        reverse_proxy mimosa:80
+        # Routage avec mode maintenance (direct vers app Node.js)
+        ${wipRouting}
       '';
     };
 
@@ -78,11 +93,8 @@ in
         # Logs JSON
         ${mkLogConfig "/var/log/caddy/hawthorn-preview.log"}
 
-        # Reverse proxy vers mimosa (Caddy actuel)
-        # Note: header_up Host nécessaire pour que mimosa reconnaisse la requête
-        reverse_proxy mimosa:80 {
-          header_up Host jeremiealcaraz.com
-        }
+        # Routage avec mode maintenance (direct vers app Node.js)
+        ${wipRouting}
       '';
     };
   };
