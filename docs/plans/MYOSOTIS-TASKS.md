@@ -98,10 +98,10 @@ graph TB
 
 ## Legende de suivi (a garder a jour)
 
-- **Phase active:** `P2`
-- **Derniere tache terminee:** `T13`
-- **Prochaine tache:** `P3` (VictoriaMetrics)
-- **Dernier commit:** `d2e1171 - chore(myosotis): add sops secrets file`
+- **Phase active:** `P7`
+- **Derniere tache terminee:** `T30`
+- **Prochaine tache:** `T31` (sops admin password)
+- **Dernier commit:** `9432f29 - refactor(myosotis): replace caddy with tailscale serve for grafana HTTPS`
 - **Date maj:** `2026-02-09`
 
 ---
@@ -182,106 +182,109 @@ graph TB
 
 ## P3 - VictoriaMetrics sur myosotis
 
-- [ ] **T14** Activer `services.victoriametrics` dans configuration.nix
+- [x] **T14** Activer `services.victoriametrics` dans configuration.nix
   **depends_on:** `T12`
   **test:** `curl http://myosotis:8428/health`
-  **commit:** `feat(myosotis): enable victoriametrics`
+  **commit:** `37d4a2d - feat(myosotis): enable victoriametrics with 12m retention`
+  **note:** 1er rebuild a casse la VM (mauvais UUID boot partition), fix dans b189801
 
-- [ ] **T15** Configurer retention 12 mois (`-retentionPeriod=12`)
+- [x] **T15** Configurer retention 12 mois (`-retentionPeriod=12`)
   **depends_on:** `T14`
   **test:** verifier dans les args du service
-  **commit:** `chore(myosotis): set victoriametrics 12m retention`
+  **commit:** (inclus dans T14)
 
-- [ ] **T16** Ouvrir le port 8428 uniquement sur Tailscale
+- [x] **T16** Ouvrir le port 8428 uniquement sur Tailscale
   **depends_on:** `T14`
   **test:** `curl` depuis host Tailscale OK, refuse depuis WAN
-  **commit:** `chore(myosotis): restrict victoriametrics to tailscale`
+  **commit:** (inclus dans T14)
 
-- [ ] **T17** Tester l'ecriture/lecture de metriques
+- [x] **T17** Tester l'ecriture/lecture de metriques
   **depends_on:** `T14`
-  **test:** `curl -d 'test_metric 42' http://myosotis:8428/api/v1/import/prometheus` puis query
+  **test:** `curl -d 'test_metric{host="marigold"} 42' http://myosotis:8428/api/v1/import/prometheus` puis query OK
   **commit:** -
 
 ---
 
 ## P4 - Node Exporter sur myosotis (premier host)
 
-- [ ] **T18** Creer le module NixOS `modules/monitoring/node-exporter.nix`
+- [x] **T18** Creer le module NixOS `modules/monitoring/node-exporter.nix`
   **depends_on:** -
   **test:** fichier existe et syntaxe valide
-  **commit:** `feat(monitoring): add node-exporter module`
+  **commit:** `b2122d2 - feat(myosotis): add node-exporter module and scrape config`
 
-- [ ] **T19** Importer le module dans myosotis/configuration.nix
+- [x] **T19** Importer le module dans myosotis/configuration.nix
   **depends_on:** `T18`
   **test:** `curl http://myosotis:9100/metrics`
-  **commit:** `feat(myosotis): enable node-exporter`
+  **commit:** (inclus dans T18)
 
-- [ ] **T20** Ajouter le scrape job dans VictoriaMetrics
+- [x] **T20** Ajouter le scrape job dans VictoriaMetrics
   **depends_on:** `T14`, `T19`
   **test:** metriques `node_*` visibles dans VM
-  **commit:** `feat(myosotis): add victoriametrics scrape config`
+  **commit:** (inclus dans T18)
 
-- [ ] **T21** Verifier les metriques dans VictoriaMetrics
+- [x] **T21** Verifier les metriques dans VictoriaMetrics
   **depends_on:** `T20`
-  **test:** `curl 'http://myosotis:8428/api/v1/query?query=node_cpu_seconds_total'`
+  **test:** `curl 'http://myosotis:8428/api/v1/query?query=node_cpu_seconds_total'` OK
   **commit:** -
 
 ---
 
 ## P5 - Loki sur myosotis
 
-- [ ] **T22** Activer `services.loki` dans configuration.nix
+- [x] **T22** Activer `services.loki` dans configuration.nix
   **depends_on:** `T12`
-  **test:** `curl http://myosotis:3100/ready`
-  **commit:** `feat(myosotis): enable loki`
+  **test:** `curl http://myosotis:3100/ready` → `ready`
+  **commit:** `9d498c9 - feat(myosotis): enable loki with 30d retention`
+  **note:** 1er build echoue (delete-request-store manquant), fix dans 8b77fc8
 
-- [ ] **T23** Configurer retention 30 jours
+- [x] **T23** Configurer retention 30 jours
   **depends_on:** `T22`
   **test:** config `retention_period: 720h` presente
-  **commit:** `chore(myosotis): set loki 30d retention`
+  **commit:** (inclus dans T22)
 
-- [ ] **T24** Ouvrir le port 3100 uniquement sur Tailscale
+- [x] **T24** Ouvrir le port 3100 uniquement sur Tailscale
   **depends_on:** `T22`
   **test:** acces OK depuis Tailscale, refuse depuis WAN
-  **commit:** `chore(myosotis): restrict loki to tailscale`
+  **commit:** (inclus dans T22)
 
 ---
 
 ## P6 - Promtail sur myosotis (premier host)
 
-- [ ] **T25** Creer le module NixOS `modules/monitoring/promtail.nix`
+- [x] **T25** Creer le module NixOS `modules/monitoring/promtail.nix`
   **depends_on:** -
   **test:** fichier existe et syntaxe valide
-  **commit:** `feat(monitoring): add promtail module`
+  **commit:** `5fd0ede - feat(myosotis): add promtail module and enable on myosotis`
+  **note:** 2 fix necessaires (sandboxing systemd) : 9788d4a et 523e041
 
-- [ ] **T26** Importer le module dans myosotis/configuration.nix
+- [x] **T26** Importer le module dans myosotis/configuration.nix
   **depends_on:** `T22`, `T25`
-  **test:** `curl http://myosotis:9080/ready`
-  **commit:** `feat(myosotis): enable promtail`
+  **test:** `systemctl is-active promtail` → active
+  **commit:** (inclus dans T25)
 
-- [ ] **T27** Verifier les logs dans Loki
+- [x] **T27** Verifier les logs dans Loki
   **depends_on:** `T26`
-  **test:** `curl 'http://myosotis:3100/loki/api/v1/query?query={host="myosotis"}'`
+  **test:** `curl 'http://myosotis:3100/loki/api/v1/labels'` → host, job, unit OK
   **commit:** -
 
 ---
 
 ## P7 - Grafana sur myosotis
 
-- [ ] **T28** Activer `services.grafana` dans configuration.nix
+- [x] **T28** Activer `services.grafana` dans configuration.nix
   **depends_on:** `T12`
-  **test:** `curl http://myosotis:3000/api/health`
-  **commit:** `feat(myosotis): enable grafana`
+  **test:** `curl http://myosotis:3000/api/health` → OK
+  **commit:** `f5b4021 - feat(myosotis): add grafana with datasources and caddy HTTPS`
 
-- [ ] **T29** Configurer les datasources Loki et VictoriaMetrics
+- [x] **T29** Configurer les datasources Loki et VictoriaMetrics
   **depends_on:** `T22`, `T14`, `T28`
   **test:** datasources vertes dans Grafana
-  **commit:** `feat(myosotis): configure grafana datasources`
+  **commit:** (inclus dans T28, provisioning declaratif)
 
-- [ ] **T30** Ajouter Caddy comme reverse proxy HTTPS
+- [x] **T30** Exposer Grafana en HTTPS via Tailscale Serve (remplace Caddy)
   **depends_on:** `T28`
-  **test:** `curl -k https://myosotis`
-  **commit:** `feat(myosotis): add caddy reverse proxy for grafana`
+  **test:** `https://myosotis.inanga-sirius.ts.net` → cadenas vert, login OK
+  **commit:** `9432f29 - refactor(myosotis): replace caddy with tailscale serve for grafana HTTPS`
 
 - [ ] **T31** Configurer le mot de passe admin via sops
   **depends_on:** `T28`
