@@ -11,6 +11,11 @@ let
       name = "node-exporter-full.json";
     }} $out/node-exporter-full.json
   '';
+
+  # Génère les scrape targets depuis config.nix (hostnames MagicDNS)
+  remoteScrapeTargets = lib.concatMapStrings (host:
+    "      - targets: [\"${host}:9100\"]\n        labels:\n          host: \"${host}\"\n"
+  ) projectConfig.tailscale.monitoredHosts;
 in
 {
   imports = [
@@ -46,6 +51,8 @@ in
 
   # Fichier de config scrape (format Prometheus)
   # Définit les cibles que VictoriaMetrics va interroger toutes les 15s
+  # Scrape config générée dynamiquement depuis config.nix (monitoredHosts)
+  # myosotis scrape localhost, les autres via hostname MagicDNS
   environment.etc."victoriametrics/scrape.yml".text = ''
     scrape_configs:
       - job_name: "node"
@@ -54,22 +61,7 @@ in
           - targets: ["localhost:9100"]
             labels:
               host: "myosotis"
-          - targets: ["${projectConfig.tailscale.hosts.hawthorn}:9100"]
-            labels:
-              host: "hawthorn"
-          - targets: ["${projectConfig.tailscale.hosts.mimosa}:9100"]
-            labels:
-              host: "mimosa"
-          - targets: ["${projectConfig.tailscale.hosts.dandelion}:9100"]
-            labels:
-              host: "dandelion"
-          - targets: ["${projectConfig.tailscale.hosts.whitelily}:9100"]
-            labels:
-              host: "whitelily"
-          - targets: ["${projectConfig.tailscale.hosts.rhizanthella}:9100"]
-            labels:
-              host: "rhizanthella"
-  '';
+    ${remoteScrapeTargets}'';
 
   services.victoriametrics = {
     enable = true;

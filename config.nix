@@ -56,5 +56,10 @@
       rhizanthella = "100.127.41.93";
       myosotis = "100.116.189.42";
     };
+
+    # Hosts monitorés par VictoriaMetrics (scrape métriques Node Exporter)
+    # Ajouter un host ici = automatiquement scrapé par myosotis
+    # Utilise les hostnames MagicDNS (pas les IPs) pour la résilience
+    monitoredHosts = [ "hawthorn" "mimosa" "dandelion" "whitelily" "rhizanthella" ];
   };
 }
