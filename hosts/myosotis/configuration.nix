@@ -103,11 +103,61 @@
     };
   };
 
+  # ==========================================================================
+  # Grafana - Interface web de visualisation
+  # ==========================================================================
+  services.grafana = {
+    enable = true;
+    settings = {
+      server = {
+        http_addr = "127.0.0.1";
+        http_port = 3000;
+        root_url = "https://myosotis";
+      };
+      # Login admin par défaut (à remplacer par sops en T31)
+      security = {
+        admin_user = "admin";
+        admin_password = "admin";
+      };
+    };
+
+    # Datasources préconfigurées (provisioning)
+    provision.datasources.settings.datasources = [
+      {
+        name = "VictoriaMetrics";
+        type = "prometheus";
+        url = "http://localhost:8428";
+        isDefault = true;
+        access = "proxy";
+      }
+      {
+        name = "Loki";
+        type = "loki";
+        url = "http://localhost:3100";
+        access = "proxy";
+      }
+    ];
+  };
+
+  # ==========================================================================
+  # Caddy - Reverse proxy HTTPS pour Grafana
+  # ==========================================================================
+  services.caddy = {
+    enable = true;
+    virtualHosts."myosotis" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy localhost:3000
+      '';
+    };
+  };
+
   # Firewall : ports ouverts uniquement sur Tailscale
   networking.firewall = {
     interfaces."tailscale0".allowedTCPPorts = [
       8428  # VictoriaMetrics
       3100  # Loki
+      443   # Caddy (HTTPS Grafana)
     ];
   };
 }
