@@ -245,6 +245,266 @@ in
         }
       ];
     };
+
+    # ==========================================================================
+    # Règles d'alerte provisionnées
+    # ==========================================================================
+    provision.alerting.rules.settings = {
+      apiVersion = 1;
+      groups = [{
+        orgId = 1;
+        name = "Infrastructure";
+        folder = "Infrastructure";
+        interval = "1m";
+        rules = [
+          # 1. Disque > 80% (critical → email + slack)
+          {
+            uid = "disk-usage-high";
+            title = "Disk usage > 80%";
+            condition = "C";
+            data = [
+              {
+                refId = "A";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "victoriametrics";
+                model = {
+                  editorMode = "code";
+                  expr = ''100 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}) * 100'';
+                  instant = true;
+                  refId = "A";
+                };
+              }
+              {
+                refId = "B";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "reduce";
+                  expression = "A";
+                  reducer = "last";
+                  refId = "B";
+                };
+              }
+              {
+                refId = "C";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "threshold";
+                  expression = "B";
+                  conditions = [{ evaluator = { type = "gt"; params = [ 80 ]; }; }];
+                  refId = "C";
+                };
+              }
+            ];
+            noDataState = "OK";
+            execErrState = "Error";
+            for = "5m";
+            labels = { severity = "critical"; };
+            annotations = {
+              summary = "Disque > 80% sur {{ $labels.host }}";
+              description = "Usage actuel : {{ $values.B }}%";
+            };
+          }
+          # 2. RAM > 90% (warning → slack)
+          {
+            uid = "ram-usage-high";
+            title = "RAM usage > 90%";
+            condition = "C";
+            data = [
+              {
+                refId = "A";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "victoriametrics";
+                model = {
+                  editorMode = "code";
+                  expr = ''(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100'';
+                  instant = true;
+                  refId = "A";
+                };
+              }
+              {
+                refId = "B";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "reduce";
+                  expression = "A";
+                  reducer = "last";
+                  refId = "B";
+                };
+              }
+              {
+                refId = "C";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "threshold";
+                  expression = "B";
+                  conditions = [{ evaluator = { type = "gt"; params = [ 90 ]; }; }];
+                  refId = "C";
+                };
+              }
+            ];
+            noDataState = "OK";
+            execErrState = "Error";
+            for = "5m";
+            labels = { severity = "warning"; };
+            annotations = {
+              summary = "RAM > 90% sur {{ $labels.host }}";
+              description = "Usage actuel : {{ $values.B }}%";
+            };
+          }
+          # 3. CPU > 90% pendant 5min (warning → slack)
+          {
+            uid = "cpu-usage-high";
+            title = "CPU usage > 90%";
+            condition = "C";
+            data = [
+              {
+                refId = "A";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "victoriametrics";
+                model = {
+                  editorMode = "code";
+                  expr = ''100 - (avg by(host) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'';
+                  instant = true;
+                  refId = "A";
+                };
+              }
+              {
+                refId = "B";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "reduce";
+                  expression = "A";
+                  reducer = "last";
+                  refId = "B";
+                };
+              }
+              {
+                refId = "C";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "threshold";
+                  expression = "B";
+                  conditions = [{ evaluator = { type = "gt"; params = [ 90 ]; }; }];
+                  refId = "C";
+                };
+              }
+            ];
+            noDataState = "OK";
+            execErrState = "Error";
+            for = "5m";
+            labels = { severity = "warning"; };
+            annotations = {
+              summary = "CPU > 90% sur {{ $labels.host }}";
+              description = "Usage actuel : {{ $values.B }}%";
+            };
+          }
+          # 4. Host injoignable depuis 2min (critical → email + slack)
+          {
+            uid = "host-unreachable";
+            title = "Host unreachable";
+            condition = "C";
+            data = [
+              {
+                refId = "A";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "victoriametrics";
+                model = {
+                  editorMode = "code";
+                  expr = ''up{job="node"}'';
+                  instant = true;
+                  refId = "A";
+                };
+              }
+              {
+                refId = "B";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "reduce";
+                  expression = "A";
+                  reducer = "last";
+                  refId = "B";
+                };
+              }
+              {
+                refId = "C";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "threshold";
+                  expression = "B";
+                  conditions = [{ evaluator = { type = "lt"; params = [ 1 ]; }; }];
+                  refId = "C";
+                };
+              }
+            ];
+            noDataState = "Alerting";
+            execErrState = "Alerting";
+            for = "2m";
+            labels = { severity = "critical"; };
+            annotations = {
+              summary = "Host {{ $labels.host }} injoignable";
+              description = "Aucune métrique reçue depuis 2 minutes";
+            };
+          }
+          # 5. Reboot détecté - uptime < 5min (info → slack)
+          {
+            uid = "host-reboot";
+            title = "Host reboot detected";
+            condition = "C";
+            data = [
+              {
+                refId = "A";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "victoriametrics";
+                model = {
+                  editorMode = "code";
+                  expr = "node_time_seconds - node_boot_time_seconds";
+                  instant = true;
+                  refId = "A";
+                };
+              }
+              {
+                refId = "B";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "reduce";
+                  expression = "A";
+                  reducer = "last";
+                  refId = "B";
+                };
+              }
+              {
+                refId = "C";
+                relativeTimeRange = { from = 600; to = 0; };
+                datasourceUid = "__expr__";
+                model = {
+                  type = "threshold";
+                  expression = "B";
+                  conditions = [{ evaluator = { type = "lt"; params = [ 300 ]; }; }];
+                  refId = "C";
+                };
+              }
+            ];
+            noDataState = "OK";
+            execErrState = "Error";
+            for = "0s";
+            labels = { severity = "info"; };
+            annotations = {
+              summary = "Reboot détecté sur {{ $labels.host }}";
+              description = "Uptime : {{ $values.B }} secondes";
+            };
+          }
+        ];
+      }];
+    };
   };
 
   # ==========================================================================
