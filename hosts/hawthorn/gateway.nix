@@ -29,10 +29,20 @@ let
     }
   '';
 
-  # Routage public (site principal)
+  # Routage public (mode maintenance) # FIXME: retirer quand le site est prêt
   publicRouting = ''
-    # Tout le trafic vers le site principal
-    reverse_proxy mimosa:4321
+    # Matcher pour /wip (site public en construction)
+    @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
+
+    # /wip : accessible à tous
+    handle @wip {
+      reverse_proxy mimosa:4321
+    }
+
+    # Tout le reste → redir vers /wip
+    handle {
+      redir https://jeremiealcaraz.com/wip 302
+    }
   '';
 
   # Routage simplifié pour accès direct via Tailscale (pas de restriction IP)
