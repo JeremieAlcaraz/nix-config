@@ -71,11 +71,12 @@ let
   # Si on accède via le hostname Tailscale, on est déjà authentifié
   tailscaleDirectRouting = ''
     # Matcher pour /docs (documentation)
-    @docs path /docs*
+    @docs path /docs /docs/*
 
     route {
-      # /docs : direct vers mimosa:4322
+      # /docs : strip le préfixe et proxyer vers mimosa:4322
       handle @docs {
+        uri strip_prefix /docs
         reverse_proxy mimosa:4322
       }
 
