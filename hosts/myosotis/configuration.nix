@@ -23,6 +23,11 @@
   # - Tailscale pour réseau privé
   # - Sops pour gestion des secrets
 
+  # Secrets spécifiques à myosotis
+  sops.secrets.grafana_admin_password = {
+    owner = "grafana";
+  };
+
   # ==========================================================================
   # VictoriaMetrics - TSDB métriques (compatible Prometheus)
   # ==========================================================================
@@ -114,10 +119,9 @@
         http_port = 3000;
         root_url = "https://myosotis.inanga-sirius.ts.net";
       };
-      # Login admin par défaut (à remplacer par sops en T31)
       security = {
         admin_user = "admin";
-        admin_password = "admin";
+        admin_password = "$__file{/run/secrets/grafana_admin_password}";
       };
     };
 
