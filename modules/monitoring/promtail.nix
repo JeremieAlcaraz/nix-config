@@ -8,10 +8,16 @@ let
   hostname = config.networking.hostName;
 in
 {
+  # Créer le répertoire de travail de Promtail
+  systemd.tmpfiles.rules = [
+    "d /var/lib/promtail 0755 promtail promtail -"
+  ];
+
   # Promtail a besoin d'accéder au journal systemd, ce qui nécessite
-  # de relâcher le sandboxing par défaut (PrivateUsers bloque l'accès)
+  # de relâcher le sandboxing par défaut
   systemd.services.promtail.serviceConfig = {
     PrivateUsers = lib.mkForce false;
+    PrivateMounts = lib.mkForce false;
     ProtectHome = lib.mkForce false;
   };
 
