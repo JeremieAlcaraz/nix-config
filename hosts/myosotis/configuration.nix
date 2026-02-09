@@ -1,5 +1,17 @@
 { config, pkgs, lib, projectConfig, ... }:
 
+let
+  # Dashboard Node Exporter Full (grafana.com #1860, rev 37)
+  # Téléchargé au build, provisionné automatiquement par Grafana
+  grafanaDashboards = pkgs.runCommand "grafana-dashboards" {} ''
+    mkdir -p $out
+    cp ${pkgs.fetchurl {
+      url = "https://grafana.com/api/dashboards/1860/revisions/37/download";
+      hash = "sha256-1DE1aaanRHHeCOMWDGdOS1wBXxOF84UXAjJzT5Ek6mM=";
+      name = "node-exporter-full.json";
+    }} $out/node-exporter-full.json
+  '';
+in
 {
   imports = [
     ./hardware-configuration.nix
@@ -141,6 +153,12 @@
         access = "proxy";
       }
     ];
+
+    # Dashboards provisionnés (chargés automatiquement au démarrage)
+    provision.dashboards.settings.providers = [{
+      name = "default";
+      options.path = grafanaDashboards;
+    }];
   };
 
   # ==========================================================================

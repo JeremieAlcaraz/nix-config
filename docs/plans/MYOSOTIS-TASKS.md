@@ -78,7 +78,7 @@ graph TB
 
 ### Grafana (sur myosotis)
 - **Rôle** : Interface web de visualisation. Dashboards, alertes, exploration
-- **Port** : 3000 (accès HTTPS via Caddy sur myosotis)
+- **Port** : 3000 (accès HTTPS via Tailscale Serve sur myosotis)
 - **Auth** : Admin local + accès Tailscale uniquement
 
 ---
@@ -92,16 +92,16 @@ graph TB
 | VictoriaMetrics  | ✅       |          |        |           |           |              |          |
 | Node Exporter    | ✅       | ✅       | ✅     | ✅        | ✅        | ✅           | ✅       |
 | Promtail         | ✅       | ✅       | ✅     | ✅        | ✅        | ✅           | ✅       |
-| Caddy (reverse)  | ✅       |          |        |           |           |              |          |
+| Tailscale Serve  | ✅       |          |        |           |           |              |          |
 
 ---
 
 ## Legende de suivi (a garder a jour)
 
 - **Phase active:** `P7`
-- **Derniere tache terminee:** `T30`
-- **Prochaine tache:** `T31` (sops admin password)
-- **Dernier commit:** `9432f29 - refactor(myosotis): replace caddy with tailscale serve for grafana HTTPS`
+- **Derniere tache terminee:** `T31`
+- **Prochaine tache:** `T32` (dashboard Node Exporter)
+- **Dernier commit:** `d0e37e5 - feat(myosotis): configure grafana admin password via sops`
 - **Date maj:** `2026-02-09`
 
 ---
@@ -286,10 +286,11 @@ graph TB
   **test:** `https://myosotis.inanga-sirius.ts.net` → cadenas vert, login OK
   **commit:** `9432f29 - refactor(myosotis): replace caddy with tailscale serve for grafana HTTPS`
 
-- [ ] **T31** Configurer le mot de passe admin via sops
+- [x] **T31** Configurer le mot de passe admin via sops
   **depends_on:** `T28`
   **test:** login avec le mot de passe sops OK
-  **commit:** `feat(myosotis): configure grafana admin password via sops`
+  **commit:** `d0e37e5 - feat(myosotis): configure grafana admin password via sops`
+  **note:** grafana.db supprime manuellement car le mot de passe etait deja stocke en base
 
 - [ ] **T32** Importer le dashboard Node Exporter Full (#1860)
   **depends_on:** `T29`
