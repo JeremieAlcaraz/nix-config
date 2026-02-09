@@ -26,7 +26,7 @@ Host gh-pro
   IdentityAgent ~/.1password/agent.sock
   IdentitiesOnly yes
 
-Host mimosa magnolia whitelily dandelion hawthorn
+Host myosotis mimosa magnolia whitelily dandelion hawthorn
     User jeremie
     ForwardAgent yes
 

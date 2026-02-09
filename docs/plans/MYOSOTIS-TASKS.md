@@ -98,10 +98,10 @@ graph TB
 
 ## Legende de suivi (a garder a jour)
 
-- **Phase active:** `P1`
-- **Derniere tache terminee:** `T05`
-- **Prochaine tache:** `T06`
-- **Dernier commit:** `-`
+- **Phase active:** `P2`
+- **Derniere tache terminee:** `T13`
+- **Prochaine tache:** `P3` (VictoriaMetrics)
+- **Dernier commit:** `d2e1171 - chore(myosotis): add sops secrets file`
 - **Date maj:** `2026-02-09`
 
 ---
@@ -133,46 +133,47 @@ graph TB
   **test:** `grep myosotis config.nix`
   **commit:** `chore(myosotis): add tailscale host placeholder`
 
-- [ ] **T06** Tester l'evaluation du flake
+- [x] **T06** Tester l'evaluation du flake
   **depends_on:** `T03`
   **test:** `nix flake show` sans erreur
   **commit:** -
 
-- [ ] **T07** Commit Phase 1
+- [x] **T07** Commit Phase 1
   **depends_on:** `T01`-`T06`
   **test:** `git log --oneline -1`
-  **commit:** `feat(myosotis): scaffold observability host`
+  **commit:** `ef5d7a0 - feat(myosotis): scaffold observability host`
 
 ---
 
 ## P2 - Creer la VM dans Proxmox
 
-- [ ] **T08** Creer la VM myosotis dans Proxmox (2 CPU, 2 Go RAM, 32 Go disque)
+- [x] **T08** Creer la VM myosotis dans Proxmox (2 CPU, 2 Go RAM, 32 Go disque)
   **depends_on:** `T07`
   **test:** VM visible dans l'interface Proxmox
   **commit:** -
 
-- [ ] **T09** Installer NixOS depuis l'ISO custom
+- [x] **T09** Installer NixOS depuis l'ISO custom
   **depends_on:** `T08`
   **test:** `ssh myosotis` OK
   **commit:** -
+  **note:** 1er essai echoue (secrets/myosotis.yaml manquant), retry OK apres ajout du fichier
 
-- [ ] **T10** Generer `hardware-configuration.nix` et le committer
+- [x] **T10** Generer `hardware-configuration.nix` et le committer
   **depends_on:** `T09`
   **test:** `cat hosts/myosotis/hardware-configuration.nix`
-  **commit:** `chore(myosotis): add hardware-configuration.nix`
+  **commit:** `d2a792e - chore(myosotis): add hardware-configuration.nix` (pushe depuis la VM)
 
-- [ ] **T11** Copier la cle sops age sur la VM
+- [x] **T11** Copier la cle sops age sur la VM
   **depends_on:** `T09`
   **test:** `test -f /var/lib/sops-nix/key.txt`
   **commit:** -
 
-- [ ] **T12** Premier `nixos-rebuild switch --flake .#myosotis`
+- [x] **T12** Premier `nixos-rebuild switch --flake .#myosotis`
   **depends_on:** `T10`, `T11`
   **test:** `hostname` retourne `myosotis`
-  **commit:** -
+  **commit:** - (fait par le script d'install)
 
-- [ ] **T13** Mettre a jour l'IP Tailscale dans `config.nix`
+- [x] **T13** Mettre a jour l'IP Tailscale dans `config.nix`
   **depends_on:** `T12`
   **test:** `ping myosotis` depuis un autre host
   **commit:** `chore(myosotis): set tailscale IP in config.nix`
