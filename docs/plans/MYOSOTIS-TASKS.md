@@ -10,16 +10,20 @@ Centraliser logs et métriques de toute l'infrastructure (hawthorn, mimosa, dand
 
 ```mermaid
 graph TB
-    subgraph "Hosts monitorés"
-        H[hawthorn<br/>Gateway]
+    subgraph "muscari - Proxmox Node 1"
+        MG[magnolia<br/>Builder/Cache]
         M[mimosa<br/>Web]
         D[dandelion<br/>Gitea]
-        W[whitelily<br/>n8n]
-        R[rhizanthella<br/>bknd]
-        MG[magnolia<br/>Proxmox]
+        H[hawthorn<br/>Gateway]
     end
 
-    subgraph "myosotis - VM Observabilité"
+    subgraph "crocus - Proxmox Node 2"
+        W[whitelily<br/>n8n]
+        R[rhizanthella<br/>bknd]
+        MY[myosotis<br/>Observabilite]
+    end
+
+    subgraph "myosotis - Stack Monitoring"
         G[Grafana<br/>:3000]
         L[Loki<br/>:3100]
         VM[VictoriaMetrics<br/>:8428]
@@ -30,8 +34,8 @@ graph TB
         PT[Promtail<br/>:9080]
     end
 
-    H & M & D & W & R & MG --> NE
-    H & M & D & W & R & MG --> PT
+    MG & M & D & H & W & R --> NE
+    MG & M & D & H & W & R --> PT
 
     PT -->|push logs| L
     VM -->|scrape /metrics| NE
@@ -42,6 +46,7 @@ graph TB
     style G fill:#ff9900,color:#000
     style L fill:#00aa55,color:#fff
     style VM fill:#0066cc,color:#fff
+    style MY fill:#ff9900,color:#000
 ```
 
 ### Flux de données
@@ -85,14 +90,15 @@ graph TB
 
 ## Qui installe quoi
 
-| Composant        | myosotis | hawthorn | mimosa | dandelion | whitelily | rhizanthella | magnolia |
-|------------------|----------|----------|--------|-----------|-----------|--------------|----------|
-| Grafana          | ✅       |          |        |           |           |              |          |
-| Loki             | ✅       |          |        |           |           |              |          |
-| VictoriaMetrics  | ✅       |          |        |           |           |              |          |
-| Node Exporter    | ✅       | ✅       | ✅     | ✅        | ✅        | ✅           | ✅       |
-| Promtail         | ✅       | ✅       | ✅     | ✅        | ✅        | ✅           | ✅       |
-| Tailscale Serve  | ✅       |          |        |           |           |              |          |
+| Composant        | myosotis | magnolia | hawthorn | mimosa | dandelion | whitelily | rhizanthella | muscari | crocus |
+|------------------|----------|----------|----------|--------|-----------|-----------|--------------|---------|--------|
+| Grafana          | ✅       |          |          |        |           |           |              |         |        |
+| Loki             | ✅       |          |          |        |           |           |              |         |        |
+| VictoriaMetrics  | ✅       |          |          |        |           |           |              |         |        |
+| Node Exporter    | ✅       | ✅       | ✅       | ✅     | ✅        | ✅        | ✅           | (P8b)   | (P8b)  |
+| Promtail         | ✅       | ✅       | ✅       | ✅     | ✅        | ✅        | ✅           |         |        |
+| Tailscale Serve  | ✅       |          |          |        |           |           |              |         |        |
+| **OS**           | NixOS    | NixOS    | NixOS    | NixOS  | NixOS     | NixOS     | NixOS        | Debian  | Debian |
 
 ---
 
@@ -336,6 +342,29 @@ graph TB
   **depends_on:** `T33`-`T38`
   **test:** tous les hosts visibles dans Grafana
   **commit:** (inclus dans commit P8 global)
+
+---
+
+## P8b - Monitoring des nodes Proxmox (muscari, crocus)
+
+Les nodes Proxmox tournent sous Debian (pas NixOS). On utilise `pkgs.pkgsStatic`
+pour compiler des binaires statiques autonomes et les deployer via SSH.
+
+- [ ] **T39b** Creer `scripts/deploy-proxmox.nix` (binaires statiques + deploy SSH)
+  **depends_on:** `T18`
+  **test:** `nix run .#deploy-proxmox` deploie sur un node
+  **commit:** `feat(monitoring): add proxmox deploy script with static binaries`
+  **note:** utilise pkgsStatic.prometheus-node-exporter pour un binaire sans dependances
+
+- [ ] **T39c** Ajouter muscari et crocus dans monitoredHosts
+  **depends_on:** `T39b`
+  **test:** metriques muscari et crocus visibles dans Grafana
+  **commit:** `feat(monitoring): add proxmox nodes to monitored hosts`
+
+- [ ] **T39d** (optionnel) Ajouter pve-exporter pour metriques Proxmox API
+  **depends_on:** `T39c`
+  **test:** metriques `pve_*` dans Grafana (backups, statut VMs)
+  **commit:** `feat(monitoring): add proxmox pve-exporter`
 
 ---
 

@@ -44,9 +44,83 @@
     };
   };
 
+  # Inventaire complet de l'infrastructure
+  # Single source of truth pour tous les hosts (NixOS + non-NixOS)
+  # Exploitable par Nix pour générer configs, scripts, diagrammes
+  infrastructure = {
+    # --- Proxmox nodes (Debian, pas gérés par NixOS) ---
+    muscari = {
+      role = "Proxmox node 1 - Hyperviseur principal";
+      os = "debian";
+      managed = false;
+      tailscaleIp = "100.67.122.20";
+      vms = [ "magnolia" "mimosa" "dandelion" "hawthorn" ];
+    };
+    crocus = {
+      role = "Proxmox node 2 - Hyperviseur secondaire";
+      os = "debian";
+      managed = false;
+      tailscaleIp = "100.127.90.43";
+      vms = [ "whitelily" "rhizanthella" "myosotis" ];
+    };
+
+    # --- VMs NixOS (gérées par flake.nix) ---
+    magnolia = {
+      role = "Builder / Deployer / Cache binaire (nix-serve :5000)";
+      os = "nixos";
+      managed = true;
+      tailscaleIp = "100.96.250.41";
+      host = "muscari";
+    };
+    hawthorn = {
+      role = "Gateway - Point d'entree web (Caddy + Cloudflare Tunnel)";
+      os = "nixos";
+      managed = true;
+      tailscaleIp = "100.126.173.95";
+      host = "muscari";
+    };
+    mimosa = {
+      role = "Web - Site jeremiealcaraz.com";
+      os = "nixos";
+      managed = true;
+      tailscaleIp = "100.96.250.45";
+      host = "muscari";
+    };
+    dandelion = {
+      role = "Gitea - Serveur Git auto-heberge";
+      os = "nixos";
+      managed = true;
+      tailscaleIp = "100.96.250.43";
+      host = "muscari";
+    };
+    whitelily = {
+      role = "n8n - Serveur d'automatisation";
+      os = "nixos";
+      managed = true;
+      tailscaleIp = "100.96.250.44";
+      host = "crocus";
+    };
+    rhizanthella = {
+      role = "bknd - Backend-as-a-Service";
+      os = "nixos";
+      managed = true;
+      tailscaleIp = "100.127.41.93";
+      host = "crocus";
+    };
+    myosotis = {
+      role = "Observabilite - Grafana, Loki, VictoriaMetrics";
+      os = "nixos";
+      managed = true;
+      tailscaleIp = "100.116.189.42";
+      host = "crocus";
+    };
+  };
+
   # Configuration réseau Tailscale
   tailscale = {
     network = "100.96.0.0/16";
+
+    # IPs Tailscale (fallback, préférer les hostnames MagicDNS)
     hosts = {
       magnolia = "100.96.250.41";
       dandelion = "100.96.250.43";
