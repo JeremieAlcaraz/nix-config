@@ -112,7 +112,7 @@
       server = {
         http_addr = "127.0.0.1";
         http_port = 3000;
-        root_url = "https://myosotis";
+        root_url = "https://myosotis.inanga-sirius.ts.net";
       };
       # Login admin par défaut (à remplacer par sops en T31)
       security = {
@@ -140,15 +140,20 @@
   };
 
   # ==========================================================================
-  # Caddy - Reverse proxy HTTPS pour Grafana
+  # Tailscale Serve - HTTPS avec certs Tailscale pour Grafana
   # ==========================================================================
-  services.caddy = {
-    enable = true;
-    virtualHosts."myosotis" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy localhost:3000
-      '';
+  # `tailscale serve` expose Grafana en HTTPS avec des vrais certificats
+  # Accessible sur https://myosotis.inanga-sirius.ts.net
+  systemd.services.tailscale-serve-grafana = {
+    description = "Tailscale Serve for Grafana";
+    after = [ "tailscaled.service" "grafana.service" ];
+    wants = [ "tailscaled.service" "grafana.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.tailscale}/bin/tailscale serve --bg --https=443 http://localhost:3000";
+      ExecStop = "${pkgs.tailscale}/bin/tailscale serve --https=443 off";
     };
   };
 
@@ -157,7 +162,6 @@
     interfaces."tailscale0".allowedTCPPorts = [
       8428  # VictoriaMetrics
       3100  # Loki
-      443   # Caddy (HTTPS Grafana)
     ];
   };
 }
