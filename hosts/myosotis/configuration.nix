@@ -94,6 +94,7 @@
       compactor = {
         working_directory = "/var/lib/loki/compactor";
         retention_enabled = true;
+        delete_request_store = "filesystem";
       };
 
       # Rétention 30 jours
