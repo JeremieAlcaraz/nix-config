@@ -7,6 +7,7 @@
     ../../modules/home-manager/tailscale.nix
     ../../modules/home-manager/tailscale-dns.nix
     ../../modules/monitoring/node-exporter.nix
+    ../../modules/monitoring/promtail.nix
   ];
 
   system.stateVersion = "25.05";
