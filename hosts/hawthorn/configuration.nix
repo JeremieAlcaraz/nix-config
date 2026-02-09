@@ -7,6 +7,8 @@
     (import ../../modules/home-manager/sops.nix { defaultSopsFile = ../../secrets/hawthorn.yaml; })
     ../../modules/home-manager/tailscale.nix
     ../../modules/home-manager/tailscale-dns.nix   # Configuration DNS pour MagicDNS
+    ../../modules/monitoring/node-exporter.nix
+    ../../modules/monitoring/promtail.nix
   ];
 
   # Système

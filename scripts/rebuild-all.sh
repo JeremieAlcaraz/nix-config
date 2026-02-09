@@ -56,7 +56,7 @@ Ce script va :
   1. Synchroniser le repo depuis Gitea (origin)
   2. Mettre à jour nixpkgs-unstable (si --update-unstable)
   3. Mettre à jour j12zdotcom (sauf si --skip-site)
-  4. Builder mimosa, whitelily, dandelion pour le cache
+  4. Builder mimosa, whitelily, dandelion, hawthorn, myosotis pour le cache
   5. Builder et appliquer la config magnolia
   6. Commit et push le flake.lock (si modifié)
 
@@ -178,6 +178,24 @@ else
     exit 1
 fi
 
+echo ""
+echo -e "${BLUE}📦 Building hawthorn...${NC}"
+if nix build .#nixosConfigurations.hawthorn.config.system.build.toplevel; then
+    log_success "Hawthorn built!"
+else
+    log_error "Hawthorn build failed!"
+    exit 1
+fi
+
+echo ""
+echo -e "${BLUE}📦 Building myosotis...${NC}"
+if nix build .#nixosConfigurations.myosotis.config.system.build.toplevel; then
+    log_success "Myosotis built!"
+else
+    log_error "Myosotis build failed!"
+    exit 1
+fi
+
 # Étape 4: Build et switch magnolia
 log_header "🔨 Building and Switching Magnolia"
 
@@ -215,7 +233,8 @@ echo "  • Magnolia:  ${GREEN}✓${NC} Applied + Cached"
 echo "  • Mimosa:    ${GREEN}✓${NC} Cached"
 echo "  • Whitelily: ${GREEN}✓${NC} Cached"
 echo "  • Dandelion: ${GREEN}✓${NC} Cached"
-echo "  • Minimal:   ${GREEN}✓${NC} Cached"
+echo "  • Hawthorn:  ${GREEN}✓${NC} Cached"
+echo "  • Myosotis:  ${GREEN}✓${NC} Cached"
 
 if ! $SKIP_SITE; then
     echo "  • j12zdotcom: ${GREEN}✓${NC} Latest version"

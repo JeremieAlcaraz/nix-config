@@ -7,6 +7,8 @@
     ../../modules/home-manager/tailscale.nix
     ../../modules/home-manager/tailscale-dns.nix   # Configuration DNS pour MagicDNS
     ../../modules/home-manager/github-actions.nix  # Clés SSH pour GitHub Actions
+    ../../modules/monitoring/node-exporter.nix
+    ../../modules/monitoring/promtail.nix
   ];
 
   # Système

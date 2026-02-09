@@ -54,6 +54,21 @@ in
           - targets: ["localhost:9100"]
             labels:
               host: "myosotis"
+          - targets: ["${projectConfig.tailscale.hosts.hawthorn}:9100"]
+            labels:
+              host: "hawthorn"
+          - targets: ["${projectConfig.tailscale.hosts.mimosa}:9100"]
+            labels:
+              host: "mimosa"
+          - targets: ["${projectConfig.tailscale.hosts.dandelion}:9100"]
+            labels:
+              host: "dandelion"
+          - targets: ["${projectConfig.tailscale.hosts.whitelily}:9100"]
+            labels:
+              host: "whitelily"
+          - targets: ["${projectConfig.tailscale.hosts.rhizanthella}:9100"]
+            labels:
+              host: "rhizanthella"
   '';
 
   services.victoriametrics = {

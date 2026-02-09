@@ -98,10 +98,10 @@ graph TB
 
 ## Legende de suivi (a garder a jour)
 
-- **Phase active:** `P7`
-- **Derniere tache terminee:** `T31`
-- **Prochaine tache:** `T32` (dashboard Node Exporter)
-- **Dernier commit:** `d0e37e5 - feat(myosotis): configure grafana admin password via sops`
+- **Phase active:** `P8`
+- **Derniere tache terminee:** `T39`
+- **Prochaine tache:** `T38` (magnolia) puis `T40` (dashboards)
+- **Dernier commit:** `feat(monitoring): deploy node-exporter and promtail on all hosts`
 - **Date maj:** `2026-02-09`
 
 ---
@@ -292,49 +292,50 @@ graph TB
   **commit:** `d0e37e5 - feat(myosotis): configure grafana admin password via sops`
   **note:** grafana.db supprime manuellement car le mot de passe etait deja stocke en base
 
-- [ ] **T32** Importer le dashboard Node Exporter Full (#1860)
+- [x] **T32** Importer le dashboard Node Exporter Full (#1860)
   **depends_on:** `T29`
   **test:** dashboard affiche CPU/RAM/disque
-  **commit:** `feat(myosotis): provision node exporter dashboard`
+  **commit:** `bb9b9ff - feat(myosotis): provision node exporter full dashboard (#1860)`
 
 ---
 
 ## P8 - Deployer monitoring sur tous les hosts
 
-- [ ] **T33** Ajouter Node Exporter + Promtail sur hawthorn
+- [x] **T33** Ajouter Node Exporter + Promtail sur hawthorn
   **depends_on:** `T18`, `T25`
   **test:** metriques et logs hawthorn dans Grafana
-  **commit:** `feat(hawthorn): enable node-exporter and promtail`
+  **commit:** (inclus dans commit P8 global)
 
-- [ ] **T34** Ajouter Node Exporter + Promtail sur mimosa
+- [x] **T34** Ajouter Node Exporter + Promtail sur mimosa
   **depends_on:** `T18`, `T25`
   **test:** metriques et logs mimosa dans Grafana
-  **commit:** `feat(mimosa): enable node-exporter and promtail`
+  **commit:** (inclus dans commit P8 global)
 
-- [ ] **T35** Ajouter Node Exporter + Promtail sur dandelion
+- [x] **T35** Ajouter Node Exporter + Promtail sur dandelion
   **depends_on:** `T18`, `T25`
   **test:** metriques et logs dandelion dans Grafana
-  **commit:** `feat(dandelion): enable node-exporter and promtail`
+  **commit:** (inclus dans commit P8 global)
 
-- [ ] **T36** Ajouter Node Exporter + Promtail sur whitelily
+- [x] **T36** Ajouter Node Exporter + Promtail sur whitelily
   **depends_on:** `T18`, `T25`
   **test:** metriques et logs whitelily dans Grafana
-  **commit:** `feat(whitelily): enable node-exporter and promtail`
+  **commit:** (inclus dans commit P8 global)
 
-- [ ] **T37** Ajouter Node Exporter + Promtail sur rhizanthella
+- [x] **T37** Ajouter Node Exporter + Promtail sur rhizanthella
   **depends_on:** `T18`, `T25`
   **test:** metriques et logs rhizanthella dans Grafana
-  **commit:** `feat(rhizanthella): enable node-exporter and promtail`
+  **commit:** (inclus dans commit P8 global)
 
 - [ ] **T38** Ajouter Node Exporter + Promtail sur magnolia
   **depends_on:** `T18`, `T25`
   **test:** metriques et logs magnolia dans Grafana
   **commit:** `feat(magnolia): enable node-exporter and promtail`
+  **note:** magnolia est le host Proxmox, configuration differente a evaluer
 
-- [ ] **T39** Ajouter tous les scrape targets dans VictoriaMetrics
+- [x] **T39** Ajouter tous les scrape targets dans VictoriaMetrics
   **depends_on:** `T33`-`T38`
   **test:** tous les hosts visibles dans Grafana
-  **commit:** `feat(myosotis): add all hosts to victoriametrics scrape config`
+  **commit:** (inclus dans commit P8 global)
 
 ---
 
