@@ -6,6 +6,7 @@
     (import ../../modules/home-manager/sops.nix { defaultSopsFile = ../../secrets/myosotis.yaml; })
     ../../modules/home-manager/tailscale.nix
     ../../modules/home-manager/tailscale-dns.nix
+    ../../modules/monitoring/node-exporter.nix
   ];
 
   system.stateVersion = "25.05";
@@ -24,11 +25,25 @@
   # ==========================================================================
   # VictoriaMetrics - TSDB métriques (compatible Prometheus)
   # ==========================================================================
+
+  # Fichier de config scrape (format Prometheus)
+  # Définit les cibles que VictoriaMetrics va interroger toutes les 15s
+  environment.etc."victoriametrics/scrape.yml".text = ''
+    scrape_configs:
+      - job_name: "node"
+        scrape_interval: 15s
+        static_configs:
+          - targets: ["localhost:9100"]
+            labels:
+              host: "myosotis"
+  '';
+
   services.victoriametrics = {
     enable = true;
     listenAddress = ":8428";
     extraOptions = [
-      "-retentionPeriod=12"  # 12 mois de rétention
+      "-retentionPeriod=12"
+      "-promscrape.config=/etc/victoriametrics/scrape.yml"
     ];
   };
 
