@@ -43,6 +43,13 @@ creation_rules:
           # Même clé partagée
           - *shared
 
+  # Secrets pour l'hôte myosotis (VM observabilité)
+  - path_regex: secrets/myosotis\.yaml$
+    key_groups:
+      - age:
+          # Même clé partagée
+          - *shared
+
   # Secrets pour l'hôte hawthorn (VM gateway)
   - path_regex: secrets/hawthorn\.yaml$
     key_groups:

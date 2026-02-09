@@ -6,3 +6,4 @@ marigold	marigold	Marigold	Hote macOS gere par nix-darwin, Homebrew et preferenc
 mimosa	mimosa	Mimosa	Serveur web principal pour jeremiealcaraz.com. Utilise Caddy et Cloudflare Tunnel, cache Nix local, et Tailscale. Mode bootstrap possible pour eviter la compilation initiale.	false	100.88.163.121
 rhizanthella	rhizanthella	Rhizanthella	Backend-as-a-Service bknd avec PostgreSQL dedie, sauvegardes quotidiennes, acces limite aux interfaces Tailscale et secrets geres par sops-nix.	false	100.127.41.93
 whitelily	whitelily	Whitelily	VM d'automations n8n avec PostgreSQL, Cloudflare Tunnel et sauvegardes planifiees. Gere les secrets via sops-nix et s'appuie sur Tailscale pour le reseau prive.	false	100.123.2.97
+myosotis	myosotis	Myosotis	Plateforme d'observabilite centralisee. Loki (logs), VictoriaMetrics (metriques), Grafana (visualisation). Surveillance de toute l'infrastructure via Tailscale. Retention 30j logs, 12 mois metriques.	false

@@ -52,6 +52,7 @@
       dandelion = "100.96.250.43";
       whitelily = "100.96.250.44";
       mimosa = "100.96.250.45";
+      # myosotis = "IP à renseigner après création VM et join Tailscale";
     };
   };
 }
