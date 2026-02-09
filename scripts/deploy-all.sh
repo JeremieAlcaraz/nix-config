@@ -133,8 +133,8 @@ for host in "${HOSTS[@]}"; do
         if ssh "$host" bash << 'ENDSSH'
 set -euo pipefail
 cd /etc/nixos
-git fetch origin
-git reset --hard origin/main
+sudo git fetch origin
+sudo git reset --hard origin/main
 sudo nixos-rebuild switch --flake ".#$(hostname)"
 ENDSSH
         then
