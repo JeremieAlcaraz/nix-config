@@ -53,6 +53,18 @@ in
   sops.secrets.grafana_admin_password = {
     owner = "grafana";
   };
+  sops.secrets."gmail/from" = {
+    owner = "grafana";
+  };
+  sops.secrets."gmail/app_password" = {
+    owner = "grafana";
+  };
+  sops.secrets."gmail/to" = {
+    owner = "grafana";
+  };
+  sops.secrets."slack/webhook_url" = {
+    owner = "grafana";
+  };
 
   # ==========================================================================
   # VictoriaMetrics - TSDB métriques (compatible Prometheus)
@@ -151,6 +163,16 @@ in
         admin_user = "admin";
         admin_password = "$__file{/run/secrets/grafana_admin_password}";
       };
+
+      # SMTP Gmail pour les alertes email
+      smtp = {
+        enabled = true;
+        host = "smtp.gmail.com:587";
+        user = "$__file{/run/secrets/gmail/from}";
+        password = "$__file{/run/secrets/gmail/app_password}";
+        from_address = "$__file{/run/secrets/gmail/from}";
+        from_name = "Grafana Myosotis";
+      };
     };
 
     # Datasources préconfigurées (provisioning)
@@ -177,6 +199,52 @@ in
       name = "default";
       options.path = grafanaDashboards;
     }];
+
+    # Contact points pour les alertes
+    provision.alerting.contactPoints.settings = {
+      contactPoints = [
+        {
+          name = "email";
+          receivers = [{
+            uid = "email";
+            type = "email";
+            settings.addresses = "$__file{/run/secrets/gmail/to}";
+          }];
+        }
+        {
+          name = "slack";
+          receivers = [{
+            uid = "slack";
+            type = "slack";
+            settings = {
+              url = "$__file{/run/secrets/slack/webhook_url}";
+              title = ''{{ template "default.title" . }}'';
+              text = ''{{ template "default.message" . }}'';
+            };
+          }];
+        }
+      ];
+    };
+
+    # Politique de notification : critical → email + slack, le reste → slack
+    provision.alerting.policies.settings = {
+      policies = [
+        {
+          receiver = "slack";
+          group_by = [ "alertname" "host" ];
+          group_wait = "30s";
+          group_interval = "5m";
+          repeat_interval = "4h";
+          routes = [
+            {
+              receiver = "email";
+              matchers = [ "severity=critical" ];
+              continue = true;
+            }
+          ];
+        }
+      ];
+    };
   };
 
   # ==========================================================================
