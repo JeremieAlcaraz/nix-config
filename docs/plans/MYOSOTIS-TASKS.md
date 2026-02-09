@@ -326,11 +326,11 @@ graph TB
   **test:** metriques et logs rhizanthella dans Grafana
   **commit:** (inclus dans commit P8 global)
 
-- [ ] **T38** Ajouter Node Exporter + Promtail sur magnolia
+- [x] **T38** Ajouter Node Exporter + Promtail sur magnolia
   **depends_on:** `T18`, `T25`
   **test:** metriques et logs magnolia dans Grafana
-  **commit:** `feat(magnolia): enable node-exporter and promtail`
-  **note:** magnolia est le host Proxmox, configuration differente a evaluer
+  **commit:** (inclus dans commit P8 global)
+  **note:** magnolia est NixOS (builder/cacher), pas Proxmox. Les nodes Proxmox (muscari, crocus) necessitent une approche pkgsStatic separee
 
 - [x] **T39** Ajouter tous les scrape targets dans VictoriaMetrics
   **depends_on:** `T33`-`T38`

@@ -8,8 +8,9 @@
     ../../modules/home-manager/tailscale-dns.nix   # Configuration DNS pour MagicDNS
     ../../modules/home-manager/nix-serve.nix
     ../../modules/home-manager/github-actions.nix  # Clés SSH pour GitHub Actions
-
     ../../modules/home-manager/deployment.nix      # Clé SSH pour déploiement et GitHub
+    ../../modules/monitoring/node-exporter.nix
+    ../../modules/monitoring/promtail.nix
   ];
 
   system.stateVersion = "25.05";
