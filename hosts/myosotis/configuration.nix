@@ -10,11 +10,15 @@ let
       hash = "sha256-1DE1aaanRHHeCOMWDGdOS1wBXxOF84UXAjJzT5Ek6mM=";
       name = "node-exporter-full.json";
     }} $out/node-exporter-full.json
-    cp ${pkgs.fetchurl {
-      url = "https://grafana.com/api/dashboards/11074/revisions/9/download";
-      hash = "sha256-iT9AKe6bPgeX662YndR7jfUW7U0Hjyje0tbY33u9EGU=";
-      name = "node-exporter-overview.json";
-    }} $out/node-exporter-overview.json
+    # Patch le dashboard pour utiliser notre datasource "VictoriaMetrics"
+    ${pkgs.gnused}/bin/sed \
+      -e 's/\''${DS__VICTORIAMETRICS}/VictoriaMetrics/g' \
+      -e 's/"uid": "xfpJB9FGz"/"uid": "victoriametrics"/g' \
+      ${pkgs.fetchurl {
+        url = "https://grafana.com/api/dashboards/11074/revisions/9/download";
+        hash = "sha256-iT9AKe6bPgeX662YndR7jfUW7U0Hjyje0tbY33u9EGU=";
+        name = "node-exporter-overview.json";
+      }} > $out/node-exporter-overview.json
   '';
 
   # Génère les scrape targets depuis config.nix (hostnames MagicDNS)
@@ -153,6 +157,7 @@ in
     provision.datasources.settings.datasources = [
       {
         name = "VictoriaMetrics";
+        uid = "victoriametrics";
         type = "prometheus";
         url = "http://localhost:8428";
         isDefault = true;
@@ -160,6 +165,7 @@ in
       }
       {
         name = "Loki";
+        uid = "loki";
         type = "loki";
         url = "http://localhost:3100";
         access = "proxy";
