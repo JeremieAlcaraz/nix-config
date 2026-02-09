@@ -8,6 +8,13 @@ let
   hostname = config.networking.hostName;
 in
 {
+  # Promtail a besoin d'accéder au journal systemd, ce qui nécessite
+  # de relâcher le sandboxing par défaut (PrivateUsers bloque l'accès)
+  systemd.services.promtail.serviceConfig = {
+    PrivateUsers = lib.mkForce false;
+    ProtectHome = lib.mkForce false;
+  };
+
   services.promtail = {
     enable = true;
     configuration = {
