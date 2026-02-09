@@ -104,10 +104,11 @@ graph TB
 
 ## Legende de suivi (a garder a jour)
 
-- **Phase active:** `P8`
+- **Phase active:** `P9`
 - **Derniere tache terminee:** `T39`
-- **Prochaine tache:** `T38` (magnolia) puis `T40` (dashboards)
-- **Dernier commit:** `feat(monitoring): deploy node-exporter and promtail on all hosts`
+- **Prochaine tache:** `T40` (dashboard vue d'ensemble)
+- **Dernier commit:** `66af770 - fix(scripts): add sudo to git commands in deploy-all.sh`
+- **Deploiement:** tous les hosts NixOS deployes, 6/7 targets UP (rhizanthella offline)
 - **Date maj:** `2026-02-09`
 
 ---
@@ -380,10 +381,22 @@ pour compiler des binaires statiques autonomes et les deployer via SSH.
   **test:** recherche de logs par host/service OK
   **commit:** `feat(myosotis): provision logs explorer dashboard`
 
-- [ ] **T42** Alertes disk > 80%, RAM > 90%, service down
-  **depends_on:** `T39`
-  **test:** simuler un seuil et verifier l'alerte
+- [ ] **T42** Configurer SMTP Gmail dans Grafana (canal de notification)
+  **depends_on:** `T28`
+  **test:** envoyer un email de test depuis Grafana
+  **commit:** `feat(myosotis): configure grafana smtp via sops`
+  **note:** utilise les secrets sops gmail (from, to, app_password) deja presents dans myosotis.yaml
+
+- [ ] **T42b** Alertes disk > 80%, RAM > 90%, service down
+  **depends_on:** `T42`, `T39`
+  **test:** simuler un seuil et verifier la reception de l'email
   **commit:** `feat(myosotis): add infrastructure alert rules`
+
+- [ ] **T42c** (optionnel) Contact point Slack pour les alertes
+  **depends_on:** `T42b`
+  **test:** alerte recue dans le channel Slack
+  **commit:** `feat(myosotis): add slack alert contact point`
+  **note:** webhook Slack deja present dans sops myosotis.yaml
 
 ---
 
