@@ -29,42 +29,10 @@ let
     }
   '';
 
-  # Logique de routage avec /docs restreint et /wip public
-  # /docs : accessible uniquement depuis Tailscale (IP 100.x.x.x)
-  # /wip : accessible à tous
-  wipAndDocsRouting = ''
-    # Matcher pour /docs (documentation privée)
-    @docs path /docs*
-
-    # Matcher pour /wip (site public en construction)
-    @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
-
-    route {
-      # /docs : accessible uniquement depuis Tailscale
-      handle @docs {
-        # Restriction par IP Tailscale (plage CGNAT privée)
-        @tailscale remote_ip 100.0.0.0/8
-
-        handle @tailscale {
-          reverse_proxy mimosa:4322
-        }
-
-        # Si pas Tailscale → 403 Forbidden
-        handle {
-          respond "Access denied. Tailscale required." 403
-        }
-      }
-
-      # /wip : accessible à tous
-      handle @wip {
-        reverse_proxy mimosa:4321
-      }
-
-      # Tout le reste → redir vers /wip
-      handle {
-        redir https://jeremiealcaraz.com/wip 302
-      }
-    }
+  # Routage public (site principal)
+  publicRouting = ''
+    # Tout le trafic vers le site principal
+    reverse_proxy mimosa:4321
   '';
 
   # Routage simplifié pour accès direct via Tailscale (pas de restriction IP)
@@ -117,8 +85,8 @@ in
         # Logs JSON
         ${mkLogConfig "/var/log/caddy/jeremiealcaraz.com.log"}
 
-        # Routage avec /docs (restreint) et /wip (public)
-        ${wipAndDocsRouting}
+        # Routage public vers site principal
+        ${publicRouting}
       '';
     };
 
@@ -136,8 +104,8 @@ in
         # Logs JSON
         ${mkLogConfig "/var/log/caddy/hawthorn-preview.log"}
 
-        # Routage avec /docs (restreint) et /wip (public)
-        ${wipAndDocsRouting}
+        # Routage public vers site principal
+        ${publicRouting}
       '';
     };
 
