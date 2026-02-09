@@ -73,23 +73,15 @@ let
     # Matcher pour /docs (documentation)
     @docs path /docs*
 
-    # Matcher pour /wip (site en construction)
-    @wip path /wip* /_astro/* /assets/* /favicon* /robots.txt /sitemap* /site.webmanifest
-
     route {
       # /docs : direct vers mimosa:4322
       handle @docs {
         reverse_proxy mimosa:4322
       }
 
-      # /wip : direct vers mimosa:4321
-      handle @wip {
-        reverse_proxy mimosa:4321
-      }
-
-      # Tout le reste → redir vers /wip
+      # Tout le reste (/, /wip, assets, etc.) : vers site principal
       handle {
-        redir http://hawthorn/wip 302
+        reverse_proxy mimosa:4321
       }
     }
   '';
