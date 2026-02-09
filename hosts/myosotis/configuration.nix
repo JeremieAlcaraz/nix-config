@@ -21,6 +21,21 @@
   # - Tailscale pour réseau privé
   # - Sops pour gestion des secrets
 
-  # TODO: Ajouter la configuration de la stack ops (Grafana, Loki, VictoriaMetrics)
-  # Cela sera fait dans les prochaines phases
+  # ==========================================================================
+  # VictoriaMetrics - TSDB métriques (compatible Prometheus)
+  # ==========================================================================
+  services.victoriametrics = {
+    enable = true;
+    listenAddress = ":8428";
+    extraOptions = [
+      "-retentionPeriod=12"  # 12 mois de rétention
+    ];
+  };
+
+  # Firewall : ports ouverts uniquement sur Tailscale
+  networking.firewall = {
+    interfaces."tailscale0".allowedTCPPorts = [
+      8428  # VictoriaMetrics
+    ];
+  };
 }
