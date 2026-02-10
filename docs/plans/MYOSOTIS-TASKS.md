@@ -104,11 +104,11 @@ graph TB
 
 ## Legende de suivi (a garder a jour)
 
-- **Phase active:** `P11`
-- **Derniere tache terminee:** `T45`
-- **Prochaine tache:** `T50` (runbook alertes)
-- **Dernier commit:** `00db51c - feat(monitoring): add postgres exporter on dandelion and whitelily`
+- **Phase active:** TERMINEE
+- **Derniere tache terminee:** `T50`
+- **Dernier commit:** `df7570c - docs(myosotis): add comprehensive alerting runbook`
 - **Deploiement:** 8/9 targets UP, 4 jobs scrape (node, caddy, gitea, postgres)
+- **Taches optionnelles restantes:** T39d (pve-exporter), T46 (dashboards applicatifs), T48 (rate limiting Loki), T49 (README architecture)
 - **Date maj:** `2026-02-09`
 
 ---
@@ -438,10 +438,11 @@ statique (CGO_ENABLED=0, pure Go) et on le deploie via SSH.
   **test:** README a jour
   **commit:** `docs(myosotis): document observability architecture`
 
-- [ ] **T50** Runbook : que faire quand une alerte fire
+- [x] **T50** Runbook : que faire quand une alerte fire
   **depends_on:** `T42`
   **test:** document lisible et actionnable
-  **commit:** `docs(myosotis): add alerting runbook`
+  **commit:** `df7570c - docs(myosotis): add comprehensive alerting runbook`
+  **note:** 700 lignes, couvre les 5 alertes + operations courantes + exemples PromQL/LogQL
 
 ---
 
