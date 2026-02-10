@@ -104,11 +104,12 @@ graph TB
 
 ## Legende de suivi (a garder a jour)
 
-- **Phase active:** `P8b`
-- **Derniere tache terminee:** `T42b`
-- **Prochaine tache:** `T39b` (monitoring Proxmox nodes)
-- **Dernier commit:** `3acfe68 - chore(myosotis): set alert repeat interval to 24h`
-- **Deploiement:** tous les hosts NixOS deployes, 6/7 targets UP (rhizanthella offline)
+- **Phase active:** `P10` (ou P11)
+- **Derniere tache terminee:** `T39c`
+- **Prochaine tache:** `T43` (metriques Caddy) ou `T47` (backup Grafana)
+- **Dernier commit:** `b7cffc9 - feat(monitoring): add proxmox nodes muscari and crocus to monitored hosts`
+- **Deploiement:** 8/9 targets UP dans Grafana (rhizanthella offline). Proxmox nodes deployes via nix run .#deploy-proxmox
+- **P8b termine:** node_exporter statique (CGO_ENABLED=0) deploye sur muscari et crocus via SSH
 - **P9 termine:** dashboards, SMTP Gmail, Slack, 5 alert rules provisionnees
 - **Date maj:** `2026-02-09`
 
@@ -349,19 +350,19 @@ graph TB
 
 ## P8b - Monitoring des nodes Proxmox (muscari, crocus)
 
-Les nodes Proxmox tournent sous Debian (pas NixOS). On utilise `pkgs.pkgsStatic`
-pour compiler des binaires statiques autonomes et les deployer via SSH.
+Les nodes Proxmox tournent sous Debian (pas NixOS). On compile un binaire
+statique (CGO_ENABLED=0, pure Go) et on le deploie via SSH.
 
-- [ ] **T39b** Creer `scripts/deploy-proxmox.nix` (binaires statiques + deploy SSH)
+- [x] **T39b** Creer `scripts/deploy-proxmox.nix` (binaires statiques + deploy SSH)
   **depends_on:** `T18`
-  **test:** `nix run .#deploy-proxmox` deploie sur un node
-  **commit:** `feat(monitoring): add proxmox deploy script with static binaries`
-  **note:** utilise pkgsStatic.prometheus-node-exporter pour un binaire sans dependances
+  **test:** `nix run .#deploy-proxmox` deploie sur muscari et crocus
+  **commit:** `03a94fd - feat(monitoring): add deploy-proxmox script for static node_exporter`
+  **note:** pkgsStatic echoue (CGO), fix avec CGO_ENABLED=0. Necessite regle SSH Tailscale pour tag:proxmox
 
-- [ ] **T39c** Ajouter muscari et crocus dans monitoredHosts
+- [x] **T39c** Ajouter muscari et crocus dans monitoredHosts
   **depends_on:** `T39b`
-  **test:** metriques muscari et crocus visibles dans Grafana
-  **commit:** `feat(monitoring): add proxmox nodes to monitored hosts`
+  **test:** 8/9 targets UP dans Grafana (muscari et crocus visibles)
+  **commit:** `b7cffc9 - feat(monitoring): add proxmox nodes muscari and crocus to monitored hosts`
 
 - [ ] **T39d** (optionnel) Ajouter pve-exporter pour metriques Proxmox API
   **depends_on:** `T39c`
