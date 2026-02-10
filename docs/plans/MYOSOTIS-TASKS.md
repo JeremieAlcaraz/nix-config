@@ -104,13 +104,11 @@ graph TB
 
 ## Legende de suivi (a garder a jour)
 
-- **Phase active:** `P10` (ou P11)
-- **Derniere tache terminee:** `T39c`
-- **Prochaine tache:** `T43` (metriques Caddy) ou `T47` (backup Grafana)
-- **Dernier commit:** `b7cffc9 - feat(monitoring): add proxmox nodes muscari and crocus to monitored hosts`
-- **Deploiement:** 8/9 targets UP dans Grafana (rhizanthella offline). Proxmox nodes deployes via nix run .#deploy-proxmox
-- **P8b termine:** node_exporter statique (CGO_ENABLED=0) deploye sur muscari et crocus via SSH
-- **P9 termine:** dashboards, SMTP Gmail, Slack, 5 alert rules provisionnees
+- **Phase active:** `P11`
+- **Derniere tache terminee:** `T45`
+- **Prochaine tache:** `T50` (runbook alertes)
+- **Dernier commit:** `00db51c - feat(monitoring): add postgres exporter on dandelion and whitelily`
+- **Deploiement:** 8/9 targets UP, 4 jobs scrape (node, caddy, gitea, postgres)
 - **Date maj:** `2026-02-09`
 
 ---
@@ -400,22 +398,25 @@ statique (CGO_ENABLED=0, pure Go) et on le deploie via SSH.
 
 ## P10 - Metriques applicatives (optionnel)
 
-- [ ] **T43** Exporter metriques Caddy (hawthorn)
+- [x] **T43** Exporter metriques Caddy (hawthorn)
   **depends_on:** `T33`
   **test:** metriques `caddy_*` dans Grafana
-  **commit:** `feat(hawthorn): expose caddy metrics`
+  **commit:** `bc9c572 - fix(hawthorn): enable caddy HTTP metrics collection in global config`
+  **note:** endpoint :9180 + directive `metrics` dans globalConfig servers{}
 
-- [ ] **T44** Exporter metriques Gitea (dandelion)
+- [x] **T44** Exporter metriques Gitea (dandelion)
   **depends_on:** `T35`
   **test:** metriques `gitea_*` dans Grafana
-  **commit:** `feat(dandelion): expose gitea metrics`
+  **commit:** `dd4395e - feat(dandelion): enable gitea prometheus metrics`
+  **note:** juste `metrics.ENABLED = true` dans la config Gitea, endpoint natif /metrics
 
-- [ ] **T45** Exporter metriques PostgreSQL (dandelion, whitelily, rhizanthella)
-  **depends_on:** `T35`, `T36`, `T37`
+- [x] **T45** Exporter metriques PostgreSQL (dandelion, whitelily)
+  **depends_on:** `T35`, `T36`
   **test:** metriques `pg_*` dans Grafana
-  **commit:** `feat(monitoring): add postgres exporter`
+  **commit:** `00db51c - feat(monitoring): add postgres exporter on dandelion and whitelily`
+  **note:** module partage, tourne en user postgres (peer auth socket Unix). rhizanthella exclu pour l'instant
 
-- [ ] **T46** Dashboard applicatif par service
+- [ ] **T46** (optionnel) Dashboard applicatif par service
   **depends_on:** `T43`-`T45`
   **test:** dashboards specifiques disponibles
   **commit:** `feat(myosotis): provision application dashboards`
@@ -424,10 +425,8 @@ statique (CGO_ENABLED=0, pure Go) et on le deploie via SSH.
 
 ## P11 - Hardening et documentation
 
-- [ ] **T47** Backup configuration Grafana (dashboards, datasources)
-  **depends_on:** `T40`
-  **test:** restaurer depuis backup
-  **commit:** `feat(myosotis): add grafana backup`
+- [x] **T47** ~~Backup configuration Grafana~~ → annulee
+  **note:** inutile car toute la config Grafana est declarative (provisionning Nix). Un `nixos-rebuild switch` reconstruit 100% de la stack. Les seules donnees perdues seraient l'historique des metriques/logs (monitoring, pas donnees metier) et les preferences utilisateur.
 
 - [ ] **T48** Rate limiting sur les endpoints Loki
   **depends_on:** `T39`
