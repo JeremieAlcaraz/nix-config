@@ -426,6 +426,9 @@ in
       force = true;
     };
 
+    # Bat themes (Tokyo Night)
+    "bat/themes".source = ../modules/dotfiles/bat/themes;
+
     # Neovim configuration
     "nvim".source = ../modules/dotfiles/nvim;
 
