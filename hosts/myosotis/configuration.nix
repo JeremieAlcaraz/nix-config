@@ -96,6 +96,15 @@ in
             labels:
               host: "dandelion"
         metrics_path: "/metrics"
+      - job_name: "postgres"
+        scrape_interval: 15s
+        static_configs:
+          - targets: ["dandelion:9187"]
+            labels:
+              host: "dandelion"
+          - targets: ["whitelily:9187"]
+            labels:
+              host: "whitelily"
   '';
 
   services.victoriametrics = {

@@ -23,6 +23,7 @@ in
     ../../modules/home-manager/tailscale-dns.nix   # Configuration DNS pour MagicDNS
     ../../modules/monitoring/node-exporter.nix
     ../../modules/monitoring/promtail.nix
+    ../../modules/monitoring/postgres-exporter.nix
   ];
 
   system.stateVersion = "25.05";
