@@ -1,6 +1,6 @@
 # Script de déploiement Node Exporter sur les nodes Proxmox (Debian)
 #
-# Compile un binaire statique via pkgsStatic (zéro dépendance),
+# Compile un binaire statique via CGO_ENABLED=0 (pure Go, zéro dépendance),
 # le copie via SSH et installe un service systemd.
 #
 # Usage: nix run .#deploy-proxmox
@@ -12,8 +12,13 @@ let
     projectConfig.infrastructure.${name}.os == "debian"
   ) (builtins.attrNames projectConfig.infrastructure);
 
-  # Binaire statique Node Exporter (tourne sur n'importe quel Linux)
-  nodeExporter = pkgs.pkgsStatic.prometheus-node-exporter;
+  # Binaire statique Node Exporter (CGO désactivé = pure Go = zéro dépendance)
+  # pkgsStatic échoue car node_exporter utilise CGO par défaut (os/user, net).
+  # En désactivant CGO, Go utilise ses implémentations pure-Go et produit
+  # un binaire sans aucune dépendance dynamique → tourne sur n'importe quel Linux.
+  nodeExporter = pkgs.prometheus-node-exporter.overrideAttrs (old: {
+    CGO_ENABLED = "0";
+  });
 
   # Service systemd pour Debian
   nodeExporterService = pkgs.writeText "node-exporter.service" ''
