@@ -104,11 +104,12 @@ graph TB
 
 ## Legende de suivi (a garder a jour)
 
-- **Phase active:** `P9`
-- **Derniere tache terminee:** `T39`
-- **Prochaine tache:** `T40` (dashboard vue d'ensemble)
-- **Dernier commit:** `66af770 - fix(scripts): add sudo to git commands in deploy-all.sh`
+- **Phase active:** `P8b`
+- **Derniere tache terminee:** `T42b`
+- **Prochaine tache:** `T39b` (monitoring Proxmox nodes)
+- **Dernier commit:** `3acfe68 - chore(myosotis): set alert repeat interval to 24h`
 - **Deploiement:** tous les hosts NixOS deployes, 6/7 targets UP (rhizanthella offline)
+- **P9 termine:** dashboards, SMTP Gmail, Slack, 5 alert rules provisionnees
 - **Date maj:** `2026-02-09`
 
 ---
@@ -371,32 +372,28 @@ pour compiler des binaires statiques autonomes et les deployer via SSH.
 
 ## P9 - Dashboards et alertes
 
-- [ ] **T40** Dashboard "Vue d'ensemble infrastructure"
+- [x] **T40** Dashboard "Vue d'ensemble infrastructure" (#11074)
   **depends_on:** `T39`
-  **test:** dashboard affiche tous les hosts
-  **commit:** `feat(myosotis): provision infrastructure overview dashboard`
+  **test:** dashboard affiche tous les hosts avec vue multi-host
+  **commit:** `01280ee - feat(myosotis): provision infrastructure overview dashboard (#11074)`
+  **note:** dashboard patche au build (sed) pour remplacer datasource variable par UID stable
 
-- [ ] **T41** Dashboard "Logs Explorer"
+- [x] **T41** Logs Explorer (natif Grafana Explore)
   **depends_on:** `T39`
-  **test:** recherche de logs par host/service OK
-  **commit:** `feat(myosotis): provision logs explorer dashboard`
+  **test:** Grafana > Explore > Loki → logs visibles par host/service
+  **commit:** - (fonctionnalite native, pas de provisioning necessaire)
 
-- [ ] **T42** Configurer SMTP Gmail dans Grafana (canal de notification)
+- [x] **T42** Configurer SMTP Gmail + Slack dans Grafana
   **depends_on:** `T28`
-  **test:** envoyer un email de test depuis Grafana
-  **commit:** `feat(myosotis): configure grafana smtp via sops`
-  **note:** utilise les secrets sops gmail (from, to, app_password) deja presents dans myosotis.yaml
+  **test:** email de test recu, notification Slack recue
+  **commit:** `0c33ed6 - feat(myosotis): configure grafana SMTP, email and slack contact points`
+  **note:** 4 secrets sops (gmail/from, gmail/app_password, gmail/to, slack/webhook_url). Politique : critical→email+slack, reste→slack. Repeat interval 24h.
 
-- [ ] **T42b** Alertes disk > 80%, RAM > 90%, service down
+- [x] **T42b** Alertes provisionnees (5 regles)
   **depends_on:** `T42`, `T39`
-  **test:** simuler un seuil et verifier la reception de l'email
-  **commit:** `feat(myosotis): add infrastructure alert rules`
-
-- [ ] **T42c** (optionnel) Contact point Slack pour les alertes
-  **depends_on:** `T42b`
-  **test:** alerte recue dans le channel Slack
-  **commit:** `feat(myosotis): add slack alert contact point`
-  **note:** webhook Slack deja present dans sops myosotis.yaml
+  **test:** alerte "Host unreachable" firing pour rhizanthella, email+slack recus
+  **commit:** `add7b08 - feat(myosotis): add 5 provisioned alert rules for infrastructure monitoring`
+  **note:** disk>80% (critical), RAM>90% (warning), CPU>90% (warning), host unreachable (critical), reboot detected (info)
 
 ---
 

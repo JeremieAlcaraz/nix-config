@@ -208,6 +208,16 @@
         };
       };
 
+      # App de déploiement monitoring sur nodes Proxmox (Debian)
+      # Usage: nix run .#deploy-proxmox (depuis magnolia)
+      apps.x86_64-linux.deploy-proxmox = {
+        type = "app";
+        program = "${import ./scripts/deploy-proxmox.nix {
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          inherit projectConfig;
+        }}/bin/deploy-proxmox";
+      };
+
       darwinConfigurations = {
         marigold = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
