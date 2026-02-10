@@ -82,7 +82,14 @@ in
           - targets: ["localhost:9100"]
             labels:
               host: "myosotis"
-    ${remoteScrapeTargets}'';
+    ${remoteScrapeTargets}
+      - job_name: "caddy"
+        scrape_interval: 15s
+        static_configs:
+          - targets: ["hawthorn:9180"]
+            labels:
+              host: "hawthorn"
+  '';
 
   services.victoriametrics = {
     enable = true;

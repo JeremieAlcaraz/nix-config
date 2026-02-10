@@ -119,6 +119,13 @@ in
       '';
     };
 
+    # Endpoint Prometheus metrics (scrape par VictoriaMetrics sur myosotis)
+    virtualHosts."http://:9180" = {
+      extraConfig = ''
+        metrics /metrics
+      '';
+    };
+
     # VirtualHost pour accès direct via Tailscale (http://hawthorn)
     virtualHosts."http://hawthorn" = {
       extraConfig = ''
@@ -142,6 +149,8 @@ in
   # Ouvrir les ports firewall (HTTP pour le tunnel local)
   networking.firewall = {
     allowedTCPPorts = [ 80 ];
+    # Métriques Caddy accessibles uniquement via Tailscale
+    interfaces."tailscale0".allowedTCPPorts = [ 9180 ];
   };
 
   # Secret Cloudflare Tunnel (même token que mimosa)
