@@ -78,6 +78,7 @@ in
       servers {
         trusted_proxies static 127.0.0.1/32 ::1
         client_ip_headers CF-Connecting-IP X-Forwarded-For
+        metrics
       }
     '';
 
