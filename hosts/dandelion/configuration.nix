@@ -118,9 +118,9 @@ in
         LEVEL = "Info";
       };
 
-      # Désactiver la télémétrie
+      # Métriques Prometheus (scrape par VictoriaMetrics sur myosotis)
       metrics = {
-        ENABLED = false;
+        ENABLED = true;
       };
 
       # Configuration des sessions

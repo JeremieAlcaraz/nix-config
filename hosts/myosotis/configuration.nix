@@ -89,6 +89,13 @@ in
           - targets: ["hawthorn:9180"]
             labels:
               host: "hawthorn"
+      - job_name: "gitea"
+        scrape_interval: 15s
+        static_configs:
+          - targets: ["dandelion:3000"]
+            labels:
+              host: "dandelion"
+        metrics_path: "/metrics"
   '';
 
   services.victoriametrics = {
