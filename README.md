@@ -10,38 +10,67 @@ Ce dépôt centralise la configuration de plusieurs VMs NixOS, des secrets via S
 
 | Hôte | Type | Rôle principal |
 |------|------|---------------|
-| **magnolia** 🌸 | Hyperviseur | Proxmox + base système |
-| **mimosa** 🌼 | Site web | jeremiealcaraz.com (Caddy + Cloudflare Tunnel) |
-| **whitelily** 🤍 | Automation | n8n + PostgreSQL + backups |
-| **dandelion** 🌾 | Git | Gitea + PostgreSQL |
-| **rhizanthella** 🌺 | BaaS | bknd + PostgreSQL |
+| **magnolia** 🌸 | NixOS | Builder/déploiement + cache binaire Nix (`nix-serve`) |
+| **hawthorn** 🌿 | NixOS | Gateway web (Caddy + Cloudflare Tunnel) |
+| **mimosa** 🌼 | NixOS | Site jeremiealcaraz.com (app + docs) |
+| **dandelion** 🌾 | NixOS | Forge Git Gitea + PostgreSQL + runners |
+| **whitelily** 🤍 | NixOS | Automations n8n + PostgreSQL |
+| **rhizanthella** 🌺 | NixOS | Backend-as-a-Service `bknd` + PostgreSQL |
+| **myosotis** 🟦 | NixOS | Observabilité (Grafana + Loki + VictoriaMetrics) |
+| **marigold** 🌼 | macOS (nix-darwin) | Poste principal de dev/admin |
 
-## 🗺️ Diagramme (VMs & interactions)
+Noeuds Proxmox (inventaire infra): **muscari** (héberge `magnolia`, `mimosa`, `dandelion`, `hawthorn`) et **crocus** (héberge `whitelily`, `rhizanthella`, `myosotis`).
+
+## 🗺️ Diagramme (architecture actuelle)
 
 ```mermaid
-flowchart TD
+flowchart LR
     Internet((Internet))
-    Proxmox["magnolia<br/>Proxmox"]
+    Cloudflare["Cloudflare"]
+    Tailnet["Tailscale tailnet"]
 
-    subgraph VMs["VMs NixOS"]
-        Mimosa["mimosa<br/>Caddy + Cloudflare Tunnel"]
-        WhiteLily["whitelily<br/>n8n + PostgreSQL"]
+    subgraph MUSCARI["muscari - Proxmox node"]
+        Magnolia["magnolia<br/>Builder + Cache Nix"]
+        Hawthorn["hawthorn<br/>Gateway Caddy + Tunnel"]
+        Mimosa["mimosa<br/>Site web + docs"]
         Dandelion["dandelion<br/>Gitea + PostgreSQL"]
-        Rhizanthella["rhizanthella<br/>bknd + PostgreSQL"]
     end
 
-    Tailscale["Tailscale mesh"]
-    Cloudflare["Cloudflare Tunnel"]
+    subgraph CROCUS["crocus - Proxmox node"]
+        WhiteLily["whitelily<br/>n8n + PostgreSQL"]
+        Rhizanthella["rhizanthella<br/>bknd + PostgreSQL"]
+        Myosotis["myosotis<br/>Grafana + Loki + VictoriaMetrics"]
+    end
 
-    Proxmox --> Mimosa
-    Proxmox --> WhiteLily
-    Proxmox --> Dandelion
-    Proxmox --> Rhizanthella
+    Marigold["marigold<br/>macOS nix-darwin"]
 
-    Internet --> Cloudflare --> Mimosa
-    Tailscale --> WhiteLily
-    Tailscale --> Dandelion
-    Tailscale --> Rhizanthella
+    Internet --> Cloudflare
+    Cloudflare --> Hawthorn
+    Hawthorn --> Mimosa
+    Cloudflare --> WhiteLily
+
+    Tailnet --- Magnolia
+    Tailnet --- Hawthorn
+    Tailnet --- Mimosa
+    Tailnet --- Dandelion
+    Tailnet --- WhiteLily
+    Tailnet --- Rhizanthella
+    Tailnet --- Myosotis
+    Tailnet --- Marigold
+
+    Magnolia -. "cache nix-serve:5000" .-> Hawthorn
+    Magnolia -. "cache nix-serve:5000" .-> Mimosa
+    Magnolia -. "cache nix-serve:5000" .-> Dandelion
+    Magnolia -. "cache nix-serve:5000" .-> WhiteLily
+    Magnolia -. "cache nix-serve:5000" .-> Rhizanthella
+    Magnolia -. "cache nix-serve:5000" .-> Myosotis
+
+    Hawthorn -. "logs + metrics" .-> Myosotis
+    Mimosa -. "logs + metrics" .-> Myosotis
+    Dandelion -. "logs + metrics" .-> Myosotis
+    WhiteLily -. "logs + metrics" .-> Myosotis
+    Rhizanthella -. "logs + metrics" .-> Myosotis
+    Magnolia -. "logs + metrics" .-> Myosotis
 ```
 
 ## 🚀 Démarrage rapide
