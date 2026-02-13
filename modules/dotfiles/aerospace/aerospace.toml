@@ -30,6 +30,7 @@ exec-on-workspace-change = [
 # See https://nikitabobko.github.io/AeroSpace/guide#on-focus-changed-callbacks
 on-focus-changed = [
   'exec-and-forget sketchybar --trigger aerospace_focus_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE',
+  'exec-and-forget /bin/bash ~/.config/aerospace/raycast-ai-overlay.sh',
 ]
 
 # Start AeroSpace at login
@@ -208,6 +209,13 @@ alt-ctrl-right = [
 [[on-window-detected]]
 if.app-name-regex-substring = '^wezterm-gui$'
 run = 'move-node-to-workspace 1'
+
+# Raycast AI Chat should stay as overlay (floating), not tiled fullscreen.
+# App ID can be verified with: aerospace list-apps | rg -i raycast
+[[on-window-detected]]
+if.app-id = 'com.raycast.macos'
+if.window-title-regex-substring = '^AI Chat$'
+run = 'layout floating'
 
 # [[on-window-detected]]
 # if.app-id = 'company.thebrowser.Browser'

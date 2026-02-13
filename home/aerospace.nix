@@ -3,6 +3,10 @@
 {
   # Configuration AeroSpace
   xdg.configFile."aerospace/aerospace.toml".source = ../modules/dotfiles/aerospace/aerospace.toml;
+  xdg.configFile."aerospace/raycast-ai-overlay.sh" = {
+    source = ../modules/dotfiles/aerospace/raycast-ai-overlay.sh;
+    executable = true;
+  };
 
   # LaunchAgent pour démarrer AeroSpace automatiquement
   launchd.agents.aerospace = {
