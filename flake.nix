@@ -164,7 +164,7 @@
         # Myosotis - Observabilité (Grafana, Loki, VictoriaMetrics)
         myosotis = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit projectConfig; };
+          specialArgs = { inherit projectConfig nixpkgs-unstable; };
           modules = [
             ./modules/home-manager/base.nix
             ./modules/home-manager/ssh.nix

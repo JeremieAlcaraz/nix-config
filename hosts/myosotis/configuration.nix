@@ -1,6 +1,11 @@
-{ config, pkgs, lib, projectConfig, ... }:
+{ config, pkgs, lib, projectConfig, nixpkgs-unstable, ... }:
 
 let
+  unstablePkgs = import nixpkgs-unstable {
+    system = pkgs.system;
+    config.allowUnfree = true;
+  };
+
   # Dashboard Node Exporter Full (grafana.com #1860, rev 37)
   # Téléchargé au build, provisionné automatiquement par Grafana
   grafanaDashboards = pkgs.runCommand "grafana-dashboards" {} ''
@@ -34,6 +39,7 @@ in
     ../../modules/home-manager/tailscale-dns.nix
     ../../modules/monitoring/node-exporter.nix
     ../../modules/monitoring/promtail.nix
+    ./homarr.nix
   ];
 
   system.stateVersion = "25.05";
@@ -48,6 +54,7 @@ in
   # - SSH avec clés publiques
   # - Tailscale pour réseau privé
   # - Sops pour gestion des secrets
+  services.tailscale.package = unstablePkgs.tailscale;
 
   # Secrets spécifiques à myosotis
   sops.secrets.grafana_admin_password = {
@@ -543,8 +550,8 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${pkgs.tailscale}/bin/tailscale serve --bg --https=443 http://localhost:3000";
-      ExecStop = "${pkgs.tailscale}/bin/tailscale serve --https=443 off";
+      ExecStart = "${config.services.tailscale.package}/bin/tailscale serve --bg --https=443 http://localhost:3000";
+      ExecStop = "${config.services.tailscale.package}/bin/tailscale serve --https=443 off";
     };
   };
 
