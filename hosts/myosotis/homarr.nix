@@ -68,8 +68,11 @@ EOF
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${config.services.tailscale.package}/bin/tailscale serve --yes --bg --https=8443 http://127.0.0.1:7575";
-      ExecStop = "${config.services.tailscale.package}/bin/tailscale serve --https=8443 off";
+      Restart = "on-failure";
+      RestartSec = "3s";
+      ExecStartPre = "${pkgs.bash}/bin/bash -euc 'for i in {1..30}; do if ${config.services.tailscale.package}/bin/tailscale status --json 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '\"BackendState\":\"Running\"'; then exit 0; fi; sleep 1; done; echo \"tailscaled not ready\" >&2; exit 1'";
+      ExecStart = "${config.services.tailscale.package}/bin/tailscale serve --yes --bg --service=svc:homarr --https=443 http://127.0.0.1:7575";
+      ExecStop = "${config.services.tailscale.package}/bin/tailscale serve clear svc:homarr";
     };
   };
 }

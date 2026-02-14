@@ -550,8 +550,11 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${config.services.tailscale.package}/bin/tailscale serve --bg --https=443 http://localhost:3000";
-      ExecStop = "${config.services.tailscale.package}/bin/tailscale serve --https=443 off";
+      Restart = "on-failure";
+      RestartSec = "3s";
+      ExecStartPre = "${pkgs.bash}/bin/bash -euc 'for i in {1..30}; do if ${config.services.tailscale.package}/bin/tailscale status --json 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '\"BackendState\":\"Running\"'; then exit 0; fi; sleep 1; done; echo \"tailscaled not ready\" >&2; exit 1'";
+      ExecStart = "${config.services.tailscale.package}/bin/tailscale serve --yes --bg --service=svc:grafana --https=443 http://localhost:3000";
+      ExecStop = "${config.services.tailscale.package}/bin/tailscale serve clear svc:grafana";
     };
   };
 
