@@ -364,6 +364,94 @@ in
       '';
       executable = true;
     };
+
+    # macOS appearance helper - dark/light/auto/toggle/cycle
+    ".local/bin/macos-appearance" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        mode=''${1:-toggle}
+
+        is_dark() {
+          defaults read -g AppleInterfaceStyle >/dev/null 2>&1
+        }
+
+        current_mode() {
+          if [[ "$(defaults read -g AppleInterfaceStyleSwitchesAutomatically 2>/dev/null || echo 0)" == "1" ]]; then
+            echo "auto"
+            return
+          fi
+
+          if is_dark; then
+            echo "dark"
+          else
+            echo "light"
+          fi
+        }
+
+        disable_auto() {
+          defaults write -g AppleInterfaceStyleSwitchesAutomatically -bool false
+        }
+
+        set_dark() {
+          disable_auto
+          osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true' >/dev/null
+        }
+
+        set_light() {
+          disable_auto
+          osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to false' >/dev/null
+        }
+
+        set_auto() {
+          defaults write -g AppleInterfaceStyleSwitchesAutomatically -bool true
+        }
+
+        case "$mode" in
+          dark)
+            set_dark
+            ;;
+          light)
+            set_light
+            ;;
+          auto)
+            set_auto
+            ;;
+          cycle)
+            case "$(current_mode)" in
+              auto)
+                set_dark
+                ;;
+              dark)
+                set_light
+                ;;
+              light)
+                set_auto
+                ;;
+            esac
+            ;;
+          toggle)
+            if is_dark; then
+              set_light
+            else
+              set_dark
+            fi
+            ;;
+          status)
+            current_mode
+            exit 0
+            ;;
+          *)
+            echo "Usage: macos-appearance [toggle|cycle|dark|light|auto|status]" >&2
+            exit 2
+            ;;
+        esac
+
+        current_mode
+      '';
+      executable = true;
+    };
   };
 
   # === DOTFILES ZSH ===

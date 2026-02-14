@@ -27,6 +27,8 @@ alias edit-zshenv="nvim ~/.zshenv"
 alias clean-dsstore="find ~ -name .DS_Store -delete"
 alias show-hidden="defaults write com.apple.finder AppleShowAllFiles YES && killall Finder"
 alias hide-hidden="defaults write com.apple.finder AppleShowAllFiles NO && killall Finder"
+alias theme="macos-appearance"
+alias ttheme="macos-appearance toggle"
 
 # === RÉSEAU ===
 alias ssh="TERM=xterm-256color ssh"

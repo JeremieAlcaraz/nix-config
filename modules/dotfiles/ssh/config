@@ -30,7 +30,7 @@ Host myosotis mimosa magnolia whitelily dandelion hawthorn
     User jeremie
     ForwardAgent yes
 
- Host muscari crocus
+ Host muscari crocus iris
     User root
     ForwardAgent yes
 

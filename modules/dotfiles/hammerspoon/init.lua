@@ -43,6 +43,13 @@ hs.hotkey.bind({ "cmd", "alt" }, "A", function()
 	hs.notify.new({ title = "AeroSpace", informativeText = "Tiling/Flottant basculé" }):send()
 end)
 
+-- Cycle apparence: auto -> dark -> light -> auto
+hs.hotkey.bind({ "cmd", "alt", "shift" }, "D", function()
+	local out = hs.execute("$HOME/.local/bin/macos-appearance cycle")
+	local mode = (out or ""):gsub("%s+$", "")
+	hs.notify.new({ title = "Apparence macOS", informativeText = "Mode " .. (mode ~= "" and mode or "mis à jour") }):send()
+end)
+
 ---
 
 local function openNewWezTermWindow()
@@ -160,8 +167,6 @@ end
 -- Raccourcis (garde ceux qui marchent chez toi)
 hs.hotkey.bind({"ctrl","cmd"}, "P", function() focusOrLaunch(ZEN_PRO) end) -- Pro
 hs.hotkey.bind({"ctrl","cmd"}, "D", function() focusOrLaunch(ZEN_PER) end) -- Perso
-
-
 
 
 
