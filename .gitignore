@@ -1,4 +1,6 @@
 .claude/settings.local.json
+# macOS Finder metadata
+.DS_Store
 # 1. On ignore tous les fichiers sensibles par défaut
 *.yaml
 *.env
