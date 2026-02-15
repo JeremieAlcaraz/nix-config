@@ -1,0 +1,14 @@
+[gdrive]
+type = drive
+client_id = 538578039833-jf6okq00scdrd4j72u3kp2v4p7d2d5kv.apps.googleusercontent.com
+client_secret = <REDACTED>
+scope = drive
+token = <REDACTED>
+team_drive =
+
+[gdrive_capsule]
+type = drive
+scope = drive
+token = <REDACTED>
+team_drive =
+root_folder_id = 1q9urpon7tZUSdeO1UfW3kIM8feURFIYe

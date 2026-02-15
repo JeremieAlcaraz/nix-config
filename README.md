@@ -18,8 +18,11 @@ Ce dépôt centralise la configuration de plusieurs VMs NixOS, des secrets via S
 | **rhizanthella** 🌺 | NixOS | Backend-as-a-Service `bknd` + PostgreSQL |
 | **myosotis** 🟦 | NixOS | Observabilité (Grafana + Loki + VictoriaMetrics) |
 | **marigold** 🌼 | macOS (nix-darwin) | Poste principal de dev/admin |
+| **poppy** 💾 | PBS (non-NixOS) | Backup Proxmox Backup Server + sync Google Drive |
 
 Noeuds Proxmox (inventaire infra): **muscari** (héberge `magnolia`, `mimosa`, `dandelion`, `hawthorn`) et **crocus** (héberge `whitelily`, `rhizanthella`, `myosotis`).
+
+Noeud backup dedie: **poppy** (PBS hors NixOS, reference documentaire dans `hosts/poppy/`).
 
 ## 🗺️ Diagramme (architecture actuelle)
 

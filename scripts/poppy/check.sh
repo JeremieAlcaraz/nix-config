@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SECRETS_FILE="${REPO_ROOT}/secrets/poppy.yaml"
+VERIFY_SCRIPT="${REPO_ROOT}/hosts/poppy/scripts/verify-drive-target.sh"
+
+command -v sops >/dev/null 2>&1 || { echo "[ERROR] missing sops" >&2; exit 1; }
+command -v yq >/dev/null 2>&1 || { echo "[ERROR] missing yq" >&2; exit 1; }
+[[ -f "${SECRETS_FILE}" ]] || { echo "[ERROR] missing ${SECRETS_FILE}" >&2; exit 1; }
+[[ -f "${VERIFY_SCRIPT}" ]] || { echo "[ERROR] missing ${VERIFY_SCRIPT}" >&2; exit 1; }
+
+umask 077
+TMP_DEC="$(mktemp)"
+trap 'rm -f "${TMP_DEC}"' EXIT
+sops -d "${SECRETS_FILE}" > "${TMP_DEC}"
+
+SSH_HOST="$(yq -r '.poppy.ssh_host' "${TMP_DEC}")"
+EXPECTED_ROOT_FOLDER_ID="$(yq -r '.rclone.gdrive_capsule.root_folder_id' "${TMP_DEC}")"
+
+echo "[INFO] Remote checks on ${SSH_HOST}"
+ssh "${SSH_HOST}" "proxmox-backup-manager datastore list >/dev/null && echo '[OK] datastore list'" 
+ssh "${SSH_HOST}" "crontab -l | grep '/root/sync-capsule.sh' >/dev/null && echo '[OK] cron line present'"
+ssh "${SSH_HOST}" "EXPECTED_ROOT_FOLDER_ID='${EXPECTED_ROOT_FOLDER_ID}' bash -s" < "${VERIFY_SCRIPT}"
+echo "[INFO] check completed"

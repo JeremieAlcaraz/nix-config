@@ -68,3 +68,8 @@ creation_rules:
     key_groups:
       - age:
           - *shared
+  # Secrets pour poppy (PBS non-NixOS)
+  - path_regex: secrets/poppy\.yaml$
+    key_groups:
+      - age:
+          - *shared
