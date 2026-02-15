@@ -224,7 +224,7 @@ EOF
     backend = "podman";
     containers.n8n = {
 <<<<<<< HEAD
-      image = "docker.io/n8nio/n8n:next@sha256:565e7df2b15c18f469f8b2d43e0349eaf6a500a0066e5adcce98e441cebfe6f8";  # Tag next pour les dernières betas
+      image = "docker.io/n8nio/n8n:next@sha256:53004142b0e93de1e9e31943e601ed9bd4b24ca82a307864ccadf1820b627e5e";  # Tag next pour les dernières betas
       autoStart = true;
       # Pas de ports mapping avec --network host (le conteneur utilise directement les ports de l'hôte)
 
