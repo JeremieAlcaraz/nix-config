@@ -7,3 +7,4 @@ mimosa	mimosa	Mimosa	Serveur web principal pour jeremiealcaraz.com. Utilise Cadd
 rhizanthella	rhizanthella	Rhizanthella	Backend-as-a-Service bknd avec PostgreSQL dedie, sauvegardes quotidiennes, acces limite aux interfaces Tailscale et secrets geres par sops-nix.	false	100.127.41.93
 whitelily	whitelily	Whitelily	VM d'automations n8n avec PostgreSQL, Cloudflare Tunnel et sauvegardes planifiees. Gere les secrets via sops-nix et s'appuie sur Tailscale pour le reseau prive.	false	100.123.2.97
 myosotis	myosotis	Myosotis	Plateforme d'observabilite centralisee. Loki (logs), VictoriaMetrics (metriques), Grafana (visualisation). Surveillance de toute l'infrastructure via Tailscale. Retention 30j logs, 12 mois metriques.	false
+poppy	poppy	Poppy	Noeud Proxmox Backup Server (PBS) non-NixOS. Source de verite dans hosts/poppy, sync du datastore vers Google Drive via rclone, administration par SSH/Tailscale.	true	100.120.10.61

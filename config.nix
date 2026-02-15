@@ -63,6 +63,13 @@
       tailscaleIp = "100.127.90.43";
       vms = [ "whitelily" "rhizanthella" "myosotis" ];
     };
+    poppy = {
+      role = "Proxmox Backup Server - Noeud backup dedie (PBS + sync Google Drive)";
+      os = "debian";
+      managed = false;
+      tailscaleIp = "100.120.10.61";
+      services = [ "proxmox-backup-server" "rclone-sync" ];
+    };
 
     # --- VMs NixOS (gérées par flake.nix) ---
     magnolia = {
@@ -129,6 +136,7 @@
       hawthorn = "100.126.173.95";
       rhizanthella = "100.127.41.93";
       myosotis = "100.116.189.42";
+      poppy = "100.120.10.61";
     };
 
     # Hosts monitorés par VictoriaMetrics (scrape métriques Node Exporter)
