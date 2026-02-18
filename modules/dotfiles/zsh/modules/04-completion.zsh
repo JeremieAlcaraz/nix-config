@@ -179,10 +179,9 @@ _fzf_tab_lazy_init() {
 
   source "$ZSH_CONFIG_DIR/plugins/fzf-tab/fzf-tab.zsh"
 
-  # Désactiver la complétion fzf classique si elle est chargée.
-  if (( $+functions[fzf-completion] )); then
-    unfunction fzf-completion
-  fi
+  # NOTE: on conserve la fonction `fzf-completion` pour le mode ciblé
+  # `v **<TAB>` / `nvim **<TAB>` (widget smart-tab-for-nvim-fzf).
+  # Le Tab par défaut reste géré par fzf-tab via les bindings ci-dessous.
 
   # Une fois chargé, Tab pointe directement sur fzf-tab-complete.
   if (( $+widgets[fzf-tab-complete] )); then

@@ -103,6 +103,7 @@ run_suite_for_mode() {
   run_check "${mode}" "Tab is bound to smart/fzf-tab widget" 'bindkey -M emacs "^I" | grep -Eq "smart-tab-for-nvim-fzf|fzf-tab-complete"'
   run_check "${mode}" "Default Tab route keeps fzf-tab-complete" 'if bindkey -M emacs "^I" | grep -q "smart-tab-for-nvim-fzf"; then whence -f _smart_tab_for_nvim_fzf | grep -q "zle fzf-tab-complete"; else bindkey -M emacs "^I" | grep -q "fzf-tab-complete"; fi'
   run_check "${mode}" "Smart Tab route supports fzf-completion trigger" 'if bindkey -M emacs "^I" | grep -q "smart-tab-for-nvim-fzf"; then whence -f _smart_tab_for_nvim_fzf | grep -q "zle fzf-completion"; else true; fi'
+  run_check "${mode}" "fzf-completion function is available" 'if bindkey -M emacs "^I" | grep -q "smart-tab-for-nvim-fzf"; then typeset -f fzf-completion >/dev/null; else true; fi'
   run_check "${mode}" "Alt-m is bound to carapace-force-completion" 'bindkey -M emacs "^[m" | grep -q "carapace-force-completion"'
   run_check "${mode}" "Alias v points to nvim" 'alias v 2>/dev/null | grep -Eq "^v=.*nvim"'
   run_check "${mode}" "Custom nvim completion function exists" 'typeset -f _custom_completion_for_nvim >/dev/null'
