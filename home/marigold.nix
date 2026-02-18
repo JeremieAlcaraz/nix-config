@@ -5,7 +5,6 @@ let
   bunCache = "${config.xdg.cacheHome}/bun";
   pnpmHome = "${config.xdg.dataHome}/pnpm";
   pnpmStore = "${config.xdg.dataHome}/pnpm/store";
-  fnmDir = "${config.xdg.dataHome}/fnm";
   repoRoot = "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config";
   repoKarabinerDir = "${repoRoot}/modules/dotfiles/karabiner/.config/karabiner";
 in
@@ -89,7 +88,6 @@ in
     BUN_INSTALL_CACHE_DIR = bunCache;
     PNPM_HOME = pnpmHome;
     PNPM_STORE_DIR = pnpmStore;
-    FNM_DIR = fnmDir;
   };
 
   home.sessionPath = [
@@ -133,9 +131,6 @@ in
     sops
 
     # pnpm: géré via wrapper (voir .local/bin/pnpm) pour permettre l'auto-install
-
-    # fnm (Fast Node Manager) - gère Node.js hors du Nix store
-    fnm
 
     # Modern ls replacement
     eza

@@ -27,11 +27,6 @@ fi
 if command -v any-nix-shell &> /dev/null; then
     any-nix-shell zsh --info-right | source /dev/stdin
 fi
-# === THEFUCK - Correction de commandes ===
-if command -v thefuck &> /dev/null; then
-    eval $(thefuck --alias)
-fi
-
 # === ZOXIDE - Navigation intelligente ===
 if command -v zoxide &> /dev/null; then
     eval "$(zoxide init zsh)"

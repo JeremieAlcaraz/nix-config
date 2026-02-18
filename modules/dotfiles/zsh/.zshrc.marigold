@@ -37,10 +37,20 @@ lg() {
   fi
 }
 
-# === TRY INITIALIZATION ===
-# Initialize try with TRY_TOP path (set in .zshenv)
+# === TRY INITIALIZATION (lazy) ===
+# Charge try seulement au premier appel de la commande.
 if command -v try &> /dev/null; then
-  eval "$(try init "${TRY_TOP:-$HOME/src/tries}")"
+  try() {
+    local try_top="${TRY_TOP:-$HOME/src/tries}"
+    unfunction try
+    eval "$(command try init "$try_top")"
+
+    if typeset -f try >/dev/null 2>&1; then
+      try "$@"
+    else
+      command try "$@"
+    fi
+  }
 fi
 
 # Debug: afficher le temps de chargement

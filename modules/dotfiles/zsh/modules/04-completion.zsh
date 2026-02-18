@@ -83,6 +83,10 @@ _carapace_force_completion() {
     fi
   fi
 
+  if (( ! $+widgets[fzf-tab-complete] )); then
+    _fzf_tab_lazy_init >/dev/null 2>&1 || true
+  fi
+
   if (( $+widgets[fzf-tab-complete] )); then
     zle fzf-tab-complete
   else
@@ -126,9 +130,16 @@ fi
 # bindkey '^[w' carapace-pick
 
 # -----------------------------------------------------------------
-# Plugin fzf-tab (ACTIVÉ) avec colonnes alignées comme navi 🚀
+# Plugin fzf-tab (lazy load): activé au premier Tab
 # -----------------------------------------------------------------
-if [[ -f "$ZSH_CONFIG_DIR/plugins/fzf-tab/fzf-tab.zsh" ]]; then
+_fzf_tab_lazy_init() {
+  (( ${+_FZF_TAB_LAZY_INITIALIZED} )) && return 0
+  typeset -g _FZF_TAB_LAZY_INITIALIZED=1
+
+  if [[ ! -f "$ZSH_CONFIG_DIR/plugins/fzf-tab/fzf-tab.zsh" ]]; then
+    return 1
+  fi
+
   # Activation du menu de sélection pour laisser fzf-tab prendre la main
   zstyle ':completion:*:descriptions' format '[%d]'
 
@@ -167,7 +178,35 @@ if [[ -f "$ZSH_CONFIG_DIR/plugins/fzf-tab/fzf-tab.zsh" ]]; then
   zstyle ':fzf-tab:complete:git-*' option-preview 'git help $word | col -bx | head -200'
 
   source "$ZSH_CONFIG_DIR/plugins/fzf-tab/fzf-tab.zsh"
-fi
+
+  # Désactiver la complétion fzf classique si elle est chargée.
+  if (( $+functions[fzf-completion] )); then
+    unfunction fzf-completion
+  fi
+
+  # Une fois chargé, Tab pointe directement sur fzf-tab-complete.
+  if (( $+widgets[fzf-tab-complete] )); then
+    for keymap in emacs viins; do
+      bindkey -M "$keymap" '^I' fzf-tab-complete
+    done
+  fi
+
+  return 0
+}
+
+_fzf_tab_lazy_complete() {
+  _fzf_tab_lazy_init >/dev/null 2>&1 || true
+
+  if (( $+widgets[fzf-tab-complete] )); then
+    zle fzf-tab-complete
+  else
+    zle complete-word
+  fi
+}
+zle -N _fzf_tab_lazy_complete
+for keymap in emacs viins; do
+  bindkey -M "$keymap" '^I' _fzf_tab_lazy_complete
+done
 
 # Re-bind after plugins which may override keymaps.
 if (( $+widgets[carapace-force-completion] )); then

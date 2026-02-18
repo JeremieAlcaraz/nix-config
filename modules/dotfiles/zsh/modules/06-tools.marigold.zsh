@@ -18,12 +18,6 @@ if command -v any-nix-shell &> /dev/null; then
     any-nix-shell zsh --info-right | source /dev/stdin
 fi
 
-# === THEFUCK - Correction de commandes ===
-# Géré par Home Manager
-if command -v thefuck &> /dev/null; then
-    eval $(thefuck --alias)
-fi
-
 # === ZOXIDE - Navigation intelligente ===
 # Géré par Home Manager
 if command -v zoxide &> /dev/null; then
@@ -82,12 +76,6 @@ fi
 # Géré par Home Manager
 if command -v direnv &> /dev/null; then
     eval "$(direnv hook zsh)"
-fi
-
-# === FNM - Fast Node Manager ===
-# Géré par Home Manager
-if command -v fnm &> /dev/null; then
-    eval "$(fnm env --use-on-cd)"
 fi
 
 # === SCRIPTS PERSONNELS ===
