@@ -202,8 +202,12 @@ _fzf_tab_lazy_init >/dev/null 2>&1 || true
 # - `v **<TAB>` / `nvim **<TAB>` -> widget fzf-completion
 # - sinon -> fzf-tab-complete (comportement par défaut)
 _smart_tab_for_nvim_fzf() {
-  local cmd="${words[1]-}"
+  local -a tokens
+  local cmd=""
   local trigger="${FZF_COMPLETION_TRIGGER-**}"
+  setopt localoptions noshwordsplit noksh_arrays noposixbuiltins
+  tokens=(${(z)LBUFFER})
+  cmd="${tokens[1]-}"
 
   if (( $+widgets[fzf-completion] )) \
     && [[ -n "$trigger" ]] \
