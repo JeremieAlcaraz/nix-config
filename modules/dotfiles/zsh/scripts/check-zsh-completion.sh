@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 
 SANDBOX_DIR=""
+SANDBOX_HOME=""
 SANDBOX_XDG=""
 SANDBOX_ZDOTDIR=""
 
@@ -25,17 +26,28 @@ EOF
 
 setup_sandbox() {
   SANDBOX_DIR="$(mktemp -d "${TMPDIR:-/tmp}/zsh-check.XXXXXX")"
-  SANDBOX_XDG="${SANDBOX_DIR}/config"
+  SANDBOX_HOME="${SANDBOX_DIR}/home"
+  SANDBOX_XDG="${SANDBOX_HOME}/.config"
   SANDBOX_ZDOTDIR="${SANDBOX_XDG}/zsh"
 
   mkdir -p "${SANDBOX_ZDOTDIR}"
+  mkdir -p "${SANDBOX_HOME}"
   cp "${REPO_ROOT}/modules/dotfiles/zsh/.zshrc.marigold" "${SANDBOX_ZDOTDIR}/.zshrc"
-  cp "${REPO_ROOT}/modules/dotfiles/zsh/.zshenv.marigold" "${SANDBOX_ZDOTDIR}/.zshenv"
+
+  cat > "${SANDBOX_ZDOTDIR}/.zshenv" <<EOF
+# sandbox-only zshenv for smoke checks against repo config
+export XDG_CONFIG_HOME="${SANDBOX_XDG}"
+export ZDOTDIR="${SANDBOX_ZDOTDIR}"
+export EDITOR="nvim"
+export VISUAL="nvim"
+export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
+EOF
 
   ln -s "${REPO_ROOT}/modules/dotfiles/zsh/modules" "${SANDBOX_ZDOTDIR}/modules"
   ln -s "${REPO_ROOT}/modules/dotfiles/zsh/functions" "${SANDBOX_ZDOTDIR}/functions"
   ln -s "${REPO_ROOT}/modules/dotfiles/zsh/plugins" "${SANDBOX_ZDOTDIR}/plugins"
   ln -s "${REPO_ROOT}/modules/dotfiles/zsh/scripts" "${SANDBOX_ZDOTDIR}/scripts"
+  ln -s "${REPO_ROOT}/modules/dotfiles/television" "${SANDBOX_XDG}/television"
 }
 
 cleanup() {
@@ -52,7 +64,7 @@ run_zsh_live() {
 
 run_zsh_sandbox() {
   local cmd="$1"
-  ZDOTDIR="${SANDBOX_ZDOTDIR}" XDG_CONFIG_HOME="${SANDBOX_XDG}" zsh -i -c "${cmd}"
+  HOME="${SANDBOX_HOME}" ZDOTDIR="${SANDBOX_ZDOTDIR}" XDG_CONFIG_HOME="${SANDBOX_XDG}" zsh -i -c "${cmd}"
 }
 
 run_check() {

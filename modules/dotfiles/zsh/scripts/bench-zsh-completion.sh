@@ -10,6 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 
 SANDBOX_DIR=""
+SANDBOX_HOME=""
 SANDBOX_XDG=""
 SANDBOX_ZDOTDIR=""
 
@@ -39,18 +40,29 @@ now_ms() {
 
 setup_sandbox() {
   SANDBOX_DIR="$(mktemp -d "${TMPDIR:-/tmp}/zsh-bench.XXXXXX")"
-  SANDBOX_XDG="${SANDBOX_DIR}/config"
+  SANDBOX_HOME="${SANDBOX_DIR}/home"
+  SANDBOX_XDG="${SANDBOX_HOME}/.config"
   SANDBOX_ZDOTDIR="${SANDBOX_XDG}/zsh"
 
   mkdir -p "${SANDBOX_ZDOTDIR}"
+  mkdir -p "${SANDBOX_HOME}"
 
   cp "${REPO_ROOT}/modules/dotfiles/zsh/.zshrc.marigold" "${SANDBOX_ZDOTDIR}/.zshrc"
-  cp "${REPO_ROOT}/modules/dotfiles/zsh/.zshenv.marigold" "${SANDBOX_ZDOTDIR}/.zshenv"
+
+  cat > "${SANDBOX_ZDOTDIR}/.zshenv" <<EOF
+# sandbox-only zshenv for benchmarking repo config
+export XDG_CONFIG_HOME="${SANDBOX_XDG}"
+export ZDOTDIR="${SANDBOX_ZDOTDIR}"
+export EDITOR="nvim"
+export VISUAL="nvim"
+export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
+EOF
 
   ln -s "${REPO_ROOT}/modules/dotfiles/zsh/modules" "${SANDBOX_ZDOTDIR}/modules"
   ln -s "${REPO_ROOT}/modules/dotfiles/zsh/functions" "${SANDBOX_ZDOTDIR}/functions"
   ln -s "${REPO_ROOT}/modules/dotfiles/zsh/plugins" "${SANDBOX_ZDOTDIR}/plugins"
   ln -s "${REPO_ROOT}/modules/dotfiles/zsh/scripts" "${SANDBOX_ZDOTDIR}/scripts"
+  ln -s "${REPO_ROOT}/modules/dotfiles/television" "${SANDBOX_XDG}/television"
 }
 
 cleanup() {
@@ -77,14 +89,14 @@ run_tab_probe_live() {
 run_startup_sandbox() {
   (
     cd "${TARGET_DIR}"
-    ZDOTDIR="${SANDBOX_ZDOTDIR}" XDG_CONFIG_HOME="${SANDBOX_XDG}" zsh -i -c exit
+    HOME="${SANDBOX_HOME}" ZDOTDIR="${SANDBOX_ZDOTDIR}" XDG_CONFIG_HOME="${SANDBOX_XDG}" zsh -i -c exit
   )
 }
 
 run_tab_probe_sandbox() {
   (
     cd "${TARGET_DIR}"
-    ZDOTDIR="${SANDBOX_ZDOTDIR}" XDG_CONFIG_HOME="${SANDBOX_XDG}" zsh -i -c 'bindkey -M emacs "^I" >/dev/null'
+    HOME="${SANDBOX_HOME}" ZDOTDIR="${SANDBOX_ZDOTDIR}" XDG_CONFIG_HOME="${SANDBOX_XDG}" zsh -i -c 'bindkey -M emacs "^I" >/dev/null'
   )
 }
 
@@ -98,7 +110,7 @@ run_fd_scan_live() {
 run_fd_scan_sandbox() {
   (
     cd "${TARGET_DIR}"
-    ZDOTDIR="${SANDBOX_ZDOTDIR}" XDG_CONFIG_HOME="${SANDBOX_XDG}" fd --hidden --follow --exclude .git --exclude .DS_Store --type f . >/dev/null
+    HOME="${SANDBOX_HOME}" ZDOTDIR="${SANDBOX_ZDOTDIR}" XDG_CONFIG_HOME="${SANDBOX_XDG}" fd --hidden --follow --exclude .git --exclude .DS_Store --type f . >/dev/null
   )
 }
 
@@ -115,6 +127,7 @@ run_git_scan_live() {
 run_git_scan_sandbox() {
   (
     cd "${TARGET_DIR}"
+    export HOME="${SANDBOX_HOME}"
     export ZDOTDIR="${SANDBOX_ZDOTDIR}"
     export XDG_CONFIG_HOME="${SANDBOX_XDG}"
     {

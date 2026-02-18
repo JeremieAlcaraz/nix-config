@@ -8,14 +8,31 @@ fi
 
 # Chargement de l'intégration zsh
 if command -v fzf >/dev/null 2>&1; then
-  if [[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]]; then
-    source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
-  elif [[ -f /usr/local/opt/fzf/shell/key-bindings.zsh ]]; then
-    source /usr/local/opt/fzf/shell/key-bindings.zsh
-  elif [[ -f /etc/profiles/per-user/$USER/share/fzf/key-bindings.zsh ]]; then
-    source /etc/profiles/per-user/$USER/share/fzf/key-bindings.zsh
+  fzf_shell_dir=""
+  if [[ -d /opt/homebrew/opt/fzf/shell ]]; then
+    fzf_shell_dir="/opt/homebrew/opt/fzf/shell"
+  elif [[ -d /usr/local/opt/fzf/shell ]]; then
+    fzf_shell_dir="/usr/local/opt/fzf/shell"
+  elif [[ -d /etc/profiles/per-user/$USER/share/fzf ]]; then
+    fzf_shell_dir="/etc/profiles/per-user/$USER/share/fzf"
+  fi
+
+  if [[ -n "$fzf_shell_dir" && -f "$fzf_shell_dir/key-bindings.zsh" ]]; then
+    source "$fzf_shell_dir/key-bindings.zsh"
+    # Active la completion fzf native (inclut le trigger **<TAB>).
+    [[ -f "$fzf_shell_dir/completion.zsh" ]] && source "$fzf_shell_dir/completion.zsh"
   else
+    # Fallback universel fourni par fzf (key-bindings + completion).
     source <(fzf --zsh)
+  fi
+
+  # completion.zsh rebind Tab sur fzf-completion. On conserve fzf-tab comme
+  # comportement par défaut pour Tab; la completion fzf pourra être appelée
+  # de façon ciblée (ex: wrapper nvim) dans les tâches suivantes.
+  if (( $+widgets[fzf-tab-complete] )); then
+    for keymap in emacs viins; do
+      bindkey -M "$keymap" '^I' fzf-tab-complete
+    done
   fi
 fi
 

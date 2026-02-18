@@ -38,7 +38,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
 
 ### P2 — Activer proprement `fzf` completion pour `**<TAB>`
 
-- [ ] T03 Charger `completion.zsh` de fzf sans casser l’ordre actuel
+- [x] T03 Charger `completion.zsh` de fzf sans casser l’ordre actuel
       Depends on: T02
       Changes: `modules/dotfiles/zsh/modules/07-fzf.zsh`
       Benefits: activer la mécanique native `**<TAB>` (non couverte par `key-bindings.zsh` seul)
