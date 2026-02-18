@@ -54,7 +54,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
 
 ### P3 — Cache intelligent des candidats
 
-- [ ] T05 Implémenter un moteur de candidats intelligent (git-first puis fd)
+- [x] T05 Implémenter un moteur de candidats intelligent (git-first puis fd)
       Depends on: T04
       Changes: `modules/dotfiles/zsh/functions/fzf-helpers.zsh`
       Benefits: accélérer les gros repos en exploitant l’index git quand disponible
