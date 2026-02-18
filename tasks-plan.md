@@ -61,7 +61,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
       Tests: `zsh -ic 'typeset -f _v_candidates_source >/dev/null && _v_candidates_source | head -n 10'`
       Commit: `feat(zsh): add smart candidate source using git index fallback to fd`
 
-- [ ] T06 Ajouter un cache mémoire TTL par contexte (cwd/repo)
+- [x] T06 Ajouter un cache mémoire TTL par contexte (cwd/repo)
       Depends on: T05
       Changes: `modules/dotfiles/zsh/functions/fzf-helpers.zsh`
       Benefits: éviter les rescans coûteux lors des Tabs successifs
