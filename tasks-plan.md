@@ -93,7 +93,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
 
 ### P5 — Validation finale et documentation
 
-- [ ] T10 Documenter l’usage et les variables de tuning (FR)
+- [x] T10 Documenter l’usage et les variables de tuning (FR)
       Depends on: T09
       Changes: `docs/MARIGOLD-ZSH-FZF-COMPLETION.md`
       Benefits: maintenance et onboarding simplifiés
