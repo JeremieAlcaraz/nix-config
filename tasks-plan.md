@@ -45,7 +45,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
       Tests: `zsh -n modules/dotfiles/zsh/modules/07-fzf.zsh && zsh -ic 'typeset -f _fzf_complete >/dev/null && echo ok'`
       Commit: `feat(zsh): load fzf completion script for recursive trigger`
 
-- [ ] T04 Uniformiser la source de candidats `fd` pour `**<TAB>`
+- [x] T04 Uniformiser la source de candidats `fd` pour `**<TAB>`
       Depends on: T03
       Changes: `modules/dotfiles/zsh/modules/07-fzf.zsh`
       Benefits: garantir une recherche récursive cohérente avec filtres (`.git`, `.DS_Store`)

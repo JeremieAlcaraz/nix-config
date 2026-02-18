@@ -38,6 +38,17 @@ fi
 
 # fzf-tab est configuré/lazy-load dans 04-completion.zsh pour éviter les doubles init.
 
+# Source de candidats fzf completion basée sur fd (récursif).
+_fzf_compgen_path() {
+  fd --hidden --follow --exclude .git --exclude .DS_Store \
+    --type f --type d --type l . "${1:-.}" 2>/dev/null
+}
+
+_fzf_compgen_dir() {
+  fd --hidden --follow --exclude .git --exclude .DS_Store \
+    --type d . "${1:-.}" 2>/dev/null
+}
+
 # Configuration personnalisée fzf (optionnel)
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .DS_Store'
 export FZF_DEFAULT_OPTS="--ansi --height 45% --layout=reverse --border=rounded --border-label=' completion ' --prompt='> ' --marker='✓' --pointer='▶' --separator='─' --info=inline --scrollbar='┃' --color=bg:#1e1e2e,fg:#cdd6f4,hl:#89b4fa,fg+:#f5e0dc,bg+:#313244,hl+:#89b4fa,spinner:#f38ba8,header:#f9e2af,info:#94e2d5,pointer:#f38ba8,marker:#a6e3a1,prompt:#89b4fa,scrollbar:#585b70,border:#585b70"
