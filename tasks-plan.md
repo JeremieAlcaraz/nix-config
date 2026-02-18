@@ -29,7 +29,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
       Tests: `bash modules/dotfiles/zsh/scripts/bench-zsh-completion.sh`
       Commit: `chore(zsh): add baseline benchmark script for completion performance`
 
-- [ ] T02 Ajouter un smoke test shell pour vérifier les composants critiques
+- [x] T02 Ajouter un smoke test shell pour vérifier les composants critiques
       Depends on: T01
       Changes: `modules/dotfiles/zsh/scripts/check-zsh-completion.sh` (nouveau)
       Benefits: détecter rapidement les régressions de bindings/widgets/fonctions
