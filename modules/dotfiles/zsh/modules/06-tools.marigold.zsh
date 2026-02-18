@@ -13,6 +13,40 @@ if [[ -d "$HOME/.local/bin" ]]; then
     export PATH="$HOME/.local/bin:$PATH"
 fi
 
+# === FNM - Node manager (lazy init) ===
+# Flow recommandé:
+# - node/npm globaux (Nix) par défaut pour shell/scripts/agents.
+# - fnm chargé seulement quand tu en as besoin pour switcher de version.
+if command -v fnm &> /dev/null; then
+    __fnm_lazy_init() {
+        if [[ -n "${__FNM_LAZY_READY:-}" ]]; then
+            return 0
+        fi
+        export __FNM_LAZY_READY=1
+
+        # En shell nix develop, garder la toolchain Node fournie par Nix.
+        local nix_node_path
+        nix_node_path="$(whence -p node 2>/dev/null || true)"
+        if [[ -n "${IN_NIX_SHELL:-}" && -n "$nix_node_path" ]]; then
+            return 0
+        fi
+
+        eval "$(command fnm env --shell zsh)" >/dev/null 2>&1 || true
+    }
+
+    # Initialise fnm à la demande sans coût au startup shell.
+    fnm() {
+        __fnm_lazy_init
+        command fnm "$@"
+    }
+
+    # Raccourci pratique: nuse 20 / nuse 22 / nuse --install-if-missing
+    nuse() {
+        __fnm_lazy_init
+        command fnm use "$@"
+    }
+fi
+
 # === ANY-NIX-SHELL - auto load nix-shell/flake envs ===
 if command -v any-nix-shell &> /dev/null; then
     any-nix-shell zsh --info-right | source /dev/stdin

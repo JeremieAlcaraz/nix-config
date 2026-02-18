@@ -127,6 +127,10 @@ in
     glow
     navi
     ripgrep
+    # Node global pour outils non-interactifs (agents AI, scripts CI, etc.).
+    # fnm reste actif en shell interactif pour gérer les versions par projet.
+    nodejs_22
+    fnm
     terminal-notifier
     sops
 
