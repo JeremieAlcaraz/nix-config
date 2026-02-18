@@ -718,6 +718,24 @@ in
     fi
   '';
 
+  home.activation.preflightFixBrokenConfigLinks = config.lib.dag.entryBefore ["checkLinkTargets"] ''
+    move_broken_link() {
+      local path="$1"
+      if [ -L "$path" ] && [ ! -e "$path" ]; then
+        local stamp backup_path
+        stamp="$(date +%Y%m%d-%H%M%S)"
+        backup_path="$path.broken-link.$stamp"
+        mv "$path" "$backup_path"
+        echo "Home Manager preflight: lien cassé déplacé -> $backup_path"
+      fi
+    }
+
+    move_broken_link "${config.xdg.configHome}/fish"
+    move_broken_link "${config.xdg.configHome}/hammerspoon"
+    move_broken_link "${config.xdg.configHome}/karabiner"
+    move_broken_link "${config.home.homeDirectory}/.hammerspoon"
+  '';
+
   home.activation.bootstrapSopsAgeKey = config.lib.dag.entryAfter ["writeBoundary"] ''
     KEY_PATH="${config.home.homeDirectory}/.config/sops/age/key.txt"
     OP_ITEM="op://Personal/sops-age-key/notesPlain"

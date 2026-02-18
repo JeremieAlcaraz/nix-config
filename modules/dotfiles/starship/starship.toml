@@ -1,4 +1,6 @@
 # Configuration Starship avec module dotfiles
+command_timeout = 1500
+
 format = """
 $username\
 $hostname\
