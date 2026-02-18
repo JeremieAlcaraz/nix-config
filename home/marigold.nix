@@ -6,6 +6,8 @@ let
   pnpmHome = "${config.xdg.dataHome}/pnpm";
   pnpmStore = "${config.xdg.dataHome}/pnpm/store";
   fnmDir = "${config.xdg.dataHome}/fnm";
+  repoRoot = "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config";
+  repoKarabinerDir = "${repoRoot}/modules/dotfiles/karabiner/.config/karabiner";
 in
 
 {
@@ -452,6 +454,98 @@ in
       '';
       executable = true;
     };
+
+    ".local/bin/karabiner-push" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        RUNTIME_JSON="${config.home.homeDirectory}/.config/karabiner/karabiner.json"
+        REPO_JSON="${repoKarabinerDir}/karabiner.json"
+        STAMP="$(date +%Y%m%d-%H%M%S)"
+
+        if [[ ! -f "$RUNTIME_JSON" ]]; then
+          echo "Erreur: fichier runtime introuvable: $RUNTIME_JSON" >&2
+          exit 1
+        fi
+
+        mkdir -p "$(dirname "$REPO_JSON")"
+
+        BACKUP_PATH=""
+        if [[ -f "$REPO_JSON" ]]; then
+          BACKUP_PATH="$REPO_JSON.bak.$STAMP"
+          cp "$REPO_JSON" "$BACKUP_PATH"
+        fi
+
+        cp "$RUNTIME_JSON" "$REPO_JSON"
+
+        if command -v jq >/dev/null 2>&1; then
+          jq empty "$REPO_JSON" >/dev/null
+        fi
+
+        echo "✅ karabiner.json poussé vers le repo."
+        echo "   Source: $RUNTIME_JSON"
+        echo "   Cible : $REPO_JSON"
+        if [[ -n "$BACKUP_PATH" ]]; then
+          echo "   Backup: $BACKUP_PATH"
+        fi
+      '';
+      executable = true;
+    };
+
+    ".local/bin/karabiner-pull" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        RUNTIME_DIR="${config.home.homeDirectory}/.config/karabiner"
+        RUNTIME_JSON="$RUNTIME_DIR/karabiner.json"
+        REPO_DIR="${repoKarabinerDir}"
+        REPO_JSON="$REPO_DIR/karabiner.json"
+        RUNTIME_ASSETS_DIR="$RUNTIME_DIR/assets"
+        RUNTIME_ASSETS_LINK="$RUNTIME_ASSETS_DIR/complex_modifications"
+        REPO_ASSETS_LINK="$REPO_DIR/assets/complex_modifications"
+        STAMP="$(date +%Y%m%d-%H%M%S)"
+
+        if [[ ! -f "$REPO_JSON" ]]; then
+          echo "Erreur: fichier repo introuvable: $REPO_JSON" >&2
+          exit 1
+        fi
+
+        if [[ -L "$RUNTIME_DIR" ]]; then
+          rm -f "$RUNTIME_DIR"
+        elif [[ -e "$RUNTIME_DIR" && ! -d "$RUNTIME_DIR" ]]; then
+          rm -f "$RUNTIME_DIR"
+        fi
+
+        mkdir -p "$RUNTIME_ASSETS_DIR"
+
+        if [[ -L "$RUNTIME_ASSETS_LINK" ]]; then
+          ln -sfn "$REPO_ASSETS_LINK" "$RUNTIME_ASSETS_LINK"
+        elif [[ -e "$RUNTIME_ASSETS_LINK" ]]; then
+          echo "Info: assets/complex_modifications existe deja en local, lien repo non force."
+        else
+          ln -s "$REPO_ASSETS_LINK" "$RUNTIME_ASSETS_LINK"
+        fi
+
+        BACKUP_PATH=""
+        if [[ -f "$RUNTIME_JSON" ]]; then
+          BACKUP_PATH="$RUNTIME_JSON.bak.$STAMP"
+          cp "$RUNTIME_JSON" "$BACKUP_PATH"
+        fi
+
+        cp "$REPO_JSON" "$RUNTIME_JSON"
+        chmod 600 "$RUNTIME_JSON" || true
+
+        echo "✅ karabiner.json appliqué depuis le repo."
+        echo "   Source: $REPO_JSON"
+        echo "   Cible : $RUNTIME_JSON"
+        if [[ -n "$BACKUP_PATH" ]]; then
+          echo "   Backup: $BACKUP_PATH"
+        fi
+      '';
+      executable = true;
+    };
   };
 
   # === DOTFILES ZSH ===
@@ -564,9 +658,6 @@ in
     "television".source = config.lib.file.mkOutOfStoreSymlink
       "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/television";
 
-    "karabiner".source = config.lib.file.mkOutOfStoreSymlink
-      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/karabiner/.config/karabiner";
-
     # Tmux configuration
     "tmux/tmux.conf".source = ../modules/dotfiles/tmux/tmux.conf;
     "tmux/tmux.reset.conf".source = ../modules/dotfiles/tmux/tmux.reset.conf;
@@ -591,6 +682,41 @@ in
       };
     };
   };
+
+  home.activation.bootstrapKarabinerRuntime = config.lib.dag.entryAfter ["writeBoundary"] ''
+    REPO_KARABINER_DIR="${repoKarabinerDir}"
+    RUNTIME_KARABINER_DIR="${config.home.homeDirectory}/.config/karabiner"
+    RUNTIME_JSON="$RUNTIME_KARABINER_DIR/karabiner.json"
+    RUNTIME_ASSETS_DIR="$RUNTIME_KARABINER_DIR/assets"
+    RUNTIME_ASSETS_LINK="$RUNTIME_ASSETS_DIR/complex_modifications"
+    REPO_ASSETS_LINK="$REPO_KARABINER_DIR/assets/complex_modifications"
+
+    if [ -L "$RUNTIME_KARABINER_DIR" ]; then
+      rm -f "$RUNTIME_KARABINER_DIR"
+      mkdir -p "$RUNTIME_KARABINER_DIR"
+      echo "Karabiner: symlink global remplace par un dossier local writable."
+    elif [ -e "$RUNTIME_KARABINER_DIR" ] && [ ! -d "$RUNTIME_KARABINER_DIR" ]; then
+      rm -f "$RUNTIME_KARABINER_DIR"
+      mkdir -p "$RUNTIME_KARABINER_DIR"
+    else
+      mkdir -p "$RUNTIME_KARABINER_DIR"
+    fi
+
+    mkdir -p "$RUNTIME_ASSETS_DIR"
+    if [ -L "$RUNTIME_ASSETS_LINK" ]; then
+      ln -sfn "$REPO_ASSETS_LINK" "$RUNTIME_ASSETS_LINK"
+    elif [ -e "$RUNTIME_ASSETS_LINK" ]; then
+      echo "Karabiner: assets/complex_modifications local detecte, lien repo non force."
+    else
+      ln -s "$REPO_ASSETS_LINK" "$RUNTIME_ASSETS_LINK"
+    fi
+
+    if [ ! -f "$RUNTIME_JSON" ]; then
+      cp "$REPO_KARABINER_DIR/karabiner.json" "$RUNTIME_JSON"
+      chmod 600 "$RUNTIME_JSON" || true
+      echo "Karabiner: bootstrap karabiner.json depuis le repo."
+    fi
+  '';
 
   home.activation.bootstrapSopsAgeKey = config.lib.dag.entryAfter ["writeBoundary"] ''
     KEY_PATH="${config.home.homeDirectory}/.config/sops/age/key.txt"

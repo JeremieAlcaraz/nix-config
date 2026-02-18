@@ -12,7 +12,11 @@
   launchd.agents.aerospace = {
     enable = true;
     config = {
-      ProgramArguments = [ "/Applications/AeroSpace.app/Contents/MacOS/AeroSpace" ];
+      ProgramArguments = [
+        "/Applications/AeroSpace.app/Contents/MacOS/AeroSpace"
+        "--config-path"
+        "${config.home.homeDirectory}/.config/aerospace/aerospace.toml"
+      ];
       Label = "com.nikitabobko.aerospace";
       RunAtLoad = true;
       KeepAlive = {
