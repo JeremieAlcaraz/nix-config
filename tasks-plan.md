@@ -100,7 +100,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
       Tests: `rg -n "v \*\*<TAB>|ZSH_V_FZF_CACHE|fzf-tab" docs/MARIGOLD-ZSH-FZF-COMPLETION.md`
       Commit: `docs(marigold): document fzf completion and smart cache workflow`
 
-- [ ] T11 Valider la config marigold et procédure d’activation
+- [x] T11 Valider la config marigold et procédure d’activation
       Depends on: T10
       Changes: `tasks-plan.md` (mise à jour statuts/checklist), éventuellement `docs/DEPLOYMENT_WORKFLOWS.md`
       Benefits: clôture propre avec runbook de vérification post-switch
