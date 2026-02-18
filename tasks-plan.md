@@ -84,7 +84,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
       Tests: `zsh -n modules/dotfiles/zsh/modules/04-completion.zsh && zsh -n modules/dotfiles/zsh/modules/07-fzf.zsh`
       Commit: `feat(zsh): wire smart cached candidates to nvim fzf completion`
 
-- [ ] T09 Vérifier explicitement que `<TAB>` standard reste `fzf-tab`
+- [x] T09 Vérifier explicitement que `<TAB>` standard reste `fzf-tab`
       Depends on: T08
       Changes: `modules/dotfiles/zsh/scripts/check-zsh-completion.sh`
       Benefits: éviter de reintroduire les erreurs de récursion et préserver les habitudes
