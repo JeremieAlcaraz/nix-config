@@ -30,3 +30,12 @@ unsetopt HIST_EXPIRE_DUPS_FIRST  # N'expire pas les doublons en premier
 # === COMMAND NOT FOUND ===
 # Désactive le message "command not found"
 command_not_found_handler() { return 127; }
+
+# === CACHE CANDIDATS NVIM/FZF ===
+# TTL en secondes pour le cache mémoire des candidats.
+: "${ZSH_V_FZF_CACHE_TTL:=3}"
+export ZSH_V_FZF_CACHE_TTL
+
+# Debug cache (0=off, 1=logs stderr).
+: "${ZSH_V_FZF_CACHE_DEBUG:=0}"
+export ZSH_V_FZF_CACHE_DEBUG

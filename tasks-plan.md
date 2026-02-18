@@ -68,7 +68,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
       Tests: `zsh -ic 'typeset -f _v_candidates_cached >/dev/null && _v_candidates_cached >/dev/null && _v_candidates_cached >/dev/null'`
       Commit: `feat(zsh): add in-memory ttl cache for completion candidates`
 
-- [ ] T07 Ajouter invalidation légère et toggles de debug/cache
+- [x] T07 Ajouter invalidation légère et toggles de debug/cache
       Depends on: T06
       Changes: `modules/dotfiles/zsh/functions/fzf-helpers.zsh`, `modules/dotfiles/zsh/modules/01-options.zsh`
       Benefits: comportement prévisible (debuggable) + rollback rapide en cas de souci

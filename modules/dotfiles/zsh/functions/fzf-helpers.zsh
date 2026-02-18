@@ -37,6 +37,11 @@ _v_candidates_source() {
 typeset -gA _V_FZF_CACHE
 typeset -gA _V_FZF_CACHE_TS
 
+_v_candidates_cache_log() {
+    (( ${ZSH_V_FZF_CACHE_DEBUG:-0} )) || return 0
+    print -u2 -- "[v-cache] $*"
+}
+
 _v_candidates_cache_key() {
     local search_dir="${1:-$PWD}"
     local git_root=""
@@ -47,6 +52,28 @@ _v_candidates_cache_key() {
     fi
 
     print -r -- "dir:${search_dir:A}"
+}
+
+_v_candidates_cache_invalidate() {
+    local target="${1:---all}"
+    local key=""
+
+    if [[ "$target" == "--all" ]]; then
+        unset _V_FZF_CACHE _V_FZF_CACHE_TS
+        typeset -gA _V_FZF_CACHE
+        typeset -gA _V_FZF_CACHE_TS
+        _v_candidates_cache_log "invalidate all"
+        return 0
+    fi
+
+    key="$(_v_candidates_cache_key "$target")"
+    unset "_V_FZF_CACHE[$key]"
+    unset "_V_FZF_CACHE_TS[$key]"
+    _v_candidates_cache_log "invalidate key=${key}"
+}
+
+_v_candidates_cache_stats() {
+    print -r -- "entries=${#_V_FZF_CACHE} ttl=${ZSH_V_FZF_CACHE_TTL:-3}s debug=${ZSH_V_FZF_CACHE_DEBUG:-0}"
 }
 
 _v_candidates_cached() {
@@ -64,10 +91,12 @@ _v_candidates_cached() {
     ts="${_V_FZF_CACHE_TS[$key]-0}"
 
     if [[ -n "${_V_FZF_CACHE[$key]-}" ]] && (( now - ts <= ttl )); then
+        _v_candidates_cache_log "hit key=${key} age=$((now-ts))s"
         print -r -- "${_V_FZF_CACHE[$key]}"
         return 0
     fi
 
+    _v_candidates_cache_log "miss key=${key}"
     data="$(_v_candidates_source "$search_dir")" || return 1
     _V_FZF_CACHE[$key]="$data"
     _V_FZF_CACHE_TS[$key]="$now"
