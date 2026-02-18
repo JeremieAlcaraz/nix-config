@@ -130,7 +130,7 @@ fi
 # bindkey '^[w' carapace-pick
 
 # -----------------------------------------------------------------
-# Plugin fzf-tab (lazy load): activé au premier Tab
+# Plugin fzf-tab
 # -----------------------------------------------------------------
 _fzf_tab_lazy_init() {
   (( ${+_FZF_TAB_LAZY_INITIALIZED} )) && return 0
@@ -194,19 +194,10 @@ _fzf_tab_lazy_init() {
   return 0
 }
 
-_fzf_tab_lazy_complete() {
-  _fzf_tab_lazy_init >/dev/null 2>&1 || true
-
-  if (( $+widgets[fzf-tab-complete] )); then
-    zle fzf-tab-complete
-  else
-    zle complete-word
-  fi
-}
-zle -N _fzf_tab_lazy_complete
-for keymap in emacs viins; do
-  bindkey -M "$keymap" '^I' _fzf_tab_lazy_complete
-done
+# Initialiser fzf-tab tout de suite après compinit. Si Tab est bindé sur un
+# wrapper lazy au moment de l'init, fzf-tab peut mémoriser ce wrapper comme
+# "orig widget", puis se rappeler lui-même (récursion infinie).
+_fzf_tab_lazy_init >/dev/null 2>&1 || true
 
 # Re-bind after plugins which may override keymaps.
 if (( $+widgets[carapace-force-completion] )); then

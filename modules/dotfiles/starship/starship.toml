@@ -1,5 +1,5 @@
 # Configuration Starship avec module dotfiles
-command_timeout = 1500
+command_timeout = 4000
 
 format = """
 $username\
@@ -37,6 +37,7 @@ modified = "+${count}"
 staged = "●${count}"
 renamed = ""
 deleted = ""
+ignore_submodules = true
 disabled = false
 
 # Config from Nix flake DX
