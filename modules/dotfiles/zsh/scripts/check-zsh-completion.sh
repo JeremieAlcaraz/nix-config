@@ -100,7 +100,7 @@ run_suite_for_mode() {
   run_check "${mode}" "fzf command available" 'command -v fzf >/dev/null'
   run_check "${mode}" "fd command available" 'command -v fd >/dev/null'
   run_check "${mode}" "Tab widget fzf-tab-complete exists" '(( $+widgets[fzf-tab-complete] ))'
-  run_check "${mode}" "Tab is bound to fzf-tab-complete" 'bindkey -M emacs "^I" | grep -q "fzf-tab-complete"'
+  run_check "${mode}" "Tab is bound to smart/fzf-tab widget" 'bindkey -M emacs "^I" | grep -Eq "smart-tab-for-nvim-fzf|fzf-tab-complete"'
   run_check "${mode}" "Alt-m is bound to carapace-force-completion" 'bindkey -M emacs "^[m" | grep -q "carapace-force-completion"'
   run_check "${mode}" "Alias v points to nvim" 'alias v 2>/dev/null | grep -Eq "^v=.*nvim"'
   run_check "${mode}" "Custom nvim completion function exists" 'typeset -f _custom_completion_for_nvim >/dev/null'

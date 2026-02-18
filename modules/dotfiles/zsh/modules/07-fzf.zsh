@@ -26,10 +26,14 @@ if command -v fzf >/dev/null 2>&1; then
     source <(fzf --zsh)
   fi
 
-  # completion.zsh rebind Tab sur fzf-completion. On conserve fzf-tab comme
-  # comportement par défaut pour Tab; la completion fzf pourra être appelée
-  # de façon ciblée (ex: wrapper nvim) dans les tâches suivantes.
-  if (( $+widgets[fzf-tab-complete] )); then
+  # completion.zsh rebind Tab sur fzf-completion.
+  # On utilise un wrapper smart si disponible pour garder fzf-tab par défaut
+  # tout en permettant `v **<TAB>` via fzf-completion.
+  if (( $+widgets[smart-tab-for-nvim-fzf] )); then
+    for keymap in emacs viins; do
+      bindkey -M "$keymap" '^I' smart-tab-for-nvim-fzf
+    done
+  elif (( $+widgets[fzf-tab-complete] )); then
     for keymap in emacs viins; do
       bindkey -M "$keymap" '^I' fzf-tab-complete
     done

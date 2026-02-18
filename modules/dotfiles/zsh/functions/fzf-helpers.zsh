@@ -102,3 +102,12 @@ _v_candidates_cached() {
     _V_FZF_CACHE_TS[$key]="$now"
     print -r -- "$data"
 }
+
+_fzf_complete_nvim() {
+    (( $+functions[_fzf_complete] )) || return 1
+    _fzf_complete -- "$@" < <(_v_candidates_cached)
+}
+
+_fzf_complete_v() {
+    _fzf_complete_nvim "$@"
+}

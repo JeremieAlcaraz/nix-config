@@ -77,7 +77,7 @@ Mettre en place une complétion fuzzy récursive fiable pour `v` (alias `nvim`) 
 
 ### P4 — Intégration `v`/`nvim` et non-régression `fzf-tab`
 
-- [ ] T08 Brancher le cache sur la complétion `v **<TAB>` / `nvim **<TAB>`
+- [x] T08 Brancher le cache sur la complétion `v **<TAB>` / `nvim **<TAB>`
       Depends on: T07
       Changes: `modules/dotfiles/zsh/modules/04-completion.zsh`, `modules/dotfiles/zsh/modules/07-fzf.zsh`, `modules/dotfiles/zsh/modules/05-aliases.zsh`
       Benefits: UX cible atteinte avec alias `v` et comportement cohérent sur `nvim`

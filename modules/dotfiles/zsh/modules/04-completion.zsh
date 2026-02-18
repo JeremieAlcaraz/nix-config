@@ -199,6 +199,30 @@ _fzf_tab_lazy_init() {
 # "orig widget", puis se rappeler lui-même (récursion infinie).
 _fzf_tab_lazy_init >/dev/null 2>&1 || true
 
+# Tab "smart":
+# - `v **<TAB>` / `nvim **<TAB>` -> widget fzf-completion
+# - sinon -> fzf-tab-complete (comportement par défaut)
+_smart_tab_for_nvim_fzf() {
+  local cmd="${words[1]-}"
+  local trigger="${FZF_COMPLETION_TRIGGER-**}"
+
+  if (( $+widgets[fzf-completion] )) \
+    && [[ -n "$trigger" ]] \
+    && [[ "$cmd" == "nvim" || "$cmd" == "v" ]] \
+    && [[ "$LBUFFER" == *"$trigger" ]] \
+    && [[ -z "$RBUFFER" ]]; then
+    zle fzf-completion
+    return
+  fi
+
+  if (( $+widgets[fzf-tab-complete] )); then
+    zle fzf-tab-complete
+  else
+    zle complete-word
+  fi
+}
+zle -N smart-tab-for-nvim-fzf _smart_tab_for_nvim_fzf
+
 # Re-bind after plugins which may override keymaps.
 if (( $+widgets[carapace-force-completion] )); then
   for keymap in emacs viins vicmd; do
