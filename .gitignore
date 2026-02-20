@@ -53,3 +53,6 @@ modules/dotfiles/codex/rules/
 modules/dotfiles/codex/sessions/
 modules/dotfiles/codex/shell_snapshots/
 modules/dotfiles/codex/skills/
+
+# Node.js dependencies
+**/node_modules/
