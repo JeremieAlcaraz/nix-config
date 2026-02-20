@@ -7,6 +7,10 @@
     source = ../modules/dotfiles/aerospace/raycast-ai-overlay.sh;
     executable = true;
   };
+  xdg.configFile."aerospace/organize-workspaces.sh" = {
+    source = ../modules/dotfiles/aerospace/organize-workspaces.sh;
+    executable = true;
+  };
 
   # LaunchAgent pour démarrer AeroSpace automatiquement
   launchd.agents.aerospace = {

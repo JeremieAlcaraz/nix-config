@@ -135,6 +135,11 @@ alt-ctrl-right = 'move right'
 alt-shift-minus = 'resize smart -50'
 alt-shift-equal = 'resize smart +50'
 alt-shift-c = 'reload-config'
+alt-shift-r = ['flatten-workspace-tree', 'balance-sizes']
+alt-shift-f = 'layout floating tiling'
+alt-shift-o = 'exec-and-forget /bin/bash ~/.config/aerospace/organize-workspaces.sh'
+alt-ctrl-o = 'exec-and-forget /bin/bash ~/.config/aerospace/organize-workspaces.sh'
+alt-shift-0 = 'exec-and-forget /bin/bash ~/.config/aerospace/organize-workspaces.sh'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
 alt-1 = 'workspace 1'
@@ -160,6 +165,11 @@ alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#mode
 alt-shift-semicolon = [
+  'mode service',
+  'exec-and-forget sketchybar --trigger aerospace_enter_service_mode',
+]
+# Fallback pour layouts FR/AZERTY où semicolon est peu fiable
+alt-shift-s = [
   'mode service',
   'exec-and-forget sketchybar --trigger aerospace_enter_service_mode',
 ]

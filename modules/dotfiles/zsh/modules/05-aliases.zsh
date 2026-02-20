@@ -50,6 +50,9 @@ alias moltbot="clawdbot" # Alias pour le nouveau nom du projet
 
 # === TOOLS ===
 alias zb="zerobrew" # Zerobrew - Homebrew package manager
+alias aero-fix='pkill -f "/Applications/AeroSpace.app/Contents/MacOS/AeroSpace" 2>/dev/null; sleep 1; open -a AeroSpace; sleep 1; for ws in $(aerospace list-workspaces --all); do aerospace flatten-workspace-tree --workspace "$ws"; aerospace balance-sizes --workspace "$ws"; done; aerospace reload-config'
+alias aero-split='aero-split-pick right'
+alias aero-organize='/bin/bash ~/.config/aerospace/organize-workspaces.sh'
 
 
 

@@ -4,6 +4,32 @@
       "complex_modifications": {
         "rules": [
           {
+            "description": "Désactiver Option+Shift+O (Ø) globalement",
+            "enabled": true,
+            "manipulators": [
+              {
+                "from": {
+                  "key_code": "o",
+                  "modifiers": {
+                    "mandatory": [
+                      "option",
+                      "shift"
+                    ],
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "vk_none"
+                  }
+                ],
+                "type": "basic"
+              }
+            ]
+          },
+          {
             "description": "Ergonomie ultime AZERTY : Shift pour (), Cmd pour []",
             "enabled": false,
             "manipulators": [

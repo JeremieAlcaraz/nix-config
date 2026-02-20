@@ -184,3 +184,79 @@ _fzf_complete_nvim_post() {
 _fzf_complete_v() {
     _fzf_complete_nvim "$@"
 }
+
+# Sélectionne une fenêtre AeroSpace via fzf, puis la ramène sur le workspace courant.
+# Usage: aero-split-pick [left|down|up|right] (direction par défaut: right)
+aero-split-pick() {
+    local direction="${1:-right}"
+    local focused_meta=""
+    local current_window_id=""
+    local current_workspace=""
+    local pick=""
+    local target_window_id=""
+    local joined=0
+    local -a dirs=()
+    local d=""
+
+    case "$direction" in
+        left|down|up|right) ;;
+        *)
+            echo "Direction invalide: $direction (left|down|up|right)" >&2
+            return 1
+            ;;
+    esac
+
+    if ! command -v aerospace >/dev/null 2>&1; then
+        echo "aerospace introuvable dans le PATH" >&2
+        return 1
+    fi
+    if ! command -v fzf >/dev/null 2>&1; then
+        echo "fzf introuvable dans le PATH" >&2
+        return 1
+    fi
+
+    focused_meta="$(aerospace list-windows --focused --format '%{window-id}|%{workspace}' 2>/dev/null || true)"
+    current_window_id="${focused_meta%%|*}"
+    current_workspace="${focused_meta#*|}"
+    if [[ -z "$current_window_id" || -z "$current_workspace" ]]; then
+        echo "Aucune fenêtre AeroSpace focalisée" >&2
+        return 1
+    fi
+
+    pick="$(
+        aerospace list-windows --all --format '%{window-id}|%{workspace}|%{app-name}|%{window-title}' \
+            | awk -F'|' -v cur="$current_window_id" '
+                $1 != cur {
+                    title = $4
+                    if (title == "") title = "(sans titre)"
+                    printf "%s\t[%s] %s - %s\n", $1, $2, $3, title
+                }
+            ' \
+            | fzf --delimiter=$'\t' --with-nth=2 --height=70% --layout=reverse --prompt='window> '
+    )"
+
+    target_window_id="${pick%%$'\t'*}"
+    [[ -z "$target_window_id" ]] && return 0
+
+    # Si la fenêtre est déjà sur le workspace courant, move-node... renvoie un message no-op.
+    # On ignore explicitement ce cas.
+    aerospace move-node-to-workspace --window-id "$target_window_id" "$current_workspace" >/dev/null 2>&1 || true
+
+    # Revenir sur la fenêtre "ancre" (celle que tu avais au départ), puis tenter le split.
+    aerospace focus --window-id "$current_window_id"
+
+    dirs=("$direction" right left down up)
+    for d in "${dirs[@]}"; do
+        if aerospace join-with "$d" >/dev/null 2>&1; then
+            joined=1
+            break
+        fi
+    done
+
+    if [[ "$joined" -ne 1 ]]; then
+        echo "Impossible de faire le split automatiquement (essaie: aero-split-pick left|right|up|down)." >&2
+        return 1
+    fi
+
+    aerospace balance-sizes --workspace "$current_workspace"
+}
