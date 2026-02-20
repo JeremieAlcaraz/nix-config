@@ -11,6 +11,10 @@
     source = ../modules/dotfiles/aerospace/organize-workspaces.sh;
     executable = true;
   };
+  xdg.configFile."aerospace/split-picker.sh" = {
+    source = ../modules/dotfiles/aerospace/split-picker.sh;
+    executable = true;
+  };
 
   # LaunchAgent pour démarrer AeroSpace automatiquement
   launchd.agents.aerospace = {

@@ -168,5 +168,3 @@ end
 hs.hotkey.bind({"ctrl","cmd"}, "P", function() focusOrLaunch(ZEN_PRO) end) -- Pro
 hs.hotkey.bind({"ctrl","cmd"}, "D", function() focusOrLaunch(ZEN_PER) end) -- Perso
 
-
-
