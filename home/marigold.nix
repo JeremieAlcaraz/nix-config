@@ -589,6 +589,9 @@ in
     # Scripts personnels
     "zsh/scripts".source = ../modules/dotfiles/zsh/scripts;
 
+    # Raycast Script Commands (centralisés dans nix-config)
+    "raycast/scripts".source = ../modules/dotfiles/raycast/scripts;
+
     # Plugins ZSH
     "zsh/plugins".source = ../modules/dotfiles/zsh/plugins;
 
