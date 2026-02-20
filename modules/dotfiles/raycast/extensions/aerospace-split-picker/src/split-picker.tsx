@@ -15,6 +15,19 @@ type AeroWindow = {
   "window-title": string;
 };
 
+function oppositeDirection(direction: Direction): Direction {
+  switch (direction) {
+    case "left":
+      return "right";
+    case "right":
+      return "left";
+    case "up":
+      return "down";
+    case "down":
+      return "up";
+  }
+}
+
 async function runAero(args: string[]): Promise<string> {
   const { stdout } = await execFileAsync(AEROSPACE_BIN, args);
   return stdout;
@@ -36,30 +49,6 @@ async function targetIsInDirection(currentWindowId: number, targetWindowId: numb
     await runAero(["focus", "--window-id", String(currentWindowId)]).catch(() => undefined);
     return false;
   }
-}
-
-async function forceTargetDirection(currentWindowId: number, targetWindowId: number, direction: Direction): Promise<boolean> {
-  for (let i = 0; i < 6; i++) {
-    if (await targetIsInDirection(currentWindowId, targetWindowId, direction)) return true;
-
-    // Try moving target in the requested direction inside the workspace tree.
-    try {
-      await runAero(["focus", "--window-id", String(targetWindowId)]);
-      await runAero(["move", direction]);
-    } catch {
-      // ignore and try swap fallback
-    }
-
-    // Try swapping from current toward the requested direction.
-    try {
-      await runAero(["focus", "--window-id", String(currentWindowId)]);
-      await runAero(["swap", direction]);
-    } catch {
-      // ignore
-    }
-  }
-
-  return targetIsInDirection(currentWindowId, targetWindowId, direction);
 }
 
 function parseWindowLines(out: string): AeroWindow[] {
@@ -95,34 +84,77 @@ async function focusedWindow(): Promise<AeroWindow | null> {
   return arr.length > 0 ? arr[0] : null;
 }
 
-async function tryJoinStrict(currentWindowId: number, targetWindowId: number, direction: Direction): Promise<boolean> {
-  // Deterministic strategy:
-  // 1) enforce orientation on current container
-  // 2) join target with a stable direction
-  // 3) optional swap to get exact side
-  try {
-    await runAero(["focus", "--window-id", String(currentWindowId)]);
-    if (direction === "left" || direction === "right") {
-      await runAero(["layout", "h_tiles"]);
-    } else {
-      await runAero(["layout", "v_tiles"]);
-    }
+async function focusedWorkspace(): Promise<string | null> {
+  const out = await runAero(["list-workspaces", "--focused", "--format", "%{workspace}"]);
+  const workspace = out.trim();
+  return workspace.length > 0 ? workspace : null;
+}
 
-    await runAero(["join-with", "--window-id", String(targetWindowId), "right"]);
-    return forceTargetDirection(currentWindowId, targetWindowId, direction);
+async function listWindowsInWorkspace(workspace: string): Promise<AeroWindow[]> {
+  const out = await runAero([
+    "list-windows",
+    "--workspace",
+    workspace,
+    "--format",
+    "%{window-id}|%{workspace}|%{app-name}|%{window-title}",
+  ]);
+  return parseWindowLines(out);
+}
+
+async function pickAnchorWindow(): Promise<AeroWindow | null> {
+  const focused = await focusedWindow();
+  if (focused && focused["app-name"] !== "Raycast") return focused;
+
+  try {
+    const ws = await focusedWorkspace();
+    if (!ws) return focused;
+
+    const windows = await listWindowsInWorkspace(ws);
+    const anchor = windows.find((w) => w["app-name"] !== "Raycast");
+    if (anchor) return anchor;
   } catch {
-    return false;
+    // Fallback to the originally focused window when workspace probing fails.
   }
+
+  return focused;
+}
+
+async function tryJoinStrict(currentWindowId: number, targetWindowId: number, direction: Direction): Promise<boolean> {
+  const opposite = oppositeDirection(direction);
+  await runAero(["focus", "--window-id", String(currentWindowId)]);
+  if (direction === "left" || direction === "right") {
+    await runAero(["layout", "h_tiles"]);
+  } else {
+    await runAero(["layout", "v_tiles"]);
+  }
+
+  if (await targetIsInDirection(currentWindowId, targetWindowId, direction)) return true;
+
+  // Direct positioning strategy: move selected window like drag-and-drop.
+  // No post-swap correction.
+  for (const moveDirection of [direction, opposite]) {
+    for (let i = 0; i < 10; i++) {
+      try {
+        await runAero(["move", "--window-id", String(targetWindowId), moveDirection]);
+      } catch {
+        break;
+      }
+      if (await targetIsInDirection(currentWindowId, targetWindowId, direction)) return true;
+    }
+  }
+
+  return await targetIsInDirection(currentWindowId, targetWindowId, direction);
 }
 
 async function splitWindow(targetWindowId: number, direction: Direction): Promise<void> {
-  const current = await focusedWindow();
+  const current = await pickAnchorWindow();
   if (!current) {
     throw new Error("Aucune fenêtre AeroSpace focalisée");
   }
 
   const currentId = String(current["window-id"]);
   const currentWorkspace = current.workspace;
+  const tempWorkspace = "__aero_tmp_split";
 
   try {
     await runAero(["move-node-to-workspace", "--window-id", String(targetWindowId), currentWorkspace]);
@@ -130,11 +162,47 @@ async function splitWindow(targetWindowId: number, direction: Direction): Promis
     // Ignore no-op when already in same workspace.
   }
 
-  const joined = await tryJoinStrict(Number(currentId), targetWindowId, direction);
-  await runAero(["balance-sizes", "--workspace", currentWorkspace]);
+  // Plan A (fast): direct placement in current tree.
+  const quick = await tryJoinStrict(Number(currentId), targetWindowId, direction);
+  if (quick) {
+    await runAero(["balance-sizes", "--workspace", currentWorkspace]).catch(() => undefined);
+    await runAero(["focus", "--window-id", String(currentId)]).catch(() => undefined);
+    return;
+  }
 
-  if (!joined) {
-    throw new Error("Split impossible dans cette direction");
+  // Plan B (reliable): isolate anchor + target, then place, then restore others.
+  const windowsInWorkspace = await listWindowsInWorkspace(currentWorkspace);
+  const otherWindows = windowsInWorkspace
+    .filter((w) => w["window-id"] !== Number(currentId))
+    .filter((w) => w["window-id"] !== targetWindowId)
+    .filter((w) => w["app-name"] !== "Raycast")
+    .map((w) => w["window-id"]);
+  try {
+    for (const id of otherWindows) {
+      await runAero(["move-node-to-workspace", "--window-id", String(id), tempWorkspace]).catch(() => undefined);
+    }
+
+    const joined = await tryJoinStrict(Number(currentId), targetWindowId, direction);
+    await runAero(["balance-sizes", "--workspace", currentWorkspace]).catch(() => undefined);
+
+    if (!joined) {
+      const probes: Direction[] = ["left", "right", "up", "down"];
+      let found: Direction | null = null;
+      for (const probe of probes) {
+        if (await targetIsInDirection(Number(currentId), targetWindowId, probe)) {
+          found = probe;
+          break;
+        }
+      }
+      const where = found ? `Position détectée: ${found}` : "Position détectée: inconnue";
+      throw new Error(`Split impossible dans cette direction. ${where}`);
+    }
+  } finally {
+    for (const id of otherWindows) {
+      await runAero(["move-node-to-workspace", "--window-id", String(id), currentWorkspace]).catch(() => undefined);
+    }
+    await runAero(["balance-sizes", "--workspace", currentWorkspace]).catch(() => undefined);
+    await runAero(["focus", "--window-id", String(currentId)]).catch(() => undefined);
   }
 }
 
@@ -152,7 +220,7 @@ export function SplitPicker({ defaultDirection, title }: SplitPickerProps) {
   async function refresh() {
     try {
       setIsLoading(true);
-      const [focused, windows] = await Promise.all([focusedWindow(), listWindowsAll()]);
+      const [focused, windows] = await Promise.all([pickAnchorWindow(), listWindowsAll()]);
       setFocusedId(focused ? focused["window-id"] : null);
       setFocusedLabel(focused ? `${focused["app-name"]} (#${focused["window-id"]})` : "");
       setItems(windows);
