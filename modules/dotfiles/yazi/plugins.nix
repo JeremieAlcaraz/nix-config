@@ -11,6 +11,7 @@
     "ouch"
     "mactag"
     "folder-rules"
+    "television"
   ];
 
   # Flavors (themes) from yazi-rs/flavors

@@ -46,4 +46,13 @@ prepend_keymap = [
         'shell "for file in "$@"; do magick "$file" -rotate -90 "${file%}"; done" --confirm',
         "refresh",
     ], desc = "Rotate selected images counter-clockwise" },
+
+    # Television - Edit file
+    { on = [ "e" ], run = "plugin television -- text --text", desc = "Edit a file via television" },
+
+    # Television - Zoxide query
+    { on = [ "z" ], run = "plugin television -- zoxide-query --cd", desc = "Jump to a directory via zoxide in television" },
+
+    # Television - Files picker
+    { on = [ "Z" ], run = "plugin television -- files", desc = "Jump to a file via television" },
 ]
