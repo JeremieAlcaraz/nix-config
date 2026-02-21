@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ ... }:
 
 let
   yaziSource = ../modules/dotfiles/yazi;
@@ -9,18 +9,11 @@ in
 {
   programs.yazi = {
     enable = true;
-    package = lib.mkForce (pkgs.unstable.yazi.override {
-      extraPackages = config.programs.yazi.yaziPlugins.runtimeDeps;
-    });
+    # package géré via brew (voir .local/bin/yazi dans marigold.nix)
   };
 
-  programs.yazi.yaziPlugins = {
-    enable = true;
-    plugins = {
-      git.enable = true;
-      starship.enable = true;
-    };
-  };
+  # yaziPlugins: gérés via brew (non compatible avec le package brew)
+  # Pour installer les plugins: ya pkg add yazi-git yazi-starship
 
   programs.yazi.settings = yaziConfig;
   programs.yazi.keymap = keymapConfig;

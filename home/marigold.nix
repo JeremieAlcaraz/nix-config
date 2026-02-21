@@ -3,6 +3,8 @@
 let
   bunInstall = "${config.xdg.dataHome}/bun";
   bunCache = "${config.xdg.cacheHome}/bun";
+  npmGlobalPrefix = "${config.xdg.dataHome}/npm";
+  npmGlobalBin = "${npmGlobalPrefix}/bin";
   pnpmHome = "${config.xdg.dataHome}/pnpm";
   pnpmStore = "${config.xdg.dataHome}/pnpm/store";
   repoRoot = "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config";
@@ -86,6 +88,7 @@ in
     SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/key.txt";
     BUN_INSTALL = bunInstall;
     BUN_INSTALL_CACHE_DIR = bunCache;
+    NPM_CONFIG_PREFIX = npmGlobalPrefix;
     PNPM_HOME = pnpmHome;
     PNPM_STORE_DIR = pnpmStore;
   };
@@ -96,6 +99,7 @@ in
     "/opt/homebrew/sbin"
     "/opt/zerobrew/prefix/bin"  # Zerobrew packages
     "${bunInstall}/bin"
+    npmGlobalBin
     pnpmHome
   ];
 
@@ -117,16 +121,15 @@ in
     # Editor (LazyVim nécessite une version récente)
     unstable.neovim
 
-    # Shell tools (zoxide, atuin, carapace for completions)
-    zoxide
+    # Shell tools (atuin, carapace for completions)
+    # zoxide: installé via brew
     atuin
     carapace
-    fd
     unstable.tabiew
     direnv
     glow
     navi
-    ripgrep
+    # ripgrep: installé via brew
     # Node global pour outils non-interactifs (agents AI, scripts CI, etc.).
     # fnm reste actif en shell interactif pour gérer les versions par projet.
     nodejs_22
@@ -200,6 +203,7 @@ in
       # Restore paths that might be reordered/removed by /etc/zprofile's path_helper
       [[ -d "/opt/zerobrew/prefix/bin" ]] && export PATH="/opt/zerobrew/prefix/bin:$PATH"
       [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+      [[ -d "${npmGlobalBin}" ]] && export PATH="${npmGlobalBin}:$PATH"
     '';
 
     # SSH configuration
@@ -307,6 +311,28 @@ in
         echo ""
         echo "✅ Television installé."
         exec "$HOMEBREW_TV" "$@"
+      '';
+      executable = true;
+    };
+
+    # Yazi wrapper - utilise Homebrew --HEAD pour avoir la dernière version
+    ".local/bin/yazi" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        HOMEBREW_YAZI="/opt/homebrew/bin/yazi"
+
+        if [[ -x "$HOMEBREW_YAZI" ]]; then
+          exec "$HOMEBREW_YAZI" "$@"
+        fi
+
+        echo "🗂️  Yazi n'est pas installé. Installation en cours..."
+        echo ""
+        brew install yazi --HEAD
+        echo ""
+        echo "✅ Yazi installé."
+        exec "$HOMEBREW_YAZI" "$@"
       '';
       executable = true;
     };
@@ -492,6 +518,69 @@ in
       executable = true;
     };
 
+    # Colima auto-stop - arrête Colima après 5 min d'inactivité (aucun container docker actif)
+    # TUE également les processus limactl et le Virtual Machine Service
+    ".local/bin/colima-autostop" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+        STAMP_FILE="/tmp/colima-autostop-last-activity"
+        THRESHOLD=300  # 5 minutes en secondes
+
+        # Vérifier si des containers docker sont actifs (seulement ça nous intéresse)
+        # On ne regarde plus limactl car il peut tourner sans containers actifs
+        HAS_DOCKER=false
+
+        if docker ps -q 2>/dev/null | grep -q .; then
+          HAS_DOCKER=true
+        fi
+
+        # Si des containers docker tournent → activité détectée, mettre à jour le timestamp
+        if [[ "$HAS_DOCKER" == "true" ]]; then
+          date +%s > "$STAMP_FILE"
+          exit 0
+        fi
+
+        # Vérifier si limactl/colima est vraiment démarré avant de perdre du temps
+        if ! colima status >/dev/null 2>&1; then
+          # Colima pas démarré, rien à faire
+          rm -f "$STAMP_FILE"
+          exit 0
+        fi
+
+        # Aucun container docker actif → vérifier depuis combien de temps
+        if [[ ! -f "$STAMP_FILE" ]]; then
+          # Premier passage sans container → on démarre le compte à rebours
+          date +%s > "$STAMP_FILE"
+          exit 0
+        fi
+
+        LAST_ACTIVITY=$(cat "$STAMP_FILE")
+        NOW=$(date +%s)
+        ELAPSED=$((NOW - LAST_ACTIVITY))
+
+        if [[ $ELAPSED -ge $THRESHOLD ]]; then
+          # Arrêter colima proprement
+          colima stop 2>/dev/null || true
+
+          # Forcer l'arrêt de tous les processus limactl
+          pkill -x limactl 2>/dev/null || true
+
+          # Forcer l'arrêt du Virtual Machine Service (launchd domain)
+          # Note: c'est un peu brutal mais nécessaire car le service peut survivre
+          killall "Virtual Machine Service" 2>/dev/null || true
+          killall "limactl" 2>/dev/null || true
+
+          rm -f "$STAMP_FILE"
+          echo "$(date): Colima/limactl arrêté après $ELAPSED secondes d'inactivité" >> /tmp/colima-autostop.log
+        fi
+      '';
+      executable = true;
+    };
+
     ".local/bin/karabiner-pull" = {
       text = ''
         #!/usr/bin/env bash
@@ -563,6 +652,7 @@ in
       # Fix PATH after macOS /etc/zprofile's path_helper
       [[ -d "/opt/zerobrew/prefix/bin" ]] && export PATH="/opt/zerobrew/prefix/bin:$PATH"
       [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+      [[ -d "${npmGlobalBin}" ]] && export PATH="${npmGlobalBin}:$PATH"
     '';
     "zsh/.zshrc".source = ../modules/dotfiles/zsh/.zshrc.marigold;
 
@@ -771,16 +861,24 @@ in
     fi
   '';
 
-  programs.yazi.yaziPlugins.runtimeDeps = lib.mkAfter [
-    pkgs.unstable.tabiew
-  ];
-
-  programs.yazi.settings = {
-    opener.csv = [
-      { run = "${pkgs.unstable.tabiew}/bin/tw \"$@\""; block = true; desc = "Tabiew"; }
-    ];
-    open.prepend_rules = [
-      { name = "*.csv"; use = [ "csv" ]; }
-    ];
+  # === LAUNCHD AGENTS ===
+  launchd.agents.colima-autostop = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${config.home.homeDirectory}/.local/bin/colima-autostop" ];
+      StartInterval = 60;  # Vérifie toutes les 60 secondes
+      RunAtLoad = false;
+      # Variables explicites car les LaunchAgents n'héritent pas du shell
+      EnvironmentVariables = {
+        HOME = config.home.homeDirectory;
+        PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
+        XDG_CONFIG_HOME = "${config.home.homeDirectory}/.config";
+      };
+      StandardOutPath = "/tmp/colima-autostop.log";
+      StandardErrorPath = "/tmp/colima-autostop.error.log";
+    };
   };
+
+  # yazi: géré via brew (voir .local/bin/yazi wrapper)
+  # La configuration est dans home/yazi.nix
 }

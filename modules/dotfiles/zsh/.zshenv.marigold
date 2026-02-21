@@ -9,6 +9,14 @@ fi
 
 # === XDG Base Directory ===
 export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+
+# === npm globals (hors Nix store) ===
+# Fallback robuste: utile si hm-session-vars n'est pas re-sourcé après un exec zsh.
+export NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-$XDG_DATA_HOME/npm}"
+if [[ ":$PATH:" != *":$NPM_CONFIG_PREFIX/bin:"* ]]; then
+  export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+fi
 
 # === Éditeurs ===
 export EDITOR="nvim"

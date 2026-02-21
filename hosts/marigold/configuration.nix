@@ -14,6 +14,17 @@ in {
       "nikitabobko/tap"
     ];
     brews = [
+      "yazi"
+      "ffmpeg"
+      "sevenzip"
+      "jq"
+      "poppler"
+      "fd"
+      "ripgrep"
+      "fzf"
+      "zoxide"
+      "resvg"
+      "imagemagick"
       "borders"
       "lua"
       "nowplaying-cli"
