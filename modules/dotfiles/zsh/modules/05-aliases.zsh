@@ -42,7 +42,14 @@ alias j="jobs"
 alias reload="exec zsh"
 alias v="nvim"
 alias m="ncspot"
-alias y="yazi"
+# Yazi function - change directory after quit
+function y() {
+    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+    command yazi "$@" --cwd-file="$tmp"
+    IFS= read -r -d '' cwd < "$tmp"
+    [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+    rm -f -- "$tmp"
+}
 alias e="emacs -nw" # lance emacs dans mon terminal
 
 # === AI ASSISTANT ===
