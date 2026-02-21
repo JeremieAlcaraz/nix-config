@@ -23,7 +23,8 @@ export BG1=0xff363944
 export BG2=0xff414550
 
 # Homebrew - nécessaire partout (scripts, shells non-interactifs, etc.)
-export PATH="/opt/homebrew/bin:$PATH"
+# Mettre EN PREMIER pour éviter que Nix ne prenne le dessus
+export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 
 
 # Age Key

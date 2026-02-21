@@ -9,6 +9,7 @@ let
   pnpmStore = "${config.xdg.dataHome}/pnpm/store";
   repoRoot = "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config";
   repoKarabinerDir = "${repoRoot}/modules/dotfiles/karabiner/.config/karabiner";
+  yaziPlugins = import ../modules/dotfiles/yazi/plugins.nix;
 in
 
 {
@@ -174,6 +175,12 @@ in
     '';
   };
 
+  # === STARSHIP CONFIGURATION ===
+  # Config via xdg.configFile (starship.toml dans dotfiles)
+  programs.starship = {
+    enable = true;
+  };
+
   # === FISH CONFIGURATION ===
   programs.fish = {
     enable = true;
@@ -333,6 +340,24 @@ in
         echo ""
         echo "✅ Yazi installé."
         exec "$HOMEBREW_YAZI" "$@"
+      '';
+      executable = true;
+    };
+
+    # Ya wrapper - utilise Homebrew pour éviter le conflit avec Nix
+    ".local/bin/ya" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        HOMEBREW_YA="/opt/homebrew/bin/ya"
+
+        if [[ -x "$HOMEBREW_YA" ]]; then
+          exec "$HOMEBREW_YA" "$@"
+        fi
+
+        echo "❌ Ya (yazi) n'est pas installé via Homebrew."
+        exit 1
       '';
       executable = true;
     };
@@ -872,10 +897,6 @@ in
   '';
 
   # === YAZI PLUGINS (declarative) ===
-  # Lit les plugins depuis modules/dotfiles/yazi/plugins.nix
-  let
-    yaziPlugins = builtins.fromTOML (builtins.readFile ../modules/dotfiles/yazi/plugins.nix);
-  in
   home.activation.installYaziPlugins = config.lib.dag.entryAfter ["writeBoundary"] ''
     export PATH="/opt/homebrew/bin:$PATH"
 
@@ -890,11 +911,11 @@ in
         fi
       done
 
-      # Install flavors (themes)
+      # Install flavors (themes) - need full path format: owner/repo:name
       for flavor in ${builtins.concatStringsSep " " yaziPlugins.flavors}; do
         if [[ ! -d "$HOME/.config/yazi/flavors/''${flavor}.yazi" ]]; then
           echo "Installing yazi flavor: ''${flavor}"
-          "$YA_BIN" pkg add "''${flavor}" 2>/dev/null || true
+          "$YA_BIN" pkg add "yazi-rs/flavors:''${flavor}" 2>/dev/null || true
         fi
       done
     else

@@ -15,6 +15,6 @@
 
   # Flavors (themes) from yazi-rs/flavors
   flavors = [
-    "catppuccin-mocha"
+    "catppuccin-frappe-lavender"
   ];
 }
