@@ -15,6 +15,7 @@ in {
     ];
     brews = [
       "yazi"
+      "ouch"
       "ffmpeg"
       "sevenzip"
       "jq"

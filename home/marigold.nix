@@ -750,6 +750,16 @@ in
     "television".source = config.lib.file.mkOutOfStoreSymlink
       "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/television";
 
+    # Yazi - config hors store (editable directement dans le repo)
+    "yazi/yazi.toml".source = config.lib.file.mkOutOfStoreSymlink
+      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/yazi/yazi.toml";
+    "yazi/keymap.toml".source = config.lib.file.mkOutOfStoreSymlink
+      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/yazi/keymap.toml";
+    "yazi/theme.toml".source = config.lib.file.mkOutOfStoreSymlink
+      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/yazi/theme.toml";
+    "yazi/init.lua".source = config.lib.file.mkOutOfStoreSymlink
+      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/yazi/init.lua";
+
     # Tmux configuration
     "tmux/tmux.conf".source = ../modules/dotfiles/tmux/tmux.conf;
     "tmux/tmux.reset.conf".source = ../modules/dotfiles/tmux/tmux.reset.conf;
@@ -858,6 +868,34 @@ in
           exit 1
         fi
       fi
+    fi
+  '';
+
+  # === YAZI PLUGINS (declarative) ===
+  home.activation.installYaziPlugins = config.lib.dag.entryAfter ["writeBoundary"] ''
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    YAZI_BIN="/opt/homebrew/bin/yazi"
+    YA_BIN="/opt/homebrew/bin/ya"
+
+    if [[ -x "$YA_BIN" ]]; then
+      # Format: "owner/repo:name" ou juste "name" (yazi-rs/plugins est le default)
+      YAZI_PLUGINS=(
+        "git"
+        "diff"
+        "toggle-pane"
+        "smart-filter"
+        "ouch"
+      )
+
+      for plugin in "''${YAZI_PLUGINS[@]}"; do
+        if [[ ! -d "$HOME/.config/yazi/plugins/''${plugin}.yazi" ]]; then
+          echo "Installing yazi plugin: ''${plugin}"
+          "$YA_BIN" pkg add "''${plugin}" 2>/dev/null || true
+        fi
+      done
+    else
+      echo "ya not found in homebrew, skipping yazi plugins"
     fi
   '';
 
