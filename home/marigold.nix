@@ -872,26 +872,29 @@ in
   '';
 
   # === YAZI PLUGINS (declarative) ===
+  # Lit les plugins depuis modules/dotfiles/yazi/plugins.nix
+  let
+    yaziPlugins = builtins.fromTOML (builtins.readFile ../modules/dotfiles/yazi/plugins.nix);
+  in
   home.activation.installYaziPlugins = config.lib.dag.entryAfter ["writeBoundary"] ''
     export PATH="/opt/homebrew/bin:$PATH"
 
-    YAZI_BIN="/opt/homebrew/bin/yazi"
     YA_BIN="/opt/homebrew/bin/ya"
 
     if [[ -x "$YA_BIN" ]]; then
-      # Format: "owner/repo:name" ou juste "name" (yazi-rs/plugins est le default)
-      YAZI_PLUGINS=(
-        "git"
-        "diff"
-        "toggle-pane"
-        "smart-filter"
-        "ouch"
-      )
-
-      for plugin in "''${YAZI_PLUGINS[@]}"; do
+      # Install plugins
+      for plugin in ${builtins.concatStringsSep " " yaziPlugins.plugins}; do
         if [[ ! -d "$HOME/.config/yazi/plugins/''${plugin}.yazi" ]]; then
           echo "Installing yazi plugin: ''${plugin}"
           "$YA_BIN" pkg add "''${plugin}" 2>/dev/null || true
+        fi
+      done
+
+      # Install flavors (themes)
+      for flavor in ${builtins.concatStringsSep " " yaziPlugins.flavors}; do
+        if [[ ! -d "$HOME/.config/yazi/flavors/''${flavor}.yazi" ]]; then
+          echo "Installing yazi flavor: ''${flavor}"
+          "$YA_BIN" pkg add "''${flavor}" 2>/dev/null || true
         fi
       done
     else
