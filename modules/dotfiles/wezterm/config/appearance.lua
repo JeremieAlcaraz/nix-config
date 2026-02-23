@@ -31,11 +31,12 @@ function M.apply(config)
 	config.font_size = 19
 
 	-- ═══════════════════════════════════════════════════════════════════
-	-- Thème (actuel) — Tokyo Night
+	-- Thème — Catppuccin Frappé
 	-- ═══════════════════════════════════════════════════════════════════
 	-- Variantes possibles : 'tokyonight_night', 'tokyonight_storm', 'tokyonight_moon',
 	-- 'tokyonight_day', 'tokyonight_light' (selon versions)
-	config.color_scheme = "tokyonight_night"
+	-- Thème Catppuccin Frappé
+	config.color_scheme = "Catppuccin Frappe"
 
 	-- 👉 (Optionnel) Basculer automatiquement selon l’apparence système
 	-- Décommente pour activer la bascule auto (light/dark)

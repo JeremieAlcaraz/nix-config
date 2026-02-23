@@ -11,24 +11,24 @@ local RIGHT_SEP = " "
 local MID_SEP = " █"
 
 local PALETTE = {
-	bar_bg = "#1a1b26",
+	bar_bg = "#303446",
 	active = {
-		title_bg = "#7aa2f7",
-		title_fg = "#16161e",
-		number_bg = "#E0AF68",
-		number_fg = "#16161e",
+		title_bg = "#f4b8e4",
+		title_fg = "#232634",
+		number_bg = "#f4b8e4",
+		number_fg = "#232634",
 	},
 	inactive = {
-		title_bg = "#292e42",
-		title_fg = "#545c7e",
-		number_bg = "#283457",
-		number_fg = "#545c7e",
+		title_bg = "#292c3c",
+		title_fg = "#51576d",
+		number_bg = "#292c3c",
+		number_fg = "#51576d",
 	},
 	hover = {
-		title_bg = "#292e42",
-		title_fg = "#7aa2f7",
-		number_bg = "#283457",
-		number_fg = "#7aa2f7",
+		title_bg = "#292c3c",
+		title_fg = "#f4b8e4",
+		number_bg = "#292c3c",
+		number_fg = "#f4b8e4",
 	},
 }
 

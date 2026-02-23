@@ -132,4 +132,5 @@ if command -v tv &> /dev/null; then
 fi
 
 # === CCL - CLI pour MiniMax (via 1Password) ===
+export MINIMAX_API_KEY=$(op item get "minimax-api-key" --vault "Personal" --field credential --reveal)
 alias ccl='MINIMAX_API_KEY=$(op item get "minimax-api-key" --vault "Personal" --field credential --reveal) ccl'
