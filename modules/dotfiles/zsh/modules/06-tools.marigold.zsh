@@ -130,3 +130,6 @@ if command -v tv &> /dev/null; then
         source "$HOME/.config/television/shell/integration.zsh"
     fi
 fi
+
+# === CCL - CLI pour MiniMax (via 1Password) ===
+alias ccl='MINIMAX_API_KEY=$(op item get "minimax-api-key" --vault "Personal" --field credential --reveal) ccl'
