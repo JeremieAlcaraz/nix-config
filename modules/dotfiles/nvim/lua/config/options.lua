@@ -1,4 +1,7 @@
--- -- Options are automatically loaded before lazy.nvim startup
+vim.g.colors_name = "catppuccin"
+vim.g.lazyvim_colorscheme = "catppuccin"
+vim.g.catppuccin_flavour = vim.g.catppuccin_flavour or "frappe"
+
 -- -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 -- -- Add any additional options here
 -- -- Forcer vim à déclencher l'autocomplétion automatiquement

@@ -807,6 +807,10 @@ in
         path = "${config.home.homeDirectory}/.ssh/id_rsa";
         mode = "0600";
       };
+      "minimax_api_key" = {
+        path = "${config.xdg.configHome}/minimax-api-key";
+        mode = "0600";
+      };
     };
   };
 
