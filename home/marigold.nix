@@ -766,18 +766,9 @@ in
     "fd/ignore".source = dotfilesSource "fd/ignore";
 
     # Git templates (hooks) - la config est gérée par programs.git
-    "git/templates/hooks/pre-commit" = {
-      source = dotfilesSource "git/templates/hooks/pre-commit";
-      executable = true;
-    };
-    "git/templates/hooks/commit-msg" = {
-      source = dotfilesSource "git/templates/hooks/commit-msg";
-      executable = true;
-    };
-    "git/templates/hooks/prepare-commit-msg" = {
-      source = dotfilesSource "git/templates/hooks/prepare-commit-msg";
-      executable = true;
-    };
+    "git/templates/hooks/pre-commit" = dotfiles.mkScript "git/templates/hooks/pre-commit";
+    "git/templates/hooks/commit-msg" = dotfiles.mkScript "git/templates/hooks/commit-msg";
+    "git/templates/hooks/prepare-commit-msg" = dotfiles.mkScript "git/templates/hooks/prepare-commit-msg";
 
     # Television - config hors store (editable directement dans le repo)
     "television".source = dotfilesSource "television";
@@ -791,10 +782,7 @@ in
     # Tmux configuration
     "tmux/tmux.conf".source = dotfilesSource "tmux/tmux.conf";
     "tmux/tmux.reset.conf".source = dotfilesSource "tmux/tmux.reset.conf";
-    "tmux/scripts/cal.sh" = {
-      source = dotfilesSource "tmux/scripts/cal.sh";
-      executable = true;
-    };
+    "tmux/scripts/cal.sh" = dotfiles.mkScript "tmux/scripts/cal.sh";
   };
 
   # === SOPS (secrets) ===

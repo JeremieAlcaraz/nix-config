@@ -44,6 +44,18 @@ in
       readOnly = true;
       description = "Fonction helper pour obtenir un chemin (store ou worktree).";
     };
+    mkScript = lib.mkOption {
+      type = lib.types.anything;
+      readOnly = true;
+      description = ''
+        Helper pour les scripts exécutables.
+        En devMode, mkOutOfStoreSymlink est incompatible avec executable = true
+        (le sandbox Nix ne peut pas accéder au fichier hors-store pendant le build).
+        Ce helper retourne { source; } sans executable en devMode,
+        et { source; executable = true; } en non-devMode.
+        Un home.activation remet le bit +x sur les symlinks en devMode.
+      '';
+    };
   };
 
   config.jeremie.dotfiles.source = relPath:
@@ -54,4 +66,19 @@ in
     if cfg.devMode
     then "${cfg.devPath}/${relPath}"
     else cfg.repoPath + "/${relPath}";
+  config.jeremie.dotfiles.mkScript = relPath:
+    if cfg.devMode
+    then { source = config.lib.file.mkOutOfStoreSymlink "${cfg.devPath}/${relPath}"; }
+    else { source = cfg.repoPath + "/${relPath}"; executable = true; };
+
+  # En devMode, remettre le bit exécutable sur les symlinks vers des scripts
+  # (impossible via executable = true avec mkOutOfStoreSymlink)
+  config.home.activation.devModeScriptsExecutable = lib.mkIf cfg.devMode (
+    lib.hm.dag.entryAfter ["linkGeneration"] ''
+      find "$HOME/.config" -type l -name "*.sh" \
+        -exec chmod +x {} \; 2>/dev/null || true
+      find "$HOME/.local/share/git-core/templates/hooks" -type l \
+        -exec chmod +x {} \; 2>/dev/null || true
+    ''
+  );
 }
