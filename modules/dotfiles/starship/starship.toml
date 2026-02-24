@@ -11,14 +11,21 @@ $git_state\
 $git_status\
 $package\
 $nodejs\
+$custom\
 $line_break\
 $character"""
 
-#[custom.dotfiles_version]
-#command = "cat ~/dotfiles/.current_version 2>/dev/null || echo 'aucune'"
-#when = "test -d ~/dotfiles"
-#format = "dotfiles:[$output]($style) "
-#style = "bold purple"
+[custom.hm_dev]
+command = "echo 'HM-CONFIG-DEV'"
+when = "readlink -f ~/.config/aerospace/organize-workspaces.sh 2>/dev/null | grep -q 'nix-config-playground'"
+format = "with [$output]($style) "
+style = "bold purple"
+
+[custom.hm_prod]
+command = "echo 'HM-CONFIG-PROD'"
+when = "readlink -f ~/.config/aerospace/organize-workspaces.sh 2>/dev/null | grep -qv 'nix-config-playground'"
+format = "with [$output]($style) "
+style = "bold #ff85c2"
 
 
 
@@ -26,7 +33,7 @@ $character"""
 
 # Git status module (native Starship - much faster than custom Python script)
 [git_status]
-format = '([$all_status$ahead_behind](bold red)) '
+format = '([$all_status$ahead_behind](bold red) )'
 ahead = "⇡${count}"
 behind = "⇣${count}"
 diverged = "⇡${ahead_count}⇣${behind_count}"

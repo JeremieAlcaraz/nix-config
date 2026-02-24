@@ -1,22 +1,14 @@
 { config, lib, pkgs, ... }:
 let
-  dotfilesSource = config.jeremie.dotfiles.source;
+  dotfiles = config.jeremie.dotfiles;
+  dotfilesSource = dotfiles.source;
 in
 {
   # Configuration AeroSpace
   xdg.configFile."aerospace/aerospace.toml".source = dotfilesSource "aerospace/aerospace.toml";
-  xdg.configFile."aerospace/raycast-ai-overlay.sh" = {
-    source = dotfilesSource "aerospace/raycast-ai-overlay.sh";
-    executable = true;
-  };
-  xdg.configFile."aerospace/organize-workspaces.sh" = {
-    source = dotfilesSource "aerospace/organize-workspaces.sh";
-    executable = true;
-  };
-  xdg.configFile."aerospace/split-picker.sh" = {
-    source = dotfilesSource "aerospace/split-picker.sh";
-    executable = true;
-  };
+  xdg.configFile."aerospace/raycast-ai-overlay.sh" = dotfiles.mkScript "aerospace/raycast-ai-overlay.sh";
+  xdg.configFile."aerospace/organize-workspaces.sh" = dotfiles.mkScript "aerospace/organize-workspaces.sh";
+  xdg.configFile."aerospace/split-picker.sh" = dotfiles.mkScript "aerospace/split-picker.sh";
 
   # LaunchAgent pour démarrer AeroSpace automatiquement
   launchd.agents.aerospace = {

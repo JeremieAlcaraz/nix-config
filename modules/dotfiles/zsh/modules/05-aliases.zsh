@@ -87,3 +87,9 @@ alias nd="nix develop"
 alias drs="darwin-rebuild switch --flake .#marigold"
 alias sops-edit='SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/key.txt" sops'
 alias sops-view='SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/key.txt" sops --decrypt'
+
+# Home Manager - profils
+# wcd : Working Config Dev  — bascule sur le worktree playground + active le profil dev
+# bp  : Back to Prod        — bascule sur le repo principal + active le profil prod
+alias hm-dev='cd ~/Development/_programmation/_production/_services/nix-config-playground && home-manager switch --flake .#jeremiealcaraz-dev --impure'
+alias hm-prod='cd ~/Development/_programmation/_production/_services/nix-config && home-manager switch --flake .#jeremiealcaraz'
