@@ -5,5 +5,5 @@
     wezterm
   ];
 
-  xdg.configFile."wezterm".source = ../modules/dotfiles/wezterm;
+  xdg.configFile."wezterm".source = config.jeremie.dotfiles.source "wezterm";
 }

@@ -1,15 +1,18 @@
 { config, lib, pkgs, try, ... }:
 
 let
+  dotfiles = config.jeremie.dotfiles;
+  dotfilesSource = dotfiles.source;
+  dotfilesPath = dotfiles.path;
   bunInstall = "${config.xdg.dataHome}/bun";
   bunCache = "${config.xdg.cacheHome}/bun";
   npmGlobalPrefix = "${config.xdg.dataHome}/npm";
   npmGlobalBin = "${npmGlobalPrefix}/bin";
   pnpmHome = "${config.xdg.dataHome}/pnpm";
   pnpmStore = "${config.xdg.dataHome}/pnpm/store";
-  repoRoot = "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config";
-  repoKarabinerDir = "${repoRoot}/modules/dotfiles/karabiner/.config/karabiner";
-  yaziPlugins = import ../modules/dotfiles/yazi/plugins.nix;
+  repoRoot = dotfiles.repoRoot;
+  repoKarabinerDir = dotfilesPath "karabiner/.config/karabiner";
+  yaziPlugins = import (dotfilesPath "yazi/plugins.nix");
 in
 
 {
@@ -20,7 +23,10 @@ in
   # === XDG Configuration ===
   xdg.enable = true;
 
+  jeremie.dotfiles.devMode = lib.mkDefault false;
+
   imports = [
+    ../modules/home-manager/dev-mode.nix
     ./aerospace.nix
     ./sketchybar.nix
     ./wezterm.nix
@@ -118,6 +124,8 @@ in
     # Version control
     git
     gh # GitHub CLI
+    home-manager
+
 
     # Editor (LazyVim nécessite une version récente)
     unstable.neovim
@@ -214,9 +222,9 @@ in
     '';
 
     # SSH configuration
-    ".ssh/config".source = ../modules/dotfiles/ssh/config;
-    ".ssh/authorized_keys".source = ../modules/dotfiles/ssh/public/authorized_keys;
-    ".ssh/public".source = ../modules/dotfiles/ssh/public;
+    ".ssh/config".source = dotfilesSource "ssh/config";
+    ".ssh/authorized_keys".source = dotfilesSource "ssh/public/authorized_keys";
+    ".ssh/public".source = dotfilesSource "ssh/public";
 
     # terminal-notifier.app registered in ~/Applications for macOS notifications.
     "Applications/terminal-notifier.app".source = "${pkgs.terminal-notifier}/Applications/terminal-notifier.app";
@@ -672,124 +680,119 @@ in
     '';
 
     # Configuration ZSH principale
-    "zsh/.zshenv".source = ../modules/dotfiles/zsh/.zshenv.marigold;
+    "zsh/.zshenv".source = dotfilesSource "zsh/.zshenv.marigold";
     "zsh/.zprofile".text = ''
       # Fix PATH after macOS /etc/zprofile's path_helper
       [[ -d "/opt/zerobrew/prefix/bin" ]] && export PATH="/opt/zerobrew/prefix/bin:$PATH"
       [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
       [[ -d "${npmGlobalBin}" ]] && export PATH="${npmGlobalBin}:$PATH"
     '';
-    "zsh/.zshrc".source = ../modules/dotfiles/zsh/.zshrc.marigold;
+    "zsh/.zshrc".source = dotfilesSource "zsh/.zshrc.marigold";
 
     # Modules ZSH (tous sauf 06-tools.zsh qu'on remplace par la version marigold)
-    "zsh/modules/01-options.zsh".source = ../modules/dotfiles/zsh/modules/01-options.zsh;
-    "zsh/modules/02-prompt.zsh".source = ../modules/dotfiles/zsh/modules/02-prompt.zsh;
-    "zsh/modules/03-history.zsh".source = ../modules/dotfiles/zsh/modules/03-history.zsh;
-    "zsh/modules/04-completion.zsh".source = ../modules/dotfiles/zsh/modules/04-completion.zsh;
-    "zsh/modules/05-aliases.zsh".source = ../modules/dotfiles/zsh/modules/05-aliases.zsh;
-    "zsh/modules/06-tools.zsh".source = ../modules/dotfiles/zsh/modules/06-tools.marigold.zsh;
-    "zsh/modules/07-fzf.zsh".source = ../modules/dotfiles/zsh/modules/07-fzf.zsh;
-    "zsh/modules/99-syntax-highlighting.zsh".source = ../modules/dotfiles/zsh/modules/99-syntax-highlighting.marigold.zsh;
+    "zsh/modules/01-options.zsh".source = dotfilesSource "zsh/modules/01-options.zsh";
+    "zsh/modules/02-prompt.zsh".source = dotfilesSource "zsh/modules/02-prompt.zsh";
+    "zsh/modules/03-history.zsh".source = dotfilesSource "zsh/modules/03-history.zsh";
+    "zsh/modules/04-completion.zsh".source = dotfilesSource "zsh/modules/04-completion.zsh";
+    "zsh/modules/05-aliases.zsh".source = dotfilesSource "zsh/modules/05-aliases.zsh";
+    "zsh/modules/06-tools.zsh".source = dotfilesSource "zsh/modules/06-tools.marigold.zsh";
+    "zsh/modules/07-fzf.zsh".source = dotfilesSource "zsh/modules/07-fzf.zsh";
+    "zsh/modules/99-syntax-highlighting.zsh".source = dotfilesSource "zsh/modules/99-syntax-highlighting.marigold.zsh";
 
     # Fonctions ZSH
-    "zsh/functions/dotfiles-switcher.zsh".source = ../modules/dotfiles/zsh/functions/dotfiles-switcher.zsh;
-    "zsh/functions/file-management.zsh".source = ../modules/dotfiles/zsh/functions/file-management.zsh;
-    "zsh/functions/fzf-helpers.zsh".source = ../modules/dotfiles/zsh/functions/fzf-helpers.zsh;
-    "zsh/functions/media-download.zsh".source = ../modules/dotfiles/zsh/functions/media-download.zsh;
-    "zsh/functions/navi-widget.zsh".source = ../modules/dotfiles/zsh/functions/navi-widget.zsh;
-    "zsh/functions/shell-switch.zsh".source = ../modules/dotfiles/zsh/functions/shell-switch.zsh;
-    "zsh/functions/show-tree.zsh".source = ../modules/dotfiles/zsh/functions/show-tree.zsh;
-    "zsh/functions/ssh.zsh".source = ../modules/dotfiles/zsh/functions/ssh.zsh;
+    "zsh/functions/dotfiles-switcher.zsh".source = dotfilesSource "zsh/functions/dotfiles-switcher.zsh";
+    "zsh/functions/file-management.zsh".source = dotfilesSource "zsh/functions/file-management.zsh";
+    "zsh/functions/fzf-helpers.zsh".source = dotfilesSource "zsh/functions/fzf-helpers.zsh";
+    "zsh/functions/media-download.zsh".source = dotfilesSource "zsh/functions/media-download.zsh";
+    "zsh/functions/navi-widget.zsh".source = dotfilesSource "zsh/functions/navi-widget.zsh";
+    "zsh/functions/shell-switch.zsh".source = dotfilesSource "zsh/functions/shell-switch.zsh";
+    "zsh/functions/show-tree.zsh".source = dotfilesSource "zsh/functions/show-tree.zsh";
+    "zsh/functions/ssh.zsh".source = dotfilesSource "zsh/functions/ssh.zsh";
 
     # Scripts personnels
-    "zsh/scripts".source = ../modules/dotfiles/zsh/scripts;
+    "zsh/scripts".source = dotfilesSource "zsh/scripts";
 
     # Raycast Script Commands (centralisés dans nix-config)
-    "raycast/scripts".source = ../modules/dotfiles/raycast/scripts;
+    "raycast/scripts".source = dotfilesSource "raycast/scripts";
 
     # Plugins ZSH
-    "zsh/plugins".source = ../modules/dotfiles/zsh/plugins;
+    "zsh/plugins".source = dotfilesSource "zsh/plugins";
 
     # Starship prompt configuration
-    "starship.toml".source = ../modules/dotfiles/starship/starship.toml;
+    "starship.toml".source = dotfilesSource "starship/starship.toml";
 
     # GitHub CLI configuration
-    "gh".source = ../modules/dotfiles/gh;
+    "gh".source = dotfilesSource "gh";
 
     # Git ignore global (XDG)
-    "git/ignore".source = ../modules/dotfiles/git/ignore;
+    "git/ignore".source = dotfilesSource "git/ignore";
 
     # Glow configuration (XDG)
     "glow/glow.yml" = {
-      source = ../modules/dotfiles/glow/glow.yml;
+      source = dotfilesSource "glow/glow.yml";
       force = true;
     };
 
     # Bat themes (Tokyo Night)
-    "bat/themes".source = ../modules/dotfiles/bat/themes;
+    "bat/themes".source = dotfilesSource "bat/themes";
 
     # Neovim configuration
-    "nvim".source = ../modules/dotfiles/nvim;
+    "nvim".source = dotfilesSource "nvim";
 
     # Hammerspoon configuration (XDG)
-    "hammerspoon".source = ../modules/dotfiles/hammerspoon;
+    "hammerspoon".source = dotfilesSource "hammerspoon";
 
     # Nushell configuration (XDG-compliant by default)
-    "nushell/env.nu".source = ../modules/dotfiles/nushell/env.marigold.nu;
-    "nushell/config.nu".source = ../modules/dotfiles/nushell/config.marigold.nu;
-    "nushell/broot.nu".source = ../modules/dotfiles/nushell/broot.marigold.nu;
+    "nushell/env.nu".source = dotfilesSource "nushell/env.marigold.nu";
+    "nushell/config.nu".source = dotfilesSource "nushell/config.marigold.nu";
+    "nushell/broot.nu".source = dotfilesSource "nushell/broot.marigold.nu";
 
     # Fish configuration
-    "fish/conf.d/broot.fish".source = ../modules/dotfiles/fish/conf.d/broot.marigold.fish;
+    "fish/conf.d/broot.fish".source = dotfilesSource "fish/conf.d/broot.marigold.fish";
 
     # Navi cheatsheets and configuration
-    "navi/config.yaml".source = ../modules/dotfiles/navi/config.yaml;
-    "navi/config.toml".source = ../modules/dotfiles/navi/config.toml;
-    "navi/cheats".source = ../modules/dotfiles/navi/cheats;
+    "navi/config.yaml".source = dotfilesSource "navi/config.yaml";
+    "navi/config.toml".source = dotfilesSource "navi/config.toml";
+    "navi/cheats".source = dotfilesSource "navi/cheats";
 
     # Broot configuration
-    "broot/conf.hjson".source = ../modules/dotfiles/broot/conf.hjson;
-    "broot/verbs.hjson".source = ../modules/dotfiles/broot/verbs.hjson;
+    "broot/conf.hjson".source = dotfilesSource "broot/conf.hjson";
+    "broot/verbs.hjson".source = dotfilesSource "broot/verbs.hjson";
 
     # Ripgrep configuration
-    "ripgrep".source = ../modules/dotfiles/ripgrep;
+    "ripgrep".source = dotfilesSource "ripgrep";
 
     # fd ignore file (XDG)
-    "fd/ignore".source = ../modules/dotfiles/fd/ignore;
+    "fd/ignore".source = dotfilesSource "fd/ignore";
 
     # Git templates (hooks) - la config est gérée par programs.git
     "git/templates/hooks/pre-commit" = {
-      source = ../modules/dotfiles/git/templates/hooks/pre-commit;
+      source = dotfilesSource "git/templates/hooks/pre-commit";
       executable = true;
     };
     "git/templates/hooks/commit-msg" = {
-      source = ../modules/dotfiles/git/templates/hooks/commit-msg;
+      source = dotfilesSource "git/templates/hooks/commit-msg";
       executable = true;
     };
     "git/templates/hooks/prepare-commit-msg" = {
-      source = ../modules/dotfiles/git/templates/hooks/prepare-commit-msg;
+      source = dotfilesSource "git/templates/hooks/prepare-commit-msg";
       executable = true;
     };
 
     # Television - config hors store (editable directement dans le repo)
-    "television".source = config.lib.file.mkOutOfStoreSymlink
-      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/television";
+    "television".source = dotfilesSource "television";
 
     # Yazi - config hors store (editable directement dans le repo)
-    "yazi/yazi.toml".source = config.lib.file.mkOutOfStoreSymlink
-      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/yazi/yazi.toml";
-    "yazi/keymap.toml".source = config.lib.file.mkOutOfStoreSymlink
-      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/yazi/keymap.toml";
-    "yazi/theme.toml".source = config.lib.file.mkOutOfStoreSymlink
-      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/yazi/theme.toml";
-    "yazi/init.lua".source = config.lib.file.mkOutOfStoreSymlink
-      "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config/modules/dotfiles/yazi/init.lua";
+    "yazi/yazi.toml".source = dotfilesSource "yazi/yazi.toml";
+    "yazi/keymap.toml".source = dotfilesSource "yazi/keymap.toml";
+    "yazi/theme.toml".source = dotfilesSource "yazi/theme.toml";
+    "yazi/init.lua".source = dotfilesSource "yazi/init.lua";
 
     # Tmux configuration
-    "tmux/tmux.conf".source = ../modules/dotfiles/tmux/tmux.conf;
-    "tmux/tmux.reset.conf".source = ../modules/dotfiles/tmux/tmux.reset.conf;
+    "tmux/tmux.conf".source = dotfilesSource "tmux/tmux.conf";
+    "tmux/tmux.reset.conf".source = dotfilesSource "tmux/tmux.reset.conf";
     "tmux/scripts/cal.sh" = {
-      source = ../modules/dotfiles/tmux/scripts/cal.sh;
+      source = dotfilesSource "tmux/scripts/cal.sh";
       executable = true;
     };
   };

@@ -131,10 +131,41 @@ if command -v tv &> /dev/null; then
     fi
 fi
 
-# === CCL - CLI pour MiniMax (via 1Password) ===
-# Récupération paresseuse de la clé API pour éviter le prompt au startup
+# === CCL - CLI pour MiniMax ===
 ccl() {
-    local api_key
-    api_key=$(op item get "minimax-api-key" --vault "Personal" --field credential --reveal 2>/dev/null)
-    MINIMAX_API_KEY="$api_key" command ccl "$@"
+    command ccl "$@"
 }
+
+# === WEZTERM - Titres de tabs intelligents ===
+# Envoie le contexte git/dossier à WezTerm via OSC 1337 SetUserVar.
+# Déclenché après chaque commande (precmd hook).
+# Guard : ne s'active que dans WezTerm ($WEZTERM_PANE est défini par WezTerm).
+if [[ -n "${WEZTERM_PANE:-}" ]]; then
+  __wezterm_update_tab_title() {
+    local title git_branch git_root repo_name
+    git_branch=$(git branch --show-current 2>/dev/null)
+
+    if [[ -n "$git_branch" ]]; then
+      if [[ "$git_branch" == "main" || "$git_branch" == "master" ]]; then
+        # Pour main/master : affiche nom-repo/main
+        git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+        repo_name=$(basename "$git_root")
+        title="${repo_name}/${git_branch}"
+      else
+        # Autres branches : affiche la branche directement (ex: feat/toto)
+        title="$git_branch"
+      fi
+    else
+      # Hors dépôt git : affiche le nom du dossier courant
+      title="${PWD##*/}"
+    fi
+
+    # Envoie la variable à WezTerm via OSC 1337
+    # base64 requis par le protocole ; tr -d '\n' supprime les sauts de ligne
+    printf "\033]1337;SetUserVar=WEZTERM_TAB_TITLE=%s\007" \
+      "$(printf '%s' "$title" | base64 | tr -d '\n')"
+  }
+
+  autoload -Uz add-zsh-hook
+  add-zsh-hook precmd __wezterm_update_tab_title
+fi

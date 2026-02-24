@@ -1,7 +1,8 @@
 { config, lib, pkgs, ... }:
-
-{
-  xdg.configFile."sketchybar".source = ../modules/dotfiles/sketchybar;
+let
+  dotfilesSource = config.jeremie.dotfiles.source;
+in {
+  xdg.configFile."sketchybar".source = dotfilesSource "sketchybar";
 
   # Crée le dossier de logs pour la redirection dans aerospace.toml
   home.file.".sketchybar/.keep".text = "";

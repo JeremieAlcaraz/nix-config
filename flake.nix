@@ -37,6 +37,19 @@
       system = "x86_64-linux";
       # Import configuration centralisée
       projectConfig = import ./config.nix;
+      # Create pkgs with allowUnfree for home-manager on Darwin
+      pkgsDarwin = import nixpkgs {
+        system = "aarch64-darwin";
+        config.allowUnfree = true;
+        overlays = [
+          (final: prev: {
+            unstable = import nixpkgs-unstable {
+              system = "aarch64-darwin";
+              config.allowUnfree = true;
+            };
+          })
+        ];
+      };
     in {
       nixosConfigurations = {
         # Magnolia - Infrastructure Proxmox
@@ -249,6 +262,37 @@
               ];
             }
           ];
+        };
+      };
+
+      homeConfigurations = {
+        jeremiealcaraz = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsDarwin;
+          modules = [
+            sops-nix.homeManagerModules.sops
+            (nix-yazi-plugins.legacyPackages.aarch64-darwin.homeManagerModules.default)
+            ./home/marigold.nix
+            {
+              jeremie.dotfiles.devMode = false;
+            }
+          ];
+          extraSpecialArgs = {
+            inherit try nix-yazi-plugins projectConfig;
+          };
+        };
+        jeremiealcaraz-dev = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsDarwin;
+          modules = [
+            sops-nix.homeManagerModules.sops
+            (nix-yazi-plugins.legacyPackages.aarch64-darwin.homeManagerModules.default)
+            ./home/marigold.nix
+            {
+              jeremie.dotfiles.devMode = true;
+            }
+          ];
+          extraSpecialArgs = {
+            inherit try nix-yazi-plugins projectConfig;
+          };
         };
       };
     };

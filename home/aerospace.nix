@@ -1,18 +1,20 @@
 { config, lib, pkgs, ... }:
-
+let
+  dotfilesSource = config.jeremie.dotfiles.source;
+in
 {
   # Configuration AeroSpace
-  xdg.configFile."aerospace/aerospace.toml".source = ../modules/dotfiles/aerospace/aerospace.toml;
+  xdg.configFile."aerospace/aerospace.toml".source = dotfilesSource "aerospace/aerospace.toml";
   xdg.configFile."aerospace/raycast-ai-overlay.sh" = {
-    source = ../modules/dotfiles/aerospace/raycast-ai-overlay.sh;
+    source = dotfilesSource "aerospace/raycast-ai-overlay.sh";
     executable = true;
   };
   xdg.configFile."aerospace/organize-workspaces.sh" = {
-    source = ../modules/dotfiles/aerospace/organize-workspaces.sh;
+    source = dotfilesSource "aerospace/organize-workspaces.sh";
     executable = true;
   };
   xdg.configFile."aerospace/split-picker.sh" = {
-    source = ../modules/dotfiles/aerospace/split-picker.sh;
+    source = dotfilesSource "aerospace/split-picker.sh";
     executable = true;
   };
 

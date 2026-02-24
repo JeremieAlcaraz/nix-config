@@ -33,10 +33,28 @@ local PALETTE = {
 }
 
 local function tab_title(tab)
+	-- Priorité 1 : titre manuel (LEADER + r)
+	-- Entrée vide lors du rename = reset → retour automatique
 	local title = tab.tab_title
-	if not title or title == "" then
-		title = tab.active_pane.title
+	if title and title ~= "" then
+		if tab.active_pane and tab.active_pane.is_zoomed then
+			title = title .. " "
+		end
+		return title
 	end
+
+	-- Priorité 2 : titre intelligent depuis zsh (branch git / dossier)
+	local user_vars = tab.active_pane and tab.active_pane.user_vars
+	local smart = user_vars and user_vars.WEZTERM_TAB_TITLE
+	if smart and smart ~= "" then
+		if tab.active_pane and tab.active_pane.is_zoomed then
+			smart = smart .. " "
+		end
+		return smart
+	end
+
+	-- Priorité 3 : fallback sur le titre du processus
+	title = tab.active_pane.title
 	if not title or title == "" then
 		title = "shell"
 	end
