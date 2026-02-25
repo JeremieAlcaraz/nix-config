@@ -703,6 +703,7 @@ in
     "zsh/functions/fzf-helpers.zsh".source = dotfilesSource "zsh/functions/fzf-helpers.zsh";
     "zsh/functions/media-download.zsh".source = dotfilesSource "zsh/functions/media-download.zsh";
     "zsh/functions/navi-widget.zsh".source = dotfilesSource "zsh/functions/navi-widget.zsh";
+    "zsh/functions/sesh-sessions.zsh".source = dotfilesSource "zsh/functions/sesh-sessions.zsh";
     "zsh/functions/shell-switch.zsh".source = dotfilesSource "zsh/functions/shell-switch.zsh";
     "zsh/functions/show-tree.zsh".source = dotfilesSource "zsh/functions/show-tree.zsh";
     "zsh/functions/ssh.zsh".source = dotfilesSource "zsh/functions/ssh.zsh";
@@ -770,6 +771,9 @@ in
 
     # Television - config hors store (editable directement dans le repo)
     "television".source = dotfilesSource "television";
+
+    # Sesh session manager
+    "sesh/sesh.toml".source = dotfilesSource "sesh/sesh.toml";
 
     # Yazi - config hors store (editable directement dans le repo)
     "yazi/yazi.toml".source = dotfilesSource "yazi/yazi.toml";

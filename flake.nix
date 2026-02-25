@@ -272,6 +272,10 @@
             sops-nix.homeManagerModules.sops
             (nix-yazi-plugins.legacyPackages.aarch64-darwin.homeManagerModules.default)
             ./home/marigold.nix
+            {
+              jeremie.dotfiles.mode = "external";
+              jeremie.dotfiles.externalRoot = "/Users/jeremiealcaraz/c/dotfiles";
+            }
           ];
           extraSpecialArgs = {
             inherit try nix-yazi-plugins projectConfig;
