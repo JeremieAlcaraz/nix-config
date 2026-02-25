@@ -12,9 +12,9 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
 
 ## Suivi
 
-- **Phase active:** `P1`
-- **Dernière tâche terminée:** `T01`
-- **Prochaine tâche:** `T02`
+- **Phase active:** `P2`
+- **Dernière tâche terminée:** `T02`
+- **Prochaine tâche:** `T03`
 - **Date maj:** `2026-02-25`
 
 ---
@@ -28,7 +28,7 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
   Tests: `rg -n "modules/dotfiles|\.\./dotfiles|jeremie\.dotfiles" flake.nix home modules docs scripts`
   Commit: `chore(plan): inventory dotfiles references before externalization`
 
-- [ ] T02 Définir le contrat cible des chemins dotfiles
+- [x] T02 Définir le contrat cible des chemins dotfiles
   Depends on: T01
   Changes: `modules/home-manager/dev-mode.nix`, éventuel fichier d’options dédié
   Benefits: un seul point de configuration pour prod/dev/externe

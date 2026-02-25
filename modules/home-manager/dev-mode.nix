@@ -2,8 +2,13 @@
 
 let
   cfg = config.jeremie.dotfiles;
+  # Contract:
+  # - repoRoot/worktreeRoot point to nix-config checkouts.
+  # - repoPath/devPath point to the dotfiles tree consumed by HM helpers.
+  # - source/path/mkScript must always resolve from repoPath or devPath only.
   repoRootDefault = "${config.home.homeDirectory}/c/nix-config/main";
   worktreeRootDefault = "${config.home.homeDirectory}/c/nix-config/dev";
+  dotfilesRepoPathDefault = ../dotfiles;
   dotfilesDevPathDefault = "${worktreeRootDefault}/modules/dotfiles";
 in
 {
@@ -24,14 +29,20 @@ in
 
     repoPath = lib.mkOption {
       type = lib.types.path;
-      default = ../dotfiles;
-      description = "Chemin Nix vers les dotfiles (store-based en prod).";
+      default = dotfilesRepoPathDefault;
+      description = ''
+        Chemin Nix vers l'arbre dotfiles en mode non-dev (store-based).
+        Ce chemin est la source de vérité des liens HM quand devMode = false.
+      '';
     };
 
     devPath = lib.mkOption {
       type = lib.types.str;
       default = dotfilesDevPathDefault;
-      description = "Chemin absolu vers les dotfiles du worktree (dev).";
+      description = ''
+        Chemin absolu vers l'arbre dotfiles en mode dev (out-of-store).
+        Ce chemin est la source de vérité des liens HM quand devMode = true.
+      '';
     };
 
     source = lib.mkOption {
