@@ -12,7 +12,7 @@ let
   pnpmStore = "${config.xdg.dataHome}/pnpm/store";
   repoRoot = dotfiles.repoRoot;
   repoKarabinerDir = dotfilesPath "karabiner/.config/karabiner";
-  yaziPlugins = import (dotfilesPath "yazi/plugins.nix");
+  yaziPlugins = import ./yazi-plugins.nix;
 in
 
 {
