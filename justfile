@@ -1,9 +1,9 @@
 set shell := ["bash", "-lc"]
 
 # Promote playground → main : commit (si changes), push, merge, hm-prod
-promote message="chore: promote playground to main":
+promote:
     git add --all
-    git diff-index --quiet HEAD -- || git commit -m "{{message}}"
+    git diff-index --quiet HEAD -- || git commit -m "chore: promote playground → main"
     git push -u origin playground
     git -C ~/c/nix-config/main fetch origin
     git -C ~/c/nix-config/main merge playground --no-edit
