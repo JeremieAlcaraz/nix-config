@@ -1,5 +1,15 @@
 set shell := ["bash", "-lc"]
 
+# Promote playground → main : commit, push, merge, hm-prod
+promote message:
+    git add --all
+    git commit -m "{{message}}"
+    git push origin playground
+    git -C ~/c/nix-config/main fetch origin
+    git -C ~/c/nix-config/main merge playground --no-edit
+    git -C ~/c/nix-config/main push origin main
+    cd ~/c/nix-config/main && home-manager switch --flake .#jeremiealcaraz
+
 restore-n8n:
 	sudo nix-shell -p sops rclone fzf jq yq-go --run ./scripts/restore-n8n.sh
 
