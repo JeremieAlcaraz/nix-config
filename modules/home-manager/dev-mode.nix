@@ -3,29 +3,19 @@
 let
   cfg = config.jeremie.dotfiles;
   # Contract:
-  # - repoRoot/worktreeRoot point to nix-config checkouts.
-  # - repoPath/devPath point to the dotfiles tree consumed by HM helpers.
-  # - source/path/mkScript must always resolve from repoPath or devPath only.
+  # - repoRoot points to nix-config checkout.
+  # - dotfiles are resolved from repoPath (store) or externalRoot (out-of-store).
+  # - source/path/mkScript must only depend on cfg.mode.
   repoRootDefault = "${config.home.homeDirectory}/c/nix-config/main";
-  worktreeRootDefault = "${config.home.homeDirectory}/c/nix-config/dev";
   externalRootDefault = "${config.home.homeDirectory}/c/dotfiles";
   dotfilesRepoPathDefault = ../dotfiles;
-  dotfilesDevPathDefault = "${worktreeRootDefault}/modules/dotfiles";
 in
 {
   options.jeremie.dotfiles = {
-    devMode = lib.mkEnableOption "dotfiles dev mode (live edit via worktree)";
-
     repoRoot = lib.mkOption {
       type = lib.types.str;
       default = repoRootDefault;
       description = "Chemin absolu vers le repo principal (branche stable).";
-    };
-
-    worktreeRoot = lib.mkOption {
-      type = lib.types.str;
-      default = worktreeRootDefault;
-      description = "Chemin absolu vers le worktree de dev (branche playground).";
     };
 
     externalRoot = lib.mkOption {
@@ -37,21 +27,22 @@ in
       '';
     };
 
+    mode = lib.mkOption {
+      type = lib.types.enum [ "repo" "external" ];
+      default = "repo";
+      description = ''
+        Sélecteur du root dotfiles:
+        - repo: utilise repoPath (store-based)
+        - external: utilise externalRoot (out-of-store)
+      '';
+    };
+
     repoPath = lib.mkOption {
       type = lib.types.path;
       default = dotfilesRepoPathDefault;
       description = ''
         Chemin Nix vers l'arbre dotfiles en mode non-dev (store-based).
         Ce chemin est la source de vérité des liens HM quand devMode = false.
-      '';
-    };
-
-    devPath = lib.mkOption {
-      type = lib.types.str;
-      default = dotfilesDevPathDefault;
-      description = ''
-        Chemin absolu vers l'arbre dotfiles en mode dev (out-of-store).
-        Ce chemin est la source de vérité des liens HM quand devMode = true.
       '';
     };
 
@@ -70,11 +61,11 @@ in
       readOnly = true;
       description = ''
         Helper pour les scripts exécutables.
-        En devMode, mkOutOfStoreSymlink est incompatible avec executable = true
+        En mode external, mkOutOfStoreSymlink est incompatible avec executable = true
         (le sandbox Nix ne peut pas accéder au fichier hors-store pendant le build).
-        Ce helper retourne { source; } sans executable en devMode,
-        et { source; executable = true; } en non-devMode.
-        Un home.activation remet le bit +x sur les symlinks en devMode.
+        Ce helper retourne { source; } sans executable en mode external,
+        et { source; executable = true; } en mode repo.
+        Un home.activation remet le bit +x sur les symlinks en mode external.
       '';
     };
   };
@@ -82,25 +73,24 @@ in
   # Expose repo paths as env vars — source unique de vérité pour tous les scripts
   config.home.sessionVariables = {
     NIX_CONFIG_MAIN = cfg.repoRoot;
-    NIX_CONFIG_DEV  = cfg.worktreeRoot;
   };
 
   config.jeremie.dotfiles.source = relPath:
-    if cfg.devMode
-    then config.lib.file.mkOutOfStoreSymlink "${cfg.devPath}/${relPath}"
+    if cfg.mode == "external"
+    then config.lib.file.mkOutOfStoreSymlink "${cfg.externalRoot}/${relPath}"
     else cfg.repoPath + "/${relPath}";
   config.jeremie.dotfiles.path = relPath:
-    if cfg.devMode
-    then "${cfg.devPath}/${relPath}"
+    if cfg.mode == "external"
+    then "${cfg.externalRoot}/${relPath}"
     else cfg.repoPath + "/${relPath}";
   config.jeremie.dotfiles.mkScript = relPath:
-    if cfg.devMode
-    then { source = config.lib.file.mkOutOfStoreSymlink "${cfg.devPath}/${relPath}"; }
+    if cfg.mode == "external"
+    then { source = config.lib.file.mkOutOfStoreSymlink "${cfg.externalRoot}/${relPath}"; }
     else { source = cfg.repoPath + "/${relPath}"; executable = true; };
 
-  # En devMode, remettre le bit exécutable sur les symlinks vers des scripts
+  # En mode external, remettre le bit exécutable sur les symlinks vers des scripts
   # (impossible via executable = true avec mkOutOfStoreSymlink)
-  config.home.activation.devModeScriptsExecutable = lib.mkIf cfg.devMode (
+  config.home.activation.externalModeScriptsExecutable = lib.mkIf (cfg.mode == "external") (
     lib.hm.dag.entryAfter ["linkGeneration"] ''
       find "$HOME/.config" -type l -name "*.sh" \
         -exec chmod +x {} \; 2>/dev/null || true

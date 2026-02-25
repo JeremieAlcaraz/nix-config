@@ -8,13 +8,13 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
 
 - Dossier cible retenu: `/Users/jeremiealcaraz/c/dotfiles`.
 - Le repo Nix reste la source de vérité pour la logique (modules/options), pas pour le contenu des dotfiles.
-- Migration effectuée en étapes réversibles, sans casser `homeConfigurations.jeremiealcaraz` ni `homeConfigurations.jeremiealcaraz-dev`.
+- Migration effectuée en étapes réversibles, avec suppression du `devMode` Home Manager.
 
 ## Suivi
 
 - **Phase active:** `P2`
-- **Dernière tâche terminée:** `T03`
-- **Prochaine tâche:** `T04`
+- **Dernière tâche terminée:** `T04`
+- **Prochaine tâche:** `T05`
 - **Date maj:** `2026-02-25`
 
 ---
@@ -46,15 +46,22 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
   Tests: `nix eval .#homeConfigurations.jeremiealcaraz.options.jeremie.dotfiles` (vérification présence nouvelles options)
   Commit: `feat(home-manager): add external dotfiles root option`
 
-- [ ] T04 Faire converger `source`, `path`, `mkScript` vers ce contrat unique
+- [x] T04 Supprimer `devMode` et converger vers un mode unique (`repo`/`external`)
   Depends on: T03
-  Changes: `modules/home-manager/dev-mode.nix`
-  Benefits: Home Manager reste l’orchestrateur unique (symlinks + exec bits)
-  Tests: `nix build .#homeConfigurations.jeremiealcaraz.activationPackage` et `nix build .#homeConfigurations.jeremiealcaraz-dev.activationPackage`
-  Commit: `refactor(home-manager): unify dotfiles path resolution`
+  Changes: `modules/home-manager/dev-mode.nix`, `home/marigold.nix`
+  Benefits: retire la complexité worktree/dev profile et stabilise HM
+  Tests: `nix build .#homeConfigurations.jeremiealcaraz.activationPackage --impure`
+  Commit: `refactor(home-manager): remove dotfiles dev mode`
 
-- [ ] T05 Supprimer les références directes restantes au chemin in-repo
+- [ ] T05 Supprimer le profil `jeremiealcaraz-dev` et ses références
   Depends on: T04
+  Changes: `flake.nix`, aliases/shell scripts impactés, docs minimales
+  Benefits: un seul profil HM à opérer
+  Tests: `nix eval .#homeConfigurations | rg jeremiealcaraz-dev` (doit être vide)
+  Commit: `refactor(home-manager): remove dev home-manager profile`
+
+- [ ] T06 Supprimer les références directes restantes au chemin in-repo
+  Depends on: T05
   Changes: `home/*.nix`, `modules/home-manager/*.nix`, scripts impactés
   Benefits: plus de dépendance implicite à `modules/dotfiles` dans le repo Nix
   Tests: `rg -n "modules/dotfiles|\.\./dotfiles" home modules scripts`
@@ -64,47 +71,47 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
 
 ## P3 — Migration physique des fichiers
 
-- [ ] T06 Copier le contenu vers `/Users/jeremiealcaraz/c/dotfiles` avec structure identique
-  Depends on: T05
+- [ ] T07 Copier le contenu vers `/Users/jeremiealcaraz/c/dotfiles` avec structure identique
+  Depends on: T06
   Changes: dossier externe `/Users/jeremiealcaraz/c/dotfiles`
   Benefits: séparation nette contenu config vs infra Nix
   Tests: `rsync -aHvn --delete modules/dotfiles/ /Users/jeremiealcaraz/c/dotfiles/` puis `rsync -aHv --delete modules/dotfiles/ /Users/jeremiealcaraz/c/dotfiles/`
   Commit: `chore(dotfiles): bootstrap external dotfiles tree`
 
-- [ ] T07 Initialiser le repo Git externe des dotfiles
-  Depends on: T06
+- [ ] T08 Initialiser le repo Git externe des dotfiles
+  Depends on: T07
   Changes: `/Users/jeremiealcaraz/c/dotfiles/.git`, `.gitignore` (si nécessaire)
   Benefits: cycle de vie/historique indépendant pour les configs
   Tests: `git -C /Users/jeremiealcaraz/c/dotfiles status` puis `git -C /Users/jeremiealcaraz/c/dotfiles log --oneline -n 1`
   Commit: `chore(dotfiles): initialize standalone git repository`
 
-- [ ] T08 Basculer Home Manager pour lire le dossier externe
-  Depends on: T07
+- [ ] T09 Basculer Home Manager pour lire le dossier externe
+  Depends on: T08
   Changes: `flake.nix` (module override éventuel), `home/marigold.nix` (si nécessaire)
   Benefits: activation réelle depuis le nouveau root externe
-  Tests: `home-manager switch --flake .#jeremiealcaraz-dev --impure` puis `home-manager switch --flake .#jeremiealcaraz --impure`
+  Tests: `home-manager switch --flake .#jeremiealcaraz --impure`
   Commit: `feat(home-manager): switch dotfiles source to external root`
 
 ---
 
 ## P4 — Nettoyage repo et documentation
 
-- [ ] T09 Retirer `modules/dotfiles` du repo Nix (ou le réduire à stub transitoire)
-  Depends on: T08
+- [ ] T10 Retirer `modules/dotfiles` du repo Nix (ou le réduire à stub transitoire)
+  Depends on: T09
   Changes: `modules/dotfiles/` (suppression ou README stub), `.gitignore` si nécessaire
   Benefits: le repo n’héberge plus les configs utilisateurs
   Tests: `rg -n "modules/dotfiles" flake.nix home modules docs scripts` (seulement mentions documentées)
   Commit: `chore(repo): remove in-repo dotfiles directory`
 
-- [ ] T10 Mettre à jour la documentation (FR) et les commandes opératoires
-  Depends on: T09
+- [ ] T11 Mettre à jour la documentation (FR) et les commandes opératoires
+  Depends on: T10
   Changes: `docs/README.md`, `docs/MARIGOLD-PACKAGES.md`, `docs/golden-path-home-manager.md`, autres docs concernées
   Benefits: onboarding cohérent avec la nouvelle architecture
   Tests: `rg -n "modules/dotfiles|/Users/jeremiealcaraz/c/dotfiles|Home Manager" docs`
   Commit: `docs(home-manager): document external dotfiles workflow`
 
-- [ ] T11 Ajouter un check de non-régression pour éviter le retour de chemins legacy
-  Depends on: T10
+- [ ] T12 Ajouter un check de non-régression pour éviter le retour de chemins legacy
+  Depends on: T11
   Changes: `justfile` ou script dédié dans `scripts/`
   Benefits: garde-fou CI/local contre la réintroduction de `modules/dotfiles`
   Tests: `just <commande-check>` ou `bash scripts/<check>.sh`
@@ -115,8 +122,8 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
 ## Validation finale (recette)
 
 - [ ] `nix build .#homeConfigurations.jeremiealcaraz.activationPackage`
-- [ ] `nix build .#homeConfigurations.jeremiealcaraz-dev.activationPackage`
-- [ ] `home-manager switch --flake .#jeremiealcaraz-dev --impure` sans erreur
+- [ ] `nix eval .#homeConfigurations | rg jeremiealcaraz-dev` ne retourne rien
+- [ ] `home-manager switch --flake .#jeremiealcaraz --impure` sans erreur
 - [ ] Les liens actifs (`~/.config/...`) pointent vers `/Users/jeremiealcaraz/c/dotfiles/...`
 - [ ] `rg -n "modules/dotfiles"` ne retourne plus de dépendance runtime
 

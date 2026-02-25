@@ -23,8 +23,6 @@ in
   # === XDG Configuration ===
   xdg.enable = true;
 
-  jeremie.dotfiles.devMode = lib.mkDefault false;
-
   imports = [
     ../modules/home-manager/dev-mode.nix
     ./aerospace.nix

@@ -272,9 +272,6 @@
             sops-nix.homeManagerModules.sops
             (nix-yazi-plugins.legacyPackages.aarch64-darwin.homeManagerModules.default)
             ./home/marigold.nix
-            {
-              jeremie.dotfiles.devMode = false;
-            }
           ];
           extraSpecialArgs = {
             inherit try nix-yazi-plugins projectConfig;
