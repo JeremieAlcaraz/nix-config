@@ -2,8 +2,8 @@
 
 let
   cfg = config.jeremie.dotfiles;
-  repoRootDefault = "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config";
-  worktreeRootDefault = "${config.home.homeDirectory}/Development/_programmation/_production/_services/nix-config-playground";
+  repoRootDefault = "${config.home.homeDirectory}/c/nix-config/main";
+  worktreeRootDefault = "${config.home.homeDirectory}/c/nix-config/dev";
   dotfilesDevPathDefault = "${worktreeRootDefault}/modules/dotfiles";
 in
 {
@@ -56,6 +56,12 @@ in
         Un home.activation remet le bit +x sur les symlinks en devMode.
       '';
     };
+  };
+
+  # Expose repo paths as env vars — source unique de vérité pour tous les scripts
+  config.home.sessionVariables = {
+    NIX_CONFIG_MAIN = cfg.repoRoot;
+    NIX_CONFIG_DEV  = cfg.worktreeRoot;
   };
 
   config.jeremie.dotfiles.source = relPath:
