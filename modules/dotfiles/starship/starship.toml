@@ -21,12 +21,6 @@ when = "readlink -f ~/.config/aerospace/organize-workspaces.sh 2>/dev/null | gre
 format = "with [$output]($style) "
 style = "bold purple"
 
-[custom.hm_prod]
-command = "echo 'HM-CONFIG-PROD'"
-when = "readlink -f ~/.config/aerospace/organize-workspaces.sh 2>/dev/null | grep -qv 'nix-config/dev'"
-format = "with [$output]($style) "
-style = "bold #ff85c2"
-
 
 
 # ~/.config/starship.toml
