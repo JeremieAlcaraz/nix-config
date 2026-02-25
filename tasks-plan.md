@@ -13,8 +13,8 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
 ## Suivi
 
 - **Phase active:** `P2`
-- **Dernière tâche terminée:** `T02`
-- **Prochaine tâche:** `T03`
+- **Dernière tâche terminée:** `T03`
+- **Prochaine tâche:** `T04`
 - **Date maj:** `2026-02-25`
 
 ---
@@ -39,7 +39,7 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
 
 ## P2 — Préparer Home Manager pour un root externe
 
-- [ ] T03 Ajouter une option explicite de root externe dotfiles
+- [x] T03 Ajouter une option explicite de root externe dotfiles
   Depends on: T02
   Changes: `modules/home-manager/dev-mode.nix`
   Benefits: bascule claire vers `/Users/jeremiealcaraz/c/dotfiles` sans hardcode dispersé

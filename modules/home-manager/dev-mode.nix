@@ -8,6 +8,7 @@ let
   # - source/path/mkScript must always resolve from repoPath or devPath only.
   repoRootDefault = "${config.home.homeDirectory}/c/nix-config/main";
   worktreeRootDefault = "${config.home.homeDirectory}/c/nix-config/dev";
+  externalRootDefault = "${config.home.homeDirectory}/c/dotfiles";
   dotfilesRepoPathDefault = ../dotfiles;
   dotfilesDevPathDefault = "${worktreeRootDefault}/modules/dotfiles";
 in
@@ -25,6 +26,15 @@ in
       type = lib.types.str;
       default = worktreeRootDefault;
       description = "Chemin absolu vers le worktree de dev (branche playground).";
+    };
+
+    externalRoot = lib.mkOption {
+      type = lib.types.str;
+      default = externalRootDefault;
+      description = ''
+        Chemin absolu vers le repository Git externe des dotfiles.
+        Ce root servira de cible principale après migration hors repo Nix.
+      '';
     };
 
     repoPath = lib.mkOption {
