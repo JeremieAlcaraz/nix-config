@@ -13,8 +13,8 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
 ## Suivi
 
 - **Phase active:** `P2`
-- **Dernière tâche terminée:** `T04`
-- **Prochaine tâche:** `T05`
+- **Dernière tâche terminée:** `T05`
+- **Prochaine tâche:** `T06`
 - **Date maj:** `2026-02-25`
 
 ---
@@ -53,7 +53,7 @@ Sortir les fichiers de configuration de ce repo Nix en déplaçant `modules/dotf
   Tests: `nix build .#homeConfigurations.jeremiealcaraz.activationPackage --impure`
   Commit: `refactor(home-manager): remove dotfiles dev mode`
 
-- [ ] T05 Supprimer le profil `jeremiealcaraz-dev` et ses références
+- [x] T05 Supprimer le profil `jeremiealcaraz-dev` et ses références
   Depends on: T04
   Changes: `flake.nix`, aliases/shell scripts impactés, docs minimales
   Benefits: un seul profil HM à opérer

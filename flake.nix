@@ -277,20 +277,6 @@
             inherit try nix-yazi-plugins projectConfig;
           };
         };
-        jeremiealcaraz-dev = home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsDarwin;
-          modules = [
-            sops-nix.homeManagerModules.sops
-            (nix-yazi-plugins.legacyPackages.aarch64-darwin.homeManagerModules.default)
-            ./home/marigold.nix
-            {
-              jeremie.dotfiles.devMode = true;
-            }
-          ];
-          extraSpecialArgs = {
-            inherit try nix-yazi-plugins projectConfig;
-          };
-        };
       };
     };
 }
