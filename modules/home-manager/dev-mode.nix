@@ -6,7 +6,7 @@ let
   # - repoRoot points to nix-config checkout.
   # - dotfiles are resolved from repoPath (store) or externalRoot (out-of-store).
   # - source/path/mkScript must only depend on cfg.mode.
-  repoRootDefault = "${config.home.homeDirectory}/c/nix-config/main";
+  repoRootDefault = "${config.home.homeDirectory}/c/nix-config";
   externalRootDefault = "${config.home.homeDirectory}/c/dotfiles";
   dotfilesRepoPathDefault = ../dotfiles;
 in

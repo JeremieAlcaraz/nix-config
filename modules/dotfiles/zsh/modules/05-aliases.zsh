@@ -89,4 +89,5 @@ alias sops-edit='SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/key.txt" sops'
 alias sops-view='SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/key.txt" sops --decrypt'
 
 # Home Manager - profil unique
-alias hm-switch='cd "$NIX_CONFIG_MAIN" && home-manager switch --flake .#jeremiealcaraz'
+alias hm-switch='cd "$HOME/c/nix-config" && home-manager switch --flake .#jeremiealcaraz'
+alias hms='hm-switch'
