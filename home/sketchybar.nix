@@ -6,6 +6,28 @@ in {
 
   # Crée le dossier de logs pour la redirection dans aerospace.toml
   home.file.".sketchybar/.keep".text = "";
+  home.file."Library/Logs/SketchyBar/.keep".text = "";
+
+  # Supervise sketchybar avec launchd pour éviter les arrêts silencieux.
+  launchd.agents.sketchybar = {
+    enable = true;
+    config = {
+      Label = "com.jeremie.sketchybar";
+      ProgramArguments = [ "/opt/homebrew/bin/sketchybar" ];
+      RunAtLoad = true;
+      KeepAlive = {
+        SuccessfulExit = false;
+        Crashed = true;
+      };
+      ProcessType = "Interactive";
+      ThrottleInterval = 5;
+      EnvironmentVariables = {
+        PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/SketchyBar/stdout.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/SketchyBar/stderr.log";
+    };
+  };
 
   home.activation.sketchybarDependencies = lib.hm.dag.entryAfter ["writeBoundary"] ''
     set -euo pipefail

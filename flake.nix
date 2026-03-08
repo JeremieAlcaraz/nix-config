@@ -245,6 +245,10 @@
               home-manager.sharedModules = [
                 sops-nix.homeManagerModules.sops
                 (nix-yazi-plugins.legacyPackages.aarch64-darwin.homeManagerModules.default)
+                ({ ... }: {
+                  jeremie.dotfiles.mode = "external";
+                  jeremie.dotfiles.externalRoot = "/Users/jeremiealcaraz/c/dotfiles";
+                })
               ];
               home-manager.users.jeremiealcaraz = import ./home/marigold.nix;
               # Passer try à Home Manager

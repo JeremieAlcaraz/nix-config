@@ -780,6 +780,7 @@ in
     "yazi/keymap.toml".source = dotfilesSource "yazi/keymap.toml";
     "yazi/theme.toml".source = dotfilesSource "yazi/theme.toml";
     "yazi/init.lua".source = dotfilesSource "yazi/init.lua";
+    "yazi/plugins/raycast-state.yazi/main.lua".source = dotfilesSource "yazi/plugins/raycast-state.yazi/main.lua";
 
     # Tmux configuration
     "tmux/tmux.conf".source = dotfilesSource "tmux/tmux.conf";
