@@ -1028,10 +1028,6 @@ in
       Label = "com.jeremie.emacs-daemon";
       ProgramArguments = [ "${config.home.homeDirectory}/.local/bin/emacs-daemon-start" ];
       RunAtLoad = true;
-      KeepAlive = {
-        SuccessfulExit = false;
-        Crashed = true;
-      };
       ProcessType = "Interactive";
       EnvironmentVariables = {
         HOME = config.home.homeDirectory;
