@@ -4,6 +4,9 @@ let
   dotfiles = config.jeremie.dotfiles;
   dotfilesSource = dotfiles.source;
   dotfilesPath = dotfiles.path;
+  emacsBin = "/Applications/Emacs.app/Contents/MacOS/Emacs";
+  emacsClientBin = "/Applications/Emacs.app/Contents/MacOS/bin/emacsclient";
+  emacsSocketName = "main";
   bunInstall = "${config.xdg.dataHome}/bun";
   bunCache = "${config.xdg.cacheHome}/bun";
   npmGlobalPrefix = "${config.xdg.dataHome}/npm";
@@ -549,6 +552,99 @@ in
       executable = true;
     };
 
+    ".local/bin/emacs-daemon-start" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        EMACS_BIN="${emacsBin}"
+        SOCKET_PATH="''${TMPDIR%/}/emacs$(id -u)/${emacsSocketName}"
+
+        if [[ ! -x "$EMACS_BIN" ]]; then
+          echo "Emacs.app introuvable: $EMACS_BIN" >&2
+          exit 1
+        fi
+
+        if "${emacsClientBin}" --socket-name="${emacsSocketName}" -e "(emacs-pid)" >/dev/null 2>&1; then
+          exit 0
+        fi
+
+        # Clean up a stale socket left behind by an unclean daemon shutdown.
+        if [[ -S "$SOCKET_PATH" ]]; then
+          rm -f "$SOCKET_PATH"
+        fi
+
+        exec "$EMACS_BIN" --fg-daemon=${emacsSocketName}
+      '';
+      executable = true;
+    };
+
+    ".local/bin/e" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        wait_for_emacs() {
+          for _ in {1..200}; do
+            if "${emacsClientBin}" --socket-name="${emacsSocketName}" -e "(emacs-pid)" >/dev/null 2>&1; then
+              return 0
+            fi
+            sleep 0.1
+          done
+          return 1
+        }
+
+        if ! "${emacsClientBin}" --socket-name="${emacsSocketName}" -e "(emacs-pid)" >/dev/null 2>&1; then
+          nohup "$HOME/.local/bin/emacs-daemon-start" >/tmp/emacs-daemon.log 2>&1 &
+          if ! wait_for_emacs; then
+            echo "Emacs daemon did not become ready. See /tmp/emacs-daemon.log" >&2
+            exit 1
+          fi
+        fi
+
+        exec "${emacsClientBin}" --socket-name="${emacsSocketName}" -t "$@"
+      '';
+      executable = true;
+    };
+
+    ".local/bin/eg" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        wait_for_emacs() {
+          for _ in {1..200}; do
+            if "${emacsClientBin}" --socket-name="${emacsSocketName}" -e "(emacs-pid)" >/dev/null 2>&1; then
+              return 0
+            fi
+            sleep 0.1
+          done
+          return 1
+        }
+
+        if ! "${emacsClientBin}" --socket-name="${emacsSocketName}" -e "(emacs-pid)" >/dev/null 2>&1; then
+          nohup "$HOME/.local/bin/emacs-daemon-start" >/tmp/emacs-daemon.log 2>&1 &
+          if ! wait_for_emacs; then
+            echo "Emacs daemon did not become ready. See /tmp/emacs-daemon.log" >&2
+            exit 1
+          fi
+        fi
+
+        exec "${emacsClientBin}" --socket-name="${emacsSocketName}" -c "$@"
+      '';
+      executable = true;
+    };
+
+    ".local/bin/ek" = {
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        exec "${emacsClientBin}" --socket-name="${emacsSocketName}" -e "(kill-emacs)"
+      '';
+      executable = true;
+    };
+
     # Colima auto-stop - arrête Colima après 5 min d'inactivité (aucun container docker actif)
     # TUE également les processus limactl et le Virtual Machine Service
     ".local/bin/colima-autostop" = {
@@ -926,6 +1022,27 @@ in
   '';
 
   # === LAUNCHD AGENTS ===
+  launchd.agents.emacs-daemon = {
+    enable = true;
+    config = {
+      Label = "com.jeremie.emacs-daemon";
+      ProgramArguments = [ "${config.home.homeDirectory}/.local/bin/emacs-daemon-start" ];
+      RunAtLoad = true;
+      KeepAlive = {
+        SuccessfulExit = false;
+        Crashed = true;
+      };
+      ProcessType = "Interactive";
+      EnvironmentVariables = {
+        HOME = config.home.homeDirectory;
+        PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+        XDG_CONFIG_HOME = "${config.home.homeDirectory}/.config";
+      };
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/Emacs/stdout.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/Emacs/stderr.log";
+    };
+  };
+
   launchd.agents.colima-autostop = {
     enable = true;
     config = {
@@ -942,6 +1059,8 @@ in
       StandardErrorPath = "/tmp/colima-autostop.error.log";
     };
   };
+
+  home.file."Library/Logs/Emacs/.keep".text = "";
 
   # yazi: géré via brew (voir .local/bin/yazi wrapper)
   # La configuration est dans home/yazi.nix
