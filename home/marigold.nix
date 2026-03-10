@@ -738,6 +738,10 @@ in
     # Neovim configuration
     "nvim".source = dotfilesSource "nvim";
 
+    # Doom Emacs configuration and local framework checkout
+    "doom".source = dotfilesSource "emacs/.config/doom";
+    "emacs".source = dotfilesSource "emacs/.config/emacs";
+
     # Hammerspoon configuration (XDG)
     "hammerspoon".source = dotfilesSource "hammerspoon";
 
