@@ -84,11 +84,7 @@ Pourquoi:
 - pas besoin de rebuild Nix pour ajouter un package Brew
 - moins de confusion entre packages Nix et packages Brew
 
-## Exception actuelle
-
-Tous les binaires ne sont pas encore forcément migrés vers Brew.
-
-Exemple: `nvim` peut rester géré par Nix tant qu'une migration explicite n'a pas été décidée.
+## Règle de décision
 
 La règle reste simple:
 

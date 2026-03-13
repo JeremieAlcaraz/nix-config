@@ -14,6 +14,7 @@ Ce guide explique comment ajouter un nouveau package sur **Marigold** avec la s√
 Ajoute-le dans [Brewfile](/Users/jeremiealcaraz/c/dotfiles/Brewfile).
 
 ```ruby
+brew "neovim"
 brew "ripgrep"
 brew "fd"
 brew "jq"

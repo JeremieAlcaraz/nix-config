@@ -127,10 +127,6 @@ in
     gh # GitHub CLI
     home-manager
 
-
-    # Editor (LazyVim nécessite une version récente)
-    unstable.neovim
-
     # Shell tools (atuin, carapace for completions)
     # zoxide: installé via brew
     atuin
@@ -217,6 +213,9 @@ in
     # Fix PATH after macOS path_helper (loaded in /etc/zprofile)
     ".zprofile".text = ''
       # Restore paths that might be reordered/removed by /etc/zprofile's path_helper
+      [[ -d "/opt/homebrew/bin" ]] && export PATH="/opt/homebrew/bin:$PATH"
+      [[ -d "/opt/homebrew/sbin" ]] && export PATH="/opt/homebrew/sbin:$PATH"
+      [[ -d "/usr/local/bin" ]] && export PATH="/usr/local/bin:$PATH"
       [[ -d "/opt/zerobrew/prefix/bin" ]] && export PATH="/opt/zerobrew/prefix/bin:$PATH"
       [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
       [[ -d "${npmGlobalBin}" ]] && export PATH="${npmGlobalBin}:$PATH"
@@ -777,6 +776,9 @@ in
     "zsh/.zshenv".source = dotfilesSource "zsh/.zshenv.marigold";
     "zsh/.zprofile".text = ''
       # Fix PATH after macOS /etc/zprofile's path_helper
+      [[ -d "/opt/homebrew/bin" ]] && export PATH="/opt/homebrew/bin:$PATH"
+      [[ -d "/opt/homebrew/sbin" ]] && export PATH="/opt/homebrew/sbin:$PATH"
+      [[ -d "/usr/local/bin" ]] && export PATH="/usr/local/bin:$PATH"
       [[ -d "/opt/zerobrew/prefix/bin" ]] && export PATH="/opt/zerobrew/prefix/bin:$PATH"
       [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
       [[ -d "${npmGlobalBin}" ]] && export PATH="${npmGlobalBin}:$PATH"
