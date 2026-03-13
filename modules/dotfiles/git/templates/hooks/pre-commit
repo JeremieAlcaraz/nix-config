@@ -25,7 +25,7 @@ fi
 # ============================================================================
 # 2. Vérifier les markers de merge conflict
 # ============================================================================
-if git diff --cached | grep -E "^(\+<<<<<<<|^\+>>>>>>>|^\+=======)"; then
+if git diff --cached | grep -E '^\+(<<<<<<<|>>>>>>>|=======)'; then
     echo -e "${RED}✗${NC} Merge conflict markers detected!"
     exit 1
 else
@@ -47,14 +47,22 @@ sensitive_files=(
     "secrets.yml"
 )
 
-for pattern in "${sensitive_files[@]}"; do
-    if git diff --cached --name-only | grep -vE '\.envrc$' | grep -qE "$pattern"; then
-        echo -e "${RED}✗${NC} Sensitive file detected: files matching '$pattern'"
-        echo -e "${YELLOW}Warning:${NC} You're about to commit a potentially sensitive file!"
-        echo -e "${YELLOW}Tip:${NC} Add it to .gitignore if it should never be committed"
-        exit 1
-    fi
-done
+while IFS= read -r staged_file; do
+    [[ -z "$staged_file" ]] && continue
+    [[ "$staged_file" == *.envrc ]] && continue
+
+    for pattern in "${sensitive_files[@]}"; do
+        case "$staged_file" in
+            $pattern)
+                echo -e "${RED}✗${NC} Sensitive file detected: '$staged_file' matches '$pattern'"
+                echo -e "${YELLOW}Warning:${NC} You're about to commit a potentially sensitive file!"
+                echo -e "${YELLOW}Tip:${NC} Add it to .gitignore if it should never be committed"
+                exit 1
+                ;;
+        esac
+    done
+done < <(git diff --cached --name-only)
+
 echo -e "${GREEN}✓${NC} No sensitive files detected"
 
 # ============================================================================

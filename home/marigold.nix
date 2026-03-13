@@ -128,14 +128,14 @@ in
     home-manager
 
     # Shell tools (atuin, carapace for completions)
-    # zoxide: installé via brew
+    # zoxide: source de verite dans dotfiles/Brewfile
     atuin
     carapace
     unstable.tabiew
     direnv
     glow
     navi
-    # ripgrep: installé via brew
+    # ripgrep: source de verite dans dotfiles/Brewfile
     # Node global pour outils non-interactifs (agents AI, scripts CI, etc.).
     # fnm reste actif en shell interactif pour gérer les versions par projet.
     nodejs_22
@@ -1065,6 +1065,6 @@ in
 
   home.file."Library/Logs/Emacs/.keep".text = "";
 
-  # yazi: géré via brew (voir .local/bin/yazi wrapper)
+  # yazi: source de verite dans dotfiles/Brewfile (voir .local/bin/yazi wrapper)
   # La configuration est dans home/yazi.nix
 }

@@ -58,7 +58,13 @@ launchd.agents.aerospace = {
 
 ### 2. Version Stable
 
-La configuration utilise `aerospace@0.19.2` (dernière version stable) au lieu de la beta. Dans `hosts/marigold/configuration.nix`, la liste `homebrew.casks` installe maintenant explicitement `nikitabobko/tap/aerospace@0.19.2`, donc `darwin-rebuild switch --flake .#marigold` retélécharge et installe toujours cette version.
+La source de vérité des packages Homebrew a été déplacée dans `dotfiles/Brewfile`.
+
+Pour AeroSpace, cela signifie:
+
+- l'installation passe désormais par `dotfiles/Brewfile`
+- `nix-config` ne pilote plus directement `homebrew.casks`
+- la configuration système et les permissions restent, elles, dans `nix-config`
 
 ## Procédure d'Application
 
@@ -81,7 +87,12 @@ sudo tccutil reset SystemPolicyAllFiles bobko.aerospace
 ```bash
 cd ~/Development/_programmation/_production/_services/nix-config
 
-# Rebuild nix-darwin (installe aerospace@0.19.2)
+# Installer/synchroniser les packages Brew
+cd ~/c/dotfiles
+just brew-install-packages
+
+# Puis appliquer la config système
+cd ~/c/nix-config
 darwin-rebuild switch --flake .#marigold
 ```
 
