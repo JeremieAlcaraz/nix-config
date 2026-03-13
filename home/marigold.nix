@@ -574,7 +574,7 @@ in
           rm -f "$SOCKET_PATH"
         fi
 
-        exec "$EMACS_BIN" --fg-daemon=${emacsSocketName}
+        nohup "$EMACS_BIN" --daemon=${emacsSocketName} >/tmp/emacs-daemon.log 2>&1 &
       '';
       executable = true;
     };
@@ -841,6 +841,9 @@ in
     # Hammerspoon configuration (XDG)
     "hammerspoon".source = dotfilesSource "hammerspoon";
 
+    # Keyboard Cowboy - config hors store (l'app écrit des backups/state localement)
+    "keyboardcowboy".source = dotfilesSource "keyboardcowboy";
+
     # Nushell configuration (XDG-compliant by default)
     "nushell/env.nu".source = dotfilesSource "nushell/env.marigold.nu";
     "nushell/config.nu".source = dotfilesSource "nushell/config.marigold.nu";
@@ -1028,6 +1031,8 @@ in
       Label = "com.jeremie.emacs-daemon";
       ProgramArguments = [ "${config.home.homeDirectory}/.local/bin/emacs-daemon-start" ];
       RunAtLoad = true;
+      # Intentionally do not use KeepAlive here. This agent is a one-shot
+      # bootstrap at login; `e`/`eg` also start the daemon on demand.
       ProcessType = "Interactive";
       EnvironmentVariables = {
         HOME = config.home.homeDirectory;

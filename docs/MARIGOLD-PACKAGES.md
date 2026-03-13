@@ -1,12 +1,37 @@
 # 🧩 Ajouter un package sur Marigold (darwin)
 
-Ce guide explique comment ajouter un nouveau package sur **Marigold** en respectant la structure actuelle du repo.
+Ce guide explique comment ajouter un nouveau package sur **Marigold** avec la séparation actuelle:
+
+- `dotfiles` pour les packages Homebrew
+- `nix-config` pour les packages Nix et l'orchestration système
 
 ---
 
 ## ✅ Où ajouter quoi ?
 
-### 1) **CLI / TUI (outil terminal)**
+### 1) **CLI / TUI via Homebrew**
+
+Ajoute-le dans [Brewfile](/Users/jeremiealcaraz/c/dotfiles/Brewfile).
+
+```ruby
+brew "ripgrep"
+brew "fd"
+brew "jq"
+```
+
+Puis applique:
+
+```bash
+cd /Users/jeremiealcaraz/c/dotfiles
+just brew-install-packages
+```
+
+---
+
+### 2) **CLI / TUI via Nix**
+
+Utilise cette voie seulement si tu veux explicitement garder le package côté Nix.
+
 Ajoute-le dans `home/marigold.nix` → `home.packages`.
 
 ```nix
@@ -28,23 +53,19 @@ home.packages = with pkgs; [
 
 ---
 
-### 2) **GUI / app macOS**
-Utilise Homebrew **cask** dans `hosts/marigold/configuration.nix`.
+### 3) **GUI / app macOS**
 
-```nix
-homebrew = {
-  enable = true;
-  casks = [
-    "1password"
-    "hammerspoon"
-    "raycast"
-  ];
-};
+Utilise Homebrew **cask** dans [Brewfile](/Users/jeremiealcaraz/c/dotfiles/Brewfile).
+
+```ruby
+cask "1password"
+cask "hammerspoon"
+cask "raycast"
 ```
 
 ---
 
-### 3) **App avec config (dotfiles)**
+### 4) **App avec config (dotfiles)**
 Si l’outil a une config dédiée, place-la dans `modules/dotfiles/<app>/` puis référence-la via `xdg.configFile` dans `home/marigold.nix`.
 
 Exemple :
@@ -54,7 +75,7 @@ xdg.configFile."myapp/config.toml".source = ../modules/dotfiles/myapp/config.tom
 
 ---
 
-### 4) **Cas spécifiques (plugins, runtime deps, etc.)**
+### 5) **Cas spécifiques (plugins, runtime deps, etc.)**
 Si un outil est **uniquement requis par une app**, préfère le déclarer près de cette app.
 
 Exemple (Yazi) :
@@ -81,10 +102,10 @@ nix search nixpkgs-unstable <nom>
 ## 🚀 Appliquer
 
 ```bash
-# Alias perso
- drs
+# Packages Brew
+cd ~/c/dotfiles && just brew-install-packages
 
-# Ou explicitement
+# Rebuild Nix seulement si tu as touché à la partie Nix
  darwin-rebuild switch --flake .#marigold
 ```
 
@@ -101,8 +122,8 @@ command -v <binaire>
 
 ## 🧠 Résumé “structure propre”
 
-- **CLI/TUI** → `home/marigold.nix` → `home.packages`
-- **GUI** → `hosts/marigold/configuration.nix` → `homebrew.casks`
+- **Packages Homebrew CLI/TUI/GUI** → `dotfiles/Brewfile`
+- **Packages Nix** → `home/marigold.nix` → `home.packages`
 - **Config** → `modules/dotfiles/<app>/` + `xdg.configFile`
 - **Dépendance spécifique à une app** → dans le bloc de cette app (ex: `programs.yazi.*`)
 

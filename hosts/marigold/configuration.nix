@@ -1,46 +1,5 @@
-{ config, pkgs, ... }:
-let
-  brewBin = if pkgs.stdenv.hostPlatform.isAarch64 then "/opt/homebrew/bin" else "/usr/local/bin";
-in {
+{ config, pkgs, ... }: {
   nixpkgs.config.allowUnfree = true;
-
-  homebrew = {
-    enable = true;
-    caskArgs = {
-      appdir = "/Applications";
-    };
-    taps = [
-      "felixkratz/formulae"
-      "nikitabobko/tap"
-    ];
-    brews = [
-      "yazi"
-      "ouch"
-      "ffmpeg"
-      "sevenzip"
-      "jq"
-      "poppler"
-      "fd"
-      "ripgrep"
-      "fzf"
-      "zoxide"
-      "resvg"
-      "imagemagick"
-      "borders"
-      "lua"
-      "nowplaying-cli"
-      "sketchybar"
-      "switchaudio-osx"
-    ];
-    casks = [
-      "1password"
-      "aerospace" # Version actuelle pour éviter les blocages TCC sur 0.19.2-Beta
-      "font-sf-mono"
-      "font-sf-pro"
-      "hammerspoon"
-      "sf-symbols"
-    ];
-  };
 
   security.pam.enableSudoTouchIdAuth = true; # Use Touch ID for sudo authentication.
   fonts.packages = [ pkgs.fira-code pkgs.jetbrains-mono ]; # Install monospace fonts.
