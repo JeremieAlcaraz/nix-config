@@ -1,4 +1,0 @@
-% Zsh - cmd utiles
-
-# activate the debug mode (to see performance)
-ZSH_DEBUGRC=1 zsh -i

@@ -1,4 +1,0 @@
-
-$HOME/Dev/_programmation/_playground/_side-projects/j12zdotcom
-$HOME/dotfiles
-$HOME/.config
