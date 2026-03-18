@@ -48,21 +48,7 @@ let
   # Routage simplifié pour accès direct via Tailscale (pas de restriction IP)
   # Si on accède via le hostname Tailscale, on est déjà authentifié
   tailscaleDirectRouting = ''
-    # Matcher pour /docs (documentation)
-    @docs path /docs /docs/*
-
-    route {
-      # /docs : strip le préfixe et proxyer vers mimosa:4322
-      handle @docs {
-        uri strip_prefix /docs
-        reverse_proxy mimosa:4322
-      }
-
-      # Tout le reste (/, /wip, assets, etc.) : vers site principal
-      handle {
-        reverse_proxy mimosa:4321
-      }
-    }
+    reverse_proxy mimosa:4321
   '';
 in
 {
