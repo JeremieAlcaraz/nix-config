@@ -8,7 +8,6 @@ let
   cfg = config.mimosa.webserver;
   # Packages pré-buildés depuis la flake (téléchargés depuis le cache magnolia)
   sitePackage = j12zdotcom.packages.x86_64-linux.site;
-  docsPackage = j12zdotcom.packages.x86_64-linux.docs;
 in
 {
   options.mimosa.webserver.enable = lib.mkEnableOption "the j12z webserver for mimosa";
@@ -35,25 +34,5 @@ in
       };
     };
 
-    # Service Node.js pour la documentation (Fumadocs)
-    systemd.services.j12zdotcom-docs = {
-      description = "J12z Documentation Server (Fumadocs)";
-      wantedBy = [ "multi-user.target" ];
-      restartTriggers = [ docsPackage ];
-
-      serviceConfig = {
-        ExecStart = "${pkgs.nodejs_22}/bin/node ${docsPackage}/server/entry.mjs";
-        WorkingDirectory = "${docsPackage}";
-        Environment = [
-          "HOST=0.0.0.0"
-          "PORT=4322"
-          "NODE_ENV=production"
-        ];
-
-        DynamicUser = true;
-        Restart = "always";
-        RestartSec = "5s";
-      };
-    };
   };
 }
