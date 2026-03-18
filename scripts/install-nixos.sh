@@ -355,6 +355,16 @@ step "Étape 5/7 : Génération de la configuration matérielle"
 nixos-generate-config --root /mnt
 info "Configuration matérielle générée"
 
+# Remplacer les UUID par des labels stables pour éviter les problèmes au reboot
+# (le disque root est formaté avec -L nixos-root et l'ESP avec -n ESP)
+sed -i 's|/dev/disk/by-uuid/[0-9a-f-]\{36\}";.*# root|/dev/disk/by-label/nixos-root";|' /mnt/etc/nixos/hardware-configuration.nix
+# Remplacement par label pour la partition root ext4 (UUID 8 groupes hexadécimaux)
+ROOT_UUID=$(blkid -s UUID -o value "${DISK}2" 2>/dev/null || true)
+if [[ -n "$ROOT_UUID" ]]; then
+    sed -i "s|/dev/disk/by-uuid/${ROOT_UUID}|/dev/disk/by-label/nixos-root|g" /mnt/etc/nixos/hardware-configuration.nix
+    info "UUID root remplacé par /dev/disk/by-label/nixos-root"
+fi
+
 # Sauvegarder hardware-configuration.nix avant de cloner
 cp /mnt/etc/nixos/hardware-configuration.nix /tmp/hardware-configuration.nix
 info "Hardware configuration sauvegardée temporairement"
