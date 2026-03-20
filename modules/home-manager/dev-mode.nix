@@ -65,4 +65,27 @@ in
       find "$HOME/.local/share/git-core/templates/hooks" -type l \
         -exec chmod +x {} \; 2>/dev/null || true
     '';
+
+  # Optionnel mais utile en mode "dotfiles source of truth":
+  # Home Manager garde ses liens via $HOME/.nix-profile/.. -> /nix/store/... par design.
+  # Ce hook remplace ces liens par des symlinks directs vers ~/c/dotfiles
+  # uniquement quand la cible finale est bien dans le repo de dotfiles.
+  config.home.activation.externalModeDirectDotfilesSymlinks =
+    lib.hm.dag.entryAfter ["linkGeneration"] ''
+      if [ -d "$HOME/.config" ]; then
+        find "$HOME/.config" -type l 2>/dev/null | while IFS= read -r link; do
+          first_target="$(readlink "$link" 2>/dev/null || true)"
+          case "$first_target" in
+            /nix/store/*home-manager-files/*)
+              second_target="$(readlink "$first_target" 2>/dev/null || true)"
+              case "$second_target" in
+                "${cfg.externalRoot}"/*)
+                  ln -sfn "$second_target" "$link"
+                  ;;
+              esac
+              ;;
+          esac
+        done
+      fi
+    '';
 }

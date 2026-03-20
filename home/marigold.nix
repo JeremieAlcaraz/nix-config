@@ -791,9 +791,9 @@ in
     "zsh/modules/03-history.zsh".source = dotfilesSource "zsh/modules/03-history.zsh";
     "zsh/modules/04-completion.zsh".source = dotfilesSource "zsh/modules/04-completion.zsh";
     "zsh/modules/05-aliases.zsh".source = dotfilesSource "zsh/modules/05-aliases.zsh";
-    "zsh/modules/06-tools.zsh".source = dotfilesSource "zsh/modules/06-tools.marigold.zsh";
+    "zsh/modules/06-tools.zsh".source = dotfilesSource "zsh/modules/06-tools.zsh";
     "zsh/modules/07-fzf.zsh".source = dotfilesSource "zsh/modules/07-fzf.zsh";
-    "zsh/modules/99-syntax-highlighting.zsh".source = dotfilesSource "zsh/modules/99-syntax-highlighting.marigold.zsh";
+    "zsh/modules/99-syntax-highlighting.zsh".source = dotfilesSource "zsh/modules/99-syntax-highlighting.zsh";
 
     # Fonctions ZSH
     "zsh/functions/dotfiles-switcher.zsh".source = dotfilesSource "zsh/functions/dotfiles-switcher.zsh";

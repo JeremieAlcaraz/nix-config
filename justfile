@@ -8,7 +8,7 @@ promote:
     git -C ~/c/nix-config/main fetch origin
     git -C ~/c/nix-config/main merge playground --no-edit
     git -C ~/c/nix-config/main push origin main
-    cd ~/c/nix-config/main && home-manager switch --flake .#jeremiealcaraz
+    cd ~/c/nix-config/main && home-manager switch -b backup --flake .#jeremiealcaraz
 
 restore-n8n:
 	sudo nix-shell -p sops rclone fzf jq yq-go --run ./scripts/restore-n8n.sh
