@@ -15,6 +15,7 @@ let
   pnpmStore = "${config.xdg.dataHome}/pnpm/store";
   repoRoot = dotfiles.repoRoot;
   repoKarabinerDir = dotfilesPath "karabiner/.config/karabiner";
+  repoPiDir = dotfilesPath "pi";
   yaziPlugins = import ./yazi-plugins.nix;
 in
 
@@ -177,6 +178,8 @@ in
       if [[ -o interactive ]]; then
         ${pkgs.any-nix-shell}/bin/any-nix-shell zsh --info-right | source /dev/stdin
       fi
+      export PATH="$HOME/.local/bin:$PATH"
+      eval "$($HOME/.local/bin/prod.rb init ~/c)"
     '';
   };
 
@@ -964,6 +967,21 @@ in
     move_broken_link "${config.xdg.configHome}/hammerspoon"
     move_broken_link "${config.xdg.configHome}/karabiner"
     move_broken_link "${config.home.homeDirectory}/.hammerspoon"
+  '';
+
+  home.activation.linkPiDirFromDotfiles = config.lib.dag.entryAfter ["writeBoundary"] ''
+    PI_LINK="${config.home.homeDirectory}/.pi"
+    REPO_PI_DIR="${repoPiDir}"
+
+    if [ -e "$PI_LINK" ] && [ ! -L "$PI_LINK" ]; then
+      stamp="$(date +%Y%m%d-%H%M%S)"
+      backup_path="$PI_LINK.backup-$stamp"
+      mv "$PI_LINK" "$backup_path"
+      echo "Pi: dossier/fichier existant sauvegarde -> $backup_path"
+    fi
+
+    ln -sfn "$REPO_PI_DIR" "$PI_LINK"
+    echo "Pi: symlink direct cree -> $PI_LINK -> $REPO_PI_DIR"
   '';
 
   home.activation.bootstrapSopsAgeKey = config.lib.dag.entryAfter ["writeBoundary"] ''
