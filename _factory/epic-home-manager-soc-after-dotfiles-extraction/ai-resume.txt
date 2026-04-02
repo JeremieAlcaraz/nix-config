@@ -1,0 +1,10 @@
+Epic: epic-home-manager-soc-after-dotfiles-extraction
+Current status: ready
+Last sync: 2026-04-02T10:48:43Z
+Token usage: total=unknown input=unknown (+ unknown cached) output=unknown (reasoning unknown)
+Resume command: codex resume epic-home-manager-soc-after-dotfiles-extraction
+Resume id stable for epic: epic-home-manager-soc-after-dotfiles-extraction
+Previous resume ids: -
+What changed: Epic factory skeleton created and synchronized to Gitea (epic + 6 stories).
+Blockers: Dépendance au résultat du spike DX Dotbot (epic dotfiles T02/T03).
+Next 3 actions: 1) Lancer T01 inventaire HM 2) Rédiger T02 ADR scope cible 3) Préparer T03 coexistence HM/Dotbot.

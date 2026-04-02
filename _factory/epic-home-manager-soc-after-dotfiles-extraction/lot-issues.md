@@ -1,0 +1,9 @@
+| key | task_ref | type | title | labels | assignee | parent_key | issue_id | url | state |
+|---|---|---|---|---|---|---|---|---|---|
+| EPIC-NIX-HM-SOC-001 | - | epic | [EPIC] Redéfinir le scope Home Manager après extraction des dotfiles | type/epic,prio/high | jeremiealcaraz | - | 38 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/38 | open |
+| STORY-NIX-HM-SOC-001 | T01 | story | [STORY] Cartographier l'existant Home Manager | type/story,prio/high | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 39 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/39 | open |
+| STORY-NIX-HM-SOC-002 | T02 | story | [STORY] Formaliser la cible SoC de Home Manager | type/story,prio/high | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 40 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/40 | open |
+| STORY-NIX-HM-SOC-003 | T03 | story | [STORY] Préparer la coexistence HM et Dotbot en transition | type/story,prio/medium | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 41 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/41 | open |
+| STORY-NIX-HM-SOC-004 | T04 | story | [STORY] Retirer les liens HM du lot safe après validation Dotbot | type/story,prio/medium | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 42 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/42 | open |
+| STORY-NIX-HM-SOC-005 | T05 | story | [STORY] Retirer les liens HM restants et finaliser le scope | type/story,prio/high | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 43 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/43 | open |
+| STORY-NIX-HM-SOC-006 | T06 | story | [STORY] Ajouter des garde-fous automatiques de scope HM | type/story,prio/medium | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 44 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/44 | open |
