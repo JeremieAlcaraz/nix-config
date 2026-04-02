@@ -819,10 +819,10 @@ in
     "zsh/plugins".source = dotfilesSource "zsh/plugins";
 
     # Starship prompt configuration
-    "starship.toml".source = dotfilesSource "starship/starship.toml";
+    # Migré vers Dotbot (dotfiles spike/dotbot-dx) pour lien direct repo -> ~/.config.
 
     # GitHub CLI configuration
-    "gh".source = dotfilesSource "gh";
+    # Migré vers Dotbot (dotfiles spike/dotbot-dx) pour lien direct repo -> ~/.config.
 
     # Git ignore global (XDG)
     "git/ignore".source = dotfilesSource "git/ignore";
@@ -867,7 +867,7 @@ in
     "broot/verbs.hjson".source = dotfilesSource "broot/verbs.hjson";
 
     # Ripgrep configuration
-    "ripgrep".source = dotfilesSource "ripgrep";
+    # Migré vers Dotbot (dotfiles spike/dotbot-dx) pour lien direct repo -> ~/.config.
 
     # fd ignore file (XDG)
     "fd/ignore".source = dotfilesSource "fd/ignore";

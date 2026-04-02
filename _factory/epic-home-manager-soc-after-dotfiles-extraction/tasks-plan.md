@@ -37,6 +37,7 @@ Définir un scope Home Manager clair et durable après migration progressive des
   Benefits: Réduction immédiate de couplage HM↔dotfiles.
   Tests: symlinks directs post-switch + comportement CLI inchangé.
   Commit: refactor(hm): remove safe batch dotfile links
+  Status: En cours — suppressions HM faites pour `gh`, `ripgrep`, `starship`; reste à aligner `bat` et `fd`.
 
 - [ ] T05 Retirer les entrées HM des lots terminal puis sensible
   Depends on: T04
