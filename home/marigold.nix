@@ -881,7 +881,7 @@ in
     "television".source = dotfilesSource "television";
 
     # Sesh session manager
-    "sesh/sesh.toml".source = dotfilesSource "sesh/sesh.toml";
+    # Migré vers Dotbot pour lien direct repo -> ~/.config/sesh/sesh.toml.
 
     # Yazi - config hors store (editable directement dans le repo)
     # Migré vers Dotbot pour liens directs repo -> ~/.config/yazi/*.

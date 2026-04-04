@@ -45,7 +45,7 @@ Définir un scope Home Manager clair et durable après migration progressive des
   Benefits: HM recentré sur son cœur utile.
   Tests: `home-manager switch` + smoke complet apps critiques.
   Commit: refactor(hm): remove remaining dotfile links
-  Status: En cours — entrées HM retirées pour `nvim`, `wezterm`, `tmux` et `yazi`; reste les autres composants terminal/sensibles.
+  Status: En cours — entrées HM retirées pour `nvim`, `wezterm`, `tmux`, `yazi` et `sesh`; reste les autres composants terminal/sensibles.
 
 - [ ] T06 Ajouter garde-fous anti-réintroduction et doc d'exploitation
   Depends on: T05
