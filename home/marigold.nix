@@ -809,7 +809,7 @@ in
     "emacs".source = dotfilesSource "emacs/.config/emacs";
 
     # Hammerspoon configuration (XDG)
-    "hammerspoon".source = dotfilesSource "hammerspoon";
+    # Migré vers Dotbot pour lien direct repo -> ~/.config/hammerspoon.
 
     # Keyboard Cowboy - config hors store (l'app écrit des backups/state localement)
     "keyboardcowboy".source = dotfilesSource "keyboardcowboy";
