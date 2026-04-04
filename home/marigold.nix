@@ -891,9 +891,7 @@ in
     "yazi/plugins/raycast-state.yazi/main.lua".source = dotfilesSource "yazi/plugins/raycast-state.yazi/main.lua";
 
     # Tmux configuration
-    "tmux/tmux.conf".source = dotfilesSource "tmux/tmux.conf";
-    "tmux/tmux.reset.conf".source = dotfilesSource "tmux/tmux.reset.conf";
-    "tmux/scripts/cal.sh" = dotfiles.mkScript "tmux/scripts/cal.sh";
+    # Migré vers Dotbot pour liens directs repo -> ~/.config/tmux/*.
   };
 
   # === SOPS (secrets) ===

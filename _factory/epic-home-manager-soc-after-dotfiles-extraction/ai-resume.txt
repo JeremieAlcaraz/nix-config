@@ -1,10 +1,10 @@
 Epic: epic-home-manager-soc-after-dotfiles-extraction
 Current status: in_progress
-Last sync: 2026-04-04T07:50:23Z
+Last sync: 2026-04-04T07:53:30Z
 Token usage: total=unknown input=unknown (+ unknown cached) output=unknown (reasoning unknown)
 Resume command: codex resume epic-home-manager-soc-after-dotfiles-extraction
 Resume id stable for epic: epic-home-manager-soc-after-dotfiles-extraction
 Previous resume ids: -
-What changed: Retrait HM supplémentaire effectué pour `nvim` et `wezterm` (alignement avec migration Dotbot).
+What changed: Retrait HM supplémentaire effectué pour `tmux` (en plus de `nvim` et `wezterm`) aligné avec migration Dotbot.
 Blockers: `home-manager switch` peut échouer sur SSL des caches Nix, ce qui ralentit la validation post-changement HM.
-Next 3 actions: 1) Exécuter `home-manager switch` quand SSL/caches OK 2) Retirer prochaines entrées HM (`tmux`, `yazi`, etc.) 3) Formaliser ADR SoC cible.
+Next 3 actions: 1) Exécuter `home-manager switch` quand SSL/caches OK 2) Retirer prochaines entrées HM (`yazi`, `sesh`, `television`, etc.) 3) Formaliser ADR SoC cible.
