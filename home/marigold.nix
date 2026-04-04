@@ -878,7 +878,7 @@ in
     "git/templates/hooks/prepare-commit-msg" = dotfiles.mkScript "git/templates/hooks/prepare-commit-msg";
 
     # Television - config hors store (editable directement dans le repo)
-    "television".source = dotfilesSource "television";
+    # Migré vers Dotbot pour lien direct repo -> ~/.config/television.
 
     # Sesh session manager
     # Migré vers Dotbot pour lien direct repo -> ~/.config/sesh/sesh.toml.
