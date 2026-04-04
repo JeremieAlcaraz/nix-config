@@ -7,3 +7,4 @@
 | STORY-NIX-HM-SOC-004 | T04 | story | [STORY] Retirer les liens HM du lot safe après validation Dotbot | type/story,prio/medium | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 42 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/42 | open |
 | STORY-NIX-HM-SOC-005 | T05 | story | [STORY] Retirer les liens HM restants et finaliser le scope | type/story,prio/high | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 43 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/43 | open |
 | STORY-NIX-HM-SOC-006 | T06 | story | [STORY] Ajouter des garde-fous automatiques de scope HM | type/story,prio/medium | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 44 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/44 | open |
+| STORY-NIX-HM-SOC-007 | T05 | story | [STORY] Sortir `~/.zshenv` et `~/.zprofile` de HM (phase optionnelle post-stabilisation) | type/story,prio/low | jeremiealcaraz | EPIC-NIX-HM-SOC-001 | 45 | http://dandelion:3000/jeremiealcaraz/nix-config/issues/45 | open |
