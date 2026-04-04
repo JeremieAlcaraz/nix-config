@@ -46,6 +46,12 @@ Définir un scope Home Manager clair et durable après migration progressive des
   Tests: `home-manager switch` + smoke complet apps critiques.
   Commit: refactor(hm): remove remaining dotfile links
   Status: En cours — entrées HM retirées pour `nvim`, `wezterm`, `tmux`, `yazi`, `sesh`, `television`; reste les autres composants sensibles (`zsh`, `doom/emacs`, `hammerspoon`).
+  Découpage HM côté sensible:
+  - T05-A Retirer d'abord `xdg.configFile` pour `~/.config/zsh/**` seulement.
+  - T05-B Conserver provisoirement `home.file.".zshenv"` et `home.file.".zprofile"` pour éviter de bricker l'init shell.
+  - T05-C `hm-switch` + smoke test zsh (nouveau terminal) avant de toucher `doom/emacs`.
+  - T05-D Retirer ensuite les blocs `doom`/`emacs`, valider démarrage Emacs + Doom sync.
+  - T05-E Retirer enfin `hammerspoon`, valider reload runtime.
 
 - [ ] T06 Ajouter garde-fous anti-réintroduction et doc d'exploitation
   Depends on: T05
