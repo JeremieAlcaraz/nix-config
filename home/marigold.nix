@@ -884,11 +884,7 @@ in
     "sesh/sesh.toml".source = dotfilesSource "sesh/sesh.toml";
 
     # Yazi - config hors store (editable directement dans le repo)
-    "yazi/yazi.toml".source = dotfilesSource "yazi/yazi.toml";
-    "yazi/keymap.toml".source = dotfilesSource "yazi/keymap.toml";
-    "yazi/theme.toml".source = dotfilesSource "yazi/theme.toml";
-    "yazi/init.lua".source = dotfilesSource "yazi/init.lua";
-    "yazi/plugins/raycast-state.yazi/main.lua".source = dotfilesSource "yazi/plugins/raycast-state.yazi/main.lua";
+    # Migré vers Dotbot pour liens directs repo -> ~/.config/yazi/*.
 
     # Tmux configuration
     # Migré vers Dotbot pour liens directs repo -> ~/.config/tmux/*.
