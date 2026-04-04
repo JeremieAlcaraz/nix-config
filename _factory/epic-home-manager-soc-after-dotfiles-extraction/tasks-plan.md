@@ -39,13 +39,13 @@ Définir un scope Home Manager clair et durable après migration progressive des
   Commit: refactor(hm): remove safe batch dotfile links
   Status: En cours — suppressions HM faites pour `gh`, `ripgrep`, `starship`; reste à aligner `bat` et `fd`.
 
-- [ ] T05 Retirer les entrées HM des lots terminal puis sensible
+- [x] T05 Retirer les entrées HM des lots terminal puis sensible
   Depends on: T04
   Changes: suppressions `wezterm/tmux/yazi` puis `nvim/zsh/emacs/hammerspoon`
   Benefits: HM recentré sur son cœur utile.
   Tests: `home-manager switch` + smoke complet apps critiques.
   Commit: refactor(hm): remove remaining dotfile links
-  Status: En cours — entrées HM retirées pour `nvim`, `wezterm`, `tmux`, `yazi`, `sesh`, `television`, `~/.config/zsh/**`, et `hammerspoon`. Les fichiers racine `~/.zshenv`/`~/.zprofile` sont conservés côté HM (bootstrap shell). Reste `doom/emacs`.
+  Status: Terminé — entrées HM retirées pour `nvim`, `wezterm`, `tmux`, `yazi`, `sesh`, `television`, `~/.config/zsh/**`, `hammerspoon`, `doom/emacs`. Les fichiers racine `~/.zshenv`/`~/.zprofile` restent côté HM par choix de sécurité (follow-up optionnel issue #45).
   Découpage HM côté sensible:
   - T05-A Retirer d'abord `xdg.configFile` pour `~/.config/zsh/**` seulement.
   - T05-B Conserver provisoirement `home.file.".zshenv"` et `home.file.".zprofile"` pour éviter de bricker l'init shell.

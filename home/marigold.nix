@@ -805,8 +805,7 @@ in
     # Migré vers Dotbot (priorisation nvim) pour lien direct repo -> ~/.config.
 
     # Doom Emacs configuration and local framework checkout
-    "doom".source = dotfilesSource "emacs/.config/doom";
-    "emacs".source = dotfilesSource "emacs/.config/emacs";
+    # Migré vers Dotbot pour liens directs repo -> ~/.config/{doom,emacs}.
 
     # Hammerspoon configuration (XDG)
     # Migré vers Dotbot pour lien direct repo -> ~/.config/hammerspoon.
