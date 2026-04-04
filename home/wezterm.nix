@@ -5,5 +5,5 @@
     wezterm
   ];
 
-  xdg.configFile."wezterm".source = config.jeremie.dotfiles.source "wezterm";
+  # Migré vers Dotbot pour lien direct repo -> ~/.config/wezterm.
 }
