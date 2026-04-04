@@ -837,7 +837,7 @@ in
     "bat/themes".source = dotfilesSource "bat/themes";
 
     # Neovim configuration
-    "nvim".source = dotfilesSource "nvim";
+    # Migré vers Dotbot (priorisation nvim) pour lien direct repo -> ~/.config.
 
     # Doom Emacs configuration and local framework checkout
     "doom".source = dotfilesSource "emacs/.config/doom";

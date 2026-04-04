@@ -1,10 +1,10 @@
 Epic: epic-home-manager-soc-after-dotfiles-extraction
 Current status: in_progress
-Last sync: 2026-04-02T11:29:49Z
+Last sync: 2026-04-04T07:27:29Z
 Token usage: total=unknown input=unknown (+ unknown cached) output=unknown (reasoning unknown)
 Resume command: codex resume epic-home-manager-soc-after-dotfiles-extraction
 Resume id stable for epic: epic-home-manager-soc-after-dotfiles-extraction
 Previous resume ids: -
-What changed: T04 démarrée en partiel avec retrait HM de `gh`, `ripgrep`, `starship` dans `home/marigold.nix`.
+What changed: Retrait HM supplémentaire effectué pour `nvim` dans `home/marigold.nix` (priorisation lot sensible).
 Blockers: `home-manager switch` peut échouer sur SSL des caches Nix, ce qui ralentit la validation post-changement HM.
-Next 3 actions: 1) Finaliser T04 safe batch (`bat`, `fd`) 2) Exécuter switch HM quand SSL OK 3) Continuer T01/T02 cadrage SoC.
+Next 3 actions: 1) Exécuter `home-manager switch` quand SSL/caches OK 2) Continuer retrait HM terminal/sensible 3) Formaliser ADR SoC cible.
