@@ -775,48 +775,13 @@ in
       Statut : En cours de déploiement.
     '';
 
-    # Configuration ZSH principale
-    "zsh/.zshenv".source = dotfilesSource "zsh/.zshenv.marigold";
-    "zsh/.zprofile".text = ''
-      # Fix PATH after macOS /etc/zprofile's path_helper
-      [[ -d "/opt/homebrew/bin" ]] && export PATH="/opt/homebrew/bin:$PATH"
-      [[ -d "/opt/homebrew/sbin" ]] && export PATH="/opt/homebrew/sbin:$PATH"
-      [[ -d "/usr/local/bin" ]] && export PATH="/usr/local/bin:$PATH"
-      [[ -d "/opt/zerobrew/prefix/bin" ]] && export PATH="/opt/zerobrew/prefix/bin:$PATH"
-      [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
-      [[ -d "${npmGlobalBin}" ]] && export PATH="${npmGlobalBin}:$PATH"
-    '';
-    "zsh/.zshrc".source = dotfilesSource "zsh/.zshrc.marigold";
-
-    # Modules ZSH (tous sauf 06-tools.zsh qu'on remplace par la version marigold)
-    "zsh/modules/01-options.zsh".source = dotfilesSource "zsh/modules/01-options.zsh";
-    "zsh/modules/02-prompt.zsh".source = dotfilesSource "zsh/modules/02-prompt.zsh";
-    "zsh/modules/03-history.zsh".source = dotfilesSource "zsh/modules/03-history.zsh";
-    "zsh/modules/04-completion.zsh".source = dotfilesSource "zsh/modules/04-completion.zsh";
-    "zsh/modules/05-aliases.zsh".source = dotfilesSource "zsh/modules/05-aliases.zsh";
-    "zsh/modules/06-tools.zsh".source = dotfilesSource "zsh/modules/06-tools.zsh";
-    "zsh/modules/07-fzf.zsh".source = dotfilesSource "zsh/modules/07-fzf.zsh";
-    "zsh/modules/99-syntax-highlighting.zsh".source = dotfilesSource "zsh/modules/99-syntax-highlighting.zsh";
-
-    # Fonctions ZSH
-    "zsh/functions/dotfiles-switcher.zsh".source = dotfilesSource "zsh/functions/dotfiles-switcher.zsh";
-    "zsh/functions/file-management.zsh".source = dotfilesSource "zsh/functions/file-management.zsh";
-    "zsh/functions/fzf-helpers.zsh".source = dotfilesSource "zsh/functions/fzf-helpers.zsh";
-    "zsh/functions/media-download.zsh".source = dotfilesSource "zsh/functions/media-download.zsh";
-    "zsh/functions/navi-widget.zsh".source = dotfilesSource "zsh/functions/navi-widget.zsh";
-    "zsh/functions/sesh-sessions.zsh".source = dotfilesSource "zsh/functions/sesh-sessions.zsh";
-    "zsh/functions/shell-switch.zsh".source = dotfilesSource "zsh/functions/shell-switch.zsh";
-    "zsh/functions/show-tree.zsh".source = dotfilesSource "zsh/functions/show-tree.zsh";
-    "zsh/functions/ssh.zsh".source = dotfilesSource "zsh/functions/ssh.zsh";
-
-    # Scripts personnels
-    "zsh/scripts".source = dotfilesSource "zsh/scripts";
+    # Configuration ZSH sous ~/.config/zsh/**
+    # Migrée vers Dotbot (phase T06-B) pour liens directs repo -> ~/.config/zsh/*.
+    # IMPORTANT: les fichiers racine HOME (~/.zshenv et ~/.zprofile) restent gérés
+    # par HM dans home.file pour garder un bootstrap shell sûr.
 
     # Raycast Script Commands (centralisés dans nix-config)
     "raycast/scripts".source = dotfilesSource "raycast/scripts";
-
-    # Plugins ZSH
-    "zsh/plugins".source = dotfilesSource "zsh/plugins";
 
     # Starship prompt configuration
     # Migré vers Dotbot (dotfiles spike/dotbot-dx) pour lien direct repo -> ~/.config.
