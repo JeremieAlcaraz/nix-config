@@ -1,0 +1,22 @@
+{
+  "services": [
+    {
+      "name": "grafana",
+      "host": "myosotis",
+      "port": 3000,
+      "autoApproveTag": "tag:newmachine"
+    },
+    {
+      "name": "homarr",
+      "host": "myosotis",
+      "port": 7575,
+      "autoApproveTag": "tag:newmachine"
+    },
+    {
+      "name": "moodboard",
+      "host": "poppy",
+      "port": 3005,
+      "autoApproveTag": "tag:newmachine"
+    }
+  ]
+}

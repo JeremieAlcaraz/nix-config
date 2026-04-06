@@ -39,3 +39,15 @@ poppy-apply:
 
 poppy-check:
 	./scripts/poppy/check.sh
+
+ts-policy-sync *args='':
+	./scripts/tailscale/ts-policy-sync.py {{args}}
+
+ts-serve host service port:
+	./scripts/tailscale/ts-serve-on-host.sh {{host}} {{service}} {{port}}
+
+ts-service-ensure service port:
+	./scripts/tailscale/ts-service-ensure.py {{service}} {{port}}
+
+ts-service-add service host port tag='tag:newmachine':
+	./scripts/tailscale/ts-service-add.py {{service}} {{host}} {{port}} --tag {{tag}}
