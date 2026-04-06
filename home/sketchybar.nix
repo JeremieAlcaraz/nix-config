@@ -1,8 +1,6 @@
 { config, lib, pkgs, ... }:
-let
-  dotfilesSource = config.jeremie.dotfiles.source;
-in {
-  xdg.configFile."sketchybar".source = dotfilesSource "sketchybar";
+{
+  # Configuration sketchybar migrée vers Dotbot (lien direct ~/.config/sketchybar).
 
   # Crée le dossier de logs pour la redirection dans aerospace.toml
   home.file.".sketchybar/.keep".text = "";

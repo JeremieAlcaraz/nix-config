@@ -1,14 +1,6 @@
 { config, lib, pkgs, ... }:
-let
-  dotfiles = config.jeremie.dotfiles;
-  dotfilesSource = dotfiles.source;
-in
 {
-  # Configuration AeroSpace
-  xdg.configFile."aerospace/aerospace.toml".source = dotfilesSource "aerospace/aerospace.toml";
-  xdg.configFile."aerospace/raycast-ai-overlay.sh" = dotfiles.mkScript "aerospace/raycast-ai-overlay.sh";
-  xdg.configFile."aerospace/organize-workspaces.sh" = dotfiles.mkScript "aerospace/organize-workspaces.sh";
-  xdg.configFile."aerospace/split-picker.sh" = dotfiles.mkScript "aerospace/split-picker.sh";
+  # Configuration AeroSpace migrée vers Dotbot (liens directs dans ~/.config/aerospace/*).
 
   # LaunchAgent pour démarrer AeroSpace automatiquement
   launchd.agents.aerospace = {
