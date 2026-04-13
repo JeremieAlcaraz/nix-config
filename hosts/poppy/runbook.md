@@ -46,6 +46,15 @@ Validation depuis myosotis:
 - `curl -fsS http://127.0.0.1:8428/api/v1/targets | jq -c '.data.activeTargets[] | select(.labels.instance=="poppy:9100") | {health,lastError}'`
 - `curl -fsS 'http://127.0.0.1:8428/api/v1/query?query=up{instance="poppy:9100",job="node"}' | jq -c .data.result`
 
+## Scripts backup versionnes (source de verite)
+
+Scripts versionnes dans ce depot (et deployes via `just poppy-apply`):
+- `hosts/poppy/scripts/sync-capsule.sh` -> `/root/sync-capsule.sh`
+- `hosts/poppy/scripts/memos-backup.sh` -> `/root/apps/memos/scripts/backup.sh`
+- `hosts/poppy/scripts/vikunja-backup.sh` -> `/root/apps/vikunja/scripts/backup.sh`
+- `hosts/poppy/scripts/vikunja-upload-backups.sh` -> `/root/apps/vikunja/scripts/upload-backups.sh`
+- `hosts/poppy/scripts/moodboard-backup.sh` -> `/root/apps/moodboard/{backup-moodboard.sh,scripts/backup-moodboard.sh}`
+
 ## Verification de cible Drive (read-only)
 
 Script: `hosts/poppy/scripts/verify-drive-target.sh`
@@ -122,8 +131,8 @@ Commandes:
 Ce que fait l'apply:
 - decrypte localement `secrets/poppy.yaml` en temporaire securise,
 - genere `rclone.conf` + `sync-capsule.sh` + ligne cron,
-- pousse sur `poppy` vers un stage temporaire,
-- applique de maniere idempotente avec backup local de la conf precedente.
+- pousse aussi les scripts backup versionnes (memos/vikunja/moodboard),
+- applique de maniere idempotente avec backup local des scripts/conf precedents.
 
 ## Rollback bootstrap
 

@@ -42,19 +42,21 @@ Mettre `poppy` au même niveau de déclarativité opérationnelle que les autres
   Commit: feat(grafana): provision poppy storage dashboard declaratively
   Status: Terminé — dashboard provisionné déclaré dans Nix, commit/push effectués, rebuild `myosotis` réalisé, provisioning Grafana validé.
 
-- [ ] T05 Capturer l'inventaire déclaratif du dossier `/apps` de poppy
+- [x] T05 Capturer l'inventaire déclaratif du dossier `/apps` de poppy
   Depends on: T01
-  Changes: `hosts/poppy/apps/README.md`, `hosts/poppy/inventory.yaml`
+  Changes: `hosts/poppy/apps/README.md`, `hosts/poppy/inventory.yaml`, `hosts/poppy/README.md`, `hosts/poppy/INDEX.md`
   Benefits: Vision claire des apps non-NixOS à restaurer.
-  Tests: `ssh poppy 'find /apps -maxdepth 3 -type f | wc -l'` + cohérence inventaire
+  Tests: audit SSH de `/root/apps` + cohérence inventaire + `just poppy-check`
   Commit: docs(poppy): add declarative apps inventory
+  Status: Terminé — inventaire apps documenté et versionné, issue #52 clôturée.
 
-- [ ] T06 Versionner et documenter les scripts backup de poppy
+- [x] T06 Versionner et documenter les scripts backup de poppy
   Depends on: T01
-  Changes: `hosts/poppy/scripts/`, `hosts/poppy/runbook.md`, `secrets/poppy.yaml.example` (si nouveaux champs)
+  Changes: `hosts/poppy/scripts/`, `hosts/poppy/runbook.md`, `hosts/poppy/bootstrap/apply-remote.sh`, `scripts/poppy/apply-from-magnolia.sh`
   Benefits: Backup/recovery reproductibles et auditables.
-  Tests: lint shell + exécution dry-run + `just poppy-check`
+  Tests: lint shell (`bash -n`) + `just poppy-dry-run` + `just poppy-check`
   Commit: feat(poppy): declare backup scripts and backup workflow
+  Status: Terminé — scripts backup memos/vikunja/moodboard versionnés et déployés par flux bootstrap idempotent.
 
 - [ ] T07 Enrichir README host avec rôle, kernel/distro, PBS et procédure de réinstallation rapide
   Depends on: T05,T06

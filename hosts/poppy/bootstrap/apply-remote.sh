@@ -10,9 +10,18 @@ STAGE_DIR="${STAGE_DIR:-/tmp/poppy-bootstrap}"
 RCLONE_CONF_STAGE="${STAGE_DIR}/rclone.conf"
 SYNC_SCRIPT_STAGE="${STAGE_DIR}/sync-capsule.sh"
 CRON_LINE_STAGE="${STAGE_DIR}/cron-line.txt"
+MEMOS_BACKUP_STAGE="${STAGE_DIR}/memos-backup.sh"
+VIKUNJA_BACKUP_STAGE="${STAGE_DIR}/vikunja-backup.sh"
+VIKUNJA_UPLOAD_STAGE="${STAGE_DIR}/vikunja-upload-backups.sh"
+MOODBOARD_BACKUP_STAGE="${STAGE_DIR}/moodboard-backup.sh"
 
 TARGET_RCLONE_CONF="/root/.config/rclone/rclone.conf"
 TARGET_SYNC_SCRIPT="/root/sync-capsule.sh"
+TARGET_MEMOS_BACKUP="/root/apps/memos/scripts/backup.sh"
+TARGET_VIKUNJA_BACKUP="/root/apps/vikunja/scripts/backup.sh"
+TARGET_VIKUNJA_UPLOAD="/root/apps/vikunja/scripts/upload-backups.sh"
+TARGET_MOODBOARD_BACKUP_A="/root/apps/moodboard/backup-moodboard.sh"
+TARGET_MOODBOARD_BACKUP_B="/root/apps/moodboard/scripts/backup-moodboard.sh"
 NODE_EXPORTER_PKG="prometheus-node-exporter"
 NODE_EXPORTER_SERVICE="prometheus-node-exporter"
 
@@ -32,6 +41,10 @@ require_file() {
 require_file "${RCLONE_CONF_STAGE}"
 require_file "${SYNC_SCRIPT_STAGE}"
 require_file "${CRON_LINE_STAGE}"
+require_file "${MEMOS_BACKUP_STAGE}"
+require_file "${VIKUNJA_BACKUP_STAGE}"
+require_file "${VIKUNJA_UPLOAD_STAGE}"
+require_file "${MOODBOARD_BACKUP_STAGE}"
 
 ensure_pkg_installed() {
   local pkg="$1"
@@ -61,6 +74,7 @@ ensure_service_enabled_active "${NODE_EXPORTER_SERVICE}"
 
 mkdir -p /root/.config/rclone
 chmod 700 /root/.config/rclone
+run mkdir -p /root/apps/memos/scripts /root/apps/vikunja/scripts /root/apps/moodboard/scripts
 
 ts="$(date +%Y%m%d-%H%M%S)"
 if [[ -f "${TARGET_RCLONE_CONF}" ]]; then
@@ -69,9 +83,19 @@ fi
 if [[ -f "${TARGET_SYNC_SCRIPT}" ]]; then
   run cp "${TARGET_SYNC_SCRIPT}" "${TARGET_SYNC_SCRIPT}.bak-${ts}"
 fi
+for f in "${TARGET_MEMOS_BACKUP}" "${TARGET_VIKUNJA_BACKUP}" "${TARGET_VIKUNJA_UPLOAD}" "${TARGET_MOODBOARD_BACKUP_A}" "${TARGET_MOODBOARD_BACKUP_B}"; do
+  if [[ -f "${f}" ]]; then
+    run cp "${f}" "${f}.bak-${ts}"
+  fi
+done
 
 run install -m 600 "${RCLONE_CONF_STAGE}" "${TARGET_RCLONE_CONF}"
 run install -m 700 "${SYNC_SCRIPT_STAGE}" "${TARGET_SYNC_SCRIPT}"
+run install -m 700 "${MEMOS_BACKUP_STAGE}" "${TARGET_MEMOS_BACKUP}"
+run install -m 700 "${VIKUNJA_BACKUP_STAGE}" "${TARGET_VIKUNJA_BACKUP}"
+run install -m 700 "${VIKUNJA_UPLOAD_STAGE}" "${TARGET_VIKUNJA_UPLOAD}"
+run install -m 700 "${MOODBOARD_BACKUP_STAGE}" "${TARGET_MOODBOARD_BACKUP_A}"
+run install -m 700 "${MOODBOARD_BACKUP_STAGE}" "${TARGET_MOODBOARD_BACKUP_B}"
 
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"
 

@@ -5,6 +5,6 @@ Token usage: total=unknown input=unknown (+ unknown cached) output=unknown (reas
 Resume command: codex resume epic-poppy-declarative-monitoring-and-rebuild
 Resume id stable for epic: epic-poppy-declarative-monitoring-and-rebuild
 Previous resume ids: -
-What changed: T04 exécutée: dashboard Grafana provisionné `Poppy Storage` (UID `poppy-storage`) ajouté et déployé via rebuild `myosotis`; validation provisioning + visibilité métriques poppy confirmées. Stories #48 #49 #50 #51 commentées et clôturées.
+What changed: T05 exécutée (inventaire déclaratif `/root/apps`, issue #52 clôturée). T06 implémentée: scripts backup memos/vikunja/moodboard versionnés + déploiement idempotent via `poppy-apply` (`apply-from-magnolia.sh` + `apply-remote.sh`) + runbook mis à jour. Tests OK (`bash -n`, `just poppy-dry-run`, `just poppy-check`).
 Blockers: -
-Next 3 actions: 1) Avancer T05 (inventaire déclaratif /root/apps) 2) Avancer T06 (scripts backup versionnés + doc) 3) Préparer T07 (README rebuild-ready) à partir des sorties T05/T06.
+Next 3 actions: 1) Clore issue #53 après push des changements T06 2) Avancer T07 (README rebuild-ready) 3) Préparer T08 (checklist E2E).
