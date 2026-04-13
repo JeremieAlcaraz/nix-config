@@ -11,13 +11,19 @@ RCLONE_CONF_STAGE="${STAGE_DIR}/rclone.conf"
 SYNC_SCRIPT_STAGE="${STAGE_DIR}/sync-capsule.sh"
 CRON_LINE_STAGE="${STAGE_DIR}/cron-line.txt"
 MEMOS_BACKUP_STAGE="${STAGE_DIR}/memos-backup.sh"
+MEMOS_UPLOAD_STAGE="${STAGE_DIR}/memos-upload-backups.sh"
 VIKUNJA_BACKUP_STAGE="${STAGE_DIR}/vikunja-backup.sh"
 VIKUNJA_UPLOAD_STAGE="${STAGE_DIR}/vikunja-upload-backups.sh"
 MOODBOARD_BACKUP_STAGE="${STAGE_DIR}/moodboard-backup.sh"
+MEMOS_BACKUP_SERVICE_STAGE="${STAGE_DIR}/memos-backup.service"
+MEMOS_BACKUP_TIMER_STAGE="${STAGE_DIR}/memos-backup.timer"
 
 TARGET_RCLONE_CONF="/root/.config/rclone/rclone.conf"
 TARGET_SYNC_SCRIPT="/root/sync-capsule.sh"
 TARGET_MEMOS_BACKUP="/root/apps/memos/scripts/backup.sh"
+TARGET_MEMOS_UPLOAD="/root/apps/memos/scripts/upload-backups.sh"
+TARGET_MEMOS_SERVICE="/etc/systemd/system/memos-backup.service"
+TARGET_MEMOS_TIMER="/etc/systemd/system/memos-backup.timer"
 TARGET_VIKUNJA_BACKUP="/root/apps/vikunja/scripts/backup.sh"
 TARGET_VIKUNJA_UPLOAD="/root/apps/vikunja/scripts/upload-backups.sh"
 TARGET_MOODBOARD_BACKUP_A="/root/apps/moodboard/backup-moodboard.sh"
@@ -42,9 +48,12 @@ require_file "${RCLONE_CONF_STAGE}"
 require_file "${SYNC_SCRIPT_STAGE}"
 require_file "${CRON_LINE_STAGE}"
 require_file "${MEMOS_BACKUP_STAGE}"
+require_file "${MEMOS_UPLOAD_STAGE}"
 require_file "${VIKUNJA_BACKUP_STAGE}"
 require_file "${VIKUNJA_UPLOAD_STAGE}"
 require_file "${MOODBOARD_BACKUP_STAGE}"
+require_file "${MEMOS_BACKUP_SERVICE_STAGE}"
+require_file "${MEMOS_BACKUP_TIMER_STAGE}"
 
 ensure_pkg_installed() {
   local pkg="$1"
@@ -83,7 +92,7 @@ fi
 if [[ -f "${TARGET_SYNC_SCRIPT}" ]]; then
   run cp "${TARGET_SYNC_SCRIPT}" "${TARGET_SYNC_SCRIPT}.bak-${ts}"
 fi
-for f in "${TARGET_MEMOS_BACKUP}" "${TARGET_VIKUNJA_BACKUP}" "${TARGET_VIKUNJA_UPLOAD}" "${TARGET_MOODBOARD_BACKUP_A}" "${TARGET_MOODBOARD_BACKUP_B}"; do
+for f in "${TARGET_MEMOS_BACKUP}" "${TARGET_MEMOS_UPLOAD}" "${TARGET_VIKUNJA_BACKUP}" "${TARGET_VIKUNJA_UPLOAD}" "${TARGET_MOODBOARD_BACKUP_A}" "${TARGET_MOODBOARD_BACKUP_B}" "${TARGET_MEMOS_SERVICE}" "${TARGET_MEMOS_TIMER}"; do
   if [[ -f "${f}" ]]; then
     run cp "${f}" "${f}.bak-${ts}"
   fi
@@ -92,6 +101,9 @@ done
 run install -m 600 "${RCLONE_CONF_STAGE}" "${TARGET_RCLONE_CONF}"
 run install -m 700 "${SYNC_SCRIPT_STAGE}" "${TARGET_SYNC_SCRIPT}"
 run install -m 700 "${MEMOS_BACKUP_STAGE}" "${TARGET_MEMOS_BACKUP}"
+run install -m 700 "${MEMOS_UPLOAD_STAGE}" "${TARGET_MEMOS_UPLOAD}"
+run install -m 644 "${MEMOS_BACKUP_SERVICE_STAGE}" "${TARGET_MEMOS_SERVICE}"
+run install -m 644 "${MEMOS_BACKUP_TIMER_STAGE}" "${TARGET_MEMOS_TIMER}"
 run install -m 700 "${VIKUNJA_BACKUP_STAGE}" "${TARGET_VIKUNJA_BACKUP}"
 run install -m 700 "${VIKUNJA_UPLOAD_STAGE}" "${TARGET_VIKUNJA_UPLOAD}"
 run install -m 700 "${MOODBOARD_BACKUP_STAGE}" "${TARGET_MOODBOARD_BACKUP_A}"
@@ -112,6 +124,14 @@ if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "${CRON_LINE}"
 else
   crontab "${NEW_CRON}"
+fi
+
+if [[ "${DRY_RUN}" -eq 1 ]]; then
+  echo "[DRY-RUN] would run: systemctl daemon-reload"
+  echo "[DRY-RUN] would run: systemctl enable --now memos-backup.timer"
+else
+  systemctl daemon-reload
+  systemctl enable --now memos-backup.timer >/dev/null
 fi
 
 if [[ "${DRY_RUN}" -eq 1 ]]; then

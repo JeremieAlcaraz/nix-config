@@ -23,5 +23,7 @@ ssh "${SSH_HOST}" "proxmox-backup-manager datastore list >/dev/null && echo '[OK
 ssh "${SSH_HOST}" "crontab -l | grep '/root/sync-capsule.sh' >/dev/null && echo '[OK] cron line present'"
 ssh "${SSH_HOST}" "systemctl is-active prometheus-node-exporter >/dev/null && echo '[OK] node exporter active'"
 ssh "${SSH_HOST}" "curl -fsS http://127.0.0.1:9100/metrics >/dev/null && echo '[OK] node exporter endpoint local'"
+ssh "${SSH_HOST}" "systemctl is-enabled memos-backup.timer >/dev/null && echo '[OK] memos-backup.timer enabled'"
+ssh "${SSH_HOST}" "systemctl is-active memos-backup.timer >/dev/null && echo '[OK] memos-backup.timer active'"
 ssh "${SSH_HOST}" "EXPECTED_ROOT_FOLDER_ID='${EXPECTED_ROOT_FOLDER_ID}' bash -s" < "${VERIFY_SCRIPT}"
 echo "[INFO] check completed"

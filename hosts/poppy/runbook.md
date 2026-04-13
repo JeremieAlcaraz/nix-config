@@ -51,6 +51,9 @@ Validation depuis myosotis:
 Scripts versionnes dans ce depot (et deployes via `just poppy-apply`):
 - `hosts/poppy/scripts/sync-capsule.sh` -> `/root/sync-capsule.sh`
 - `hosts/poppy/scripts/memos-backup.sh` -> `/root/apps/memos/scripts/backup.sh`
+- `hosts/poppy/scripts/memos-upload-backups.sh` -> `/root/apps/memos/scripts/upload-backups.sh`
+- `hosts/poppy/systemd/memos-backup.service` -> `/etc/systemd/system/memos-backup.service`
+- `hosts/poppy/systemd/memos-backup.timer` -> `/etc/systemd/system/memos-backup.timer`
 - `hosts/poppy/scripts/vikunja-backup.sh` -> `/root/apps/vikunja/scripts/backup.sh`
 - `hosts/poppy/scripts/vikunja-upload-backups.sh` -> `/root/apps/vikunja/scripts/upload-backups.sh`
 - `hosts/poppy/scripts/moodboard-backup.sh` -> `/root/apps/moodboard/{backup-moodboard.sh,scripts/backup-moodboard.sh}`
@@ -132,6 +135,7 @@ Ce que fait l'apply:
 - decrypte localement `secrets/poppy.yaml` en temporaire securise,
 - genere `rclone.conf` + `sync-capsule.sh` + ligne cron,
 - pousse aussi les scripts backup versionnes (memos/vikunja/moodboard),
+- pousse et active le timer systemd `memos-backup.timer`,
 - applique de maniere idempotente avec backup local des scripts/conf precedents.
 
 ## Rollback bootstrap

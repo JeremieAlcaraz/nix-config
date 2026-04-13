@@ -14,6 +14,9 @@ MEMOS_BACKUP_SCRIPT="${REPO_ROOT}/hosts/poppy/scripts/memos-backup.sh"
 VIKUNJA_BACKUP_SCRIPT="${REPO_ROOT}/hosts/poppy/scripts/vikunja-backup.sh"
 VIKUNJA_UPLOAD_SCRIPT="${REPO_ROOT}/hosts/poppy/scripts/vikunja-upload-backups.sh"
 MOODBOARD_BACKUP_SCRIPT="${REPO_ROOT}/hosts/poppy/scripts/moodboard-backup.sh"
+MEMOS_UPLOAD_SCRIPT="${REPO_ROOT}/hosts/poppy/scripts/memos-upload-backups.sh"
+MEMOS_BACKUP_SERVICE="${REPO_ROOT}/hosts/poppy/systemd/memos-backup.service"
+MEMOS_BACKUP_TIMER="${REPO_ROOT}/hosts/poppy/systemd/memos-backup.timer"
 
 for cmd in sops yq ssh scp; do
   command -v "${cmd}" >/dev/null 2>&1 || { echo "[ERROR] missing command: ${cmd}" >&2; exit 1; }
@@ -21,7 +24,7 @@ done
 
 [[ -f "${SECRETS_FILE}" ]] || { echo "[ERROR] missing ${SECRETS_FILE}" >&2; exit 1; }
 [[ -x "${REMOTE_APPLY}" ]] || { echo "[ERROR] missing executable ${REMOTE_APPLY}" >&2; exit 1; }
-for f in "${MEMOS_BACKUP_SCRIPT}" "${VIKUNJA_BACKUP_SCRIPT}" "${VIKUNJA_UPLOAD_SCRIPT}" "${MOODBOARD_BACKUP_SCRIPT}"; do
+for f in "${MEMOS_BACKUP_SCRIPT}" "${MEMOS_UPLOAD_SCRIPT}" "${VIKUNJA_BACKUP_SCRIPT}" "${VIKUNJA_UPLOAD_SCRIPT}" "${MOODBOARD_BACKUP_SCRIPT}" "${MEMOS_BACKUP_SERVICE}" "${MEMOS_BACKUP_TIMER}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
 
@@ -100,9 +103,12 @@ scp -q "${SYNC_SCRIPT}" "${SSH_HOST}:${REMOTE_STAGE}/sync-capsule.sh"
 scp -q "${CRON_LINE_FILE}" "${SSH_HOST}:${REMOTE_STAGE}/cron-line.txt"
 scp -q "${REMOTE_APPLY}" "${SSH_HOST}:${REMOTE_STAGE}/apply-remote.sh"
 scp -q "${MEMOS_BACKUP_SCRIPT}" "${SSH_HOST}:${REMOTE_STAGE}/memos-backup.sh"
+scp -q "${MEMOS_UPLOAD_SCRIPT}" "${SSH_HOST}:${REMOTE_STAGE}/memos-upload-backups.sh"
 scp -q "${VIKUNJA_BACKUP_SCRIPT}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja-backup.sh"
 scp -q "${VIKUNJA_UPLOAD_SCRIPT}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja-upload-backups.sh"
 scp -q "${MOODBOARD_BACKUP_SCRIPT}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-backup.sh"
+scp -q "${MEMOS_BACKUP_SERVICE}" "${SSH_HOST}:${REMOTE_STAGE}/memos-backup.service"
+scp -q "${MEMOS_BACKUP_TIMER}" "${SSH_HOST}:${REMOTE_STAGE}/memos-backup.timer"
 
 if [[ "${MODE}" == "dry-run" ]]; then
   ssh "${SSH_HOST}" "chmod 700 '${REMOTE_STAGE}/apply-remote.sh' && STAGE_DIR='${REMOTE_STAGE}' '${REMOTE_STAGE}/apply-remote.sh' --dry-run"

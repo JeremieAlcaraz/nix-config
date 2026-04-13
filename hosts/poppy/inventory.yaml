@@ -39,6 +39,12 @@ apps:
         - "/root/apps/memos/backups"
       backup_scripts:
         - "/root/apps/memos/scripts/backup.sh"
+        - "/root/apps/memos/scripts/upload-backups.sh"
+      backup_scheduler:
+        type: "systemd-timer"
+        timer_unit: "memos-backup.timer"
+        service_unit: "memos-backup.service"
+        schedule: "daily 05:30"
     vikunja:
       path: "/root/apps/vikunja"
       compose_file: "/root/apps/vikunja/compose.yml"
@@ -69,6 +75,7 @@ apps:
 backup_scripts_detected:
   - "/root/sync-capsule.sh"
   - "/root/apps/memos/scripts/backup.sh"
+  - "/root/apps/memos/scripts/upload-backups.sh"
   - "/root/apps/vikunja/scripts/backup.sh"
   - "/root/apps/vikunja/scripts/upload-backups.sh"
   - "/root/apps/moodboard/backup-moodboard.sh"

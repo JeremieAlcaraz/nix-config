@@ -48,7 +48,8 @@ Ce dossier existe pour la déclaration, la traçabilité et la reproductibilité
 - Arborescence applicative détectée: `/root/apps` (et non `/apps`)
 - Apps détectées: `memos`, `moodboard`, `vikunja`
 - Script de sync PBS actif: `/root/sync-capsule.sh`
-- Scheduling actuel: cron root `0 4 * * *`
+- Scheduling sync PBS: cron root `0 4 * * *`
+- Scheduling backup memos: systemd `memos-backup.timer` (05:30)
 
 ### Monitoring status
 

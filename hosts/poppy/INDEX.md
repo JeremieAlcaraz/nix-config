@@ -21,3 +21,5 @@
 
 - `hosts/poppy/rclone/rclone.conf.example`: template rclone sans secrets.
 - `hosts/poppy/cron/root.crontab.example`: cron root actuel (sync quotidienne 04:00).
+- `hosts/poppy/systemd/memos-backup.service`: unite systemd declarative backup+upload memos.
+- `hosts/poppy/systemd/memos-backup.timer`: timer systemd declaratif (05:30).

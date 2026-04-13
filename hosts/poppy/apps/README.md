@@ -12,7 +12,10 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
 - Port exposé: `5230:5230`
 - Données: `/root/apps/memos/data`
 - Sauvegardes: `/root/apps/memos/backups`
-- Script backup: `/root/apps/memos/scripts/backup.sh`
+- Scripts backup:
+  - `/root/apps/memos/scripts/backup.sh`
+  - `/root/apps/memos/scripts/upload-backups.sh`
+- Scheduler: `memos-backup.timer` (05:30, systemd)
 
 ### vikunja
 - Chemin: `/root/apps/vikunja`

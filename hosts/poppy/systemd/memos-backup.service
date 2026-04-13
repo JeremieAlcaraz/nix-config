@@ -1,0 +1,15 @@
+[Unit]
+Description=Backup Memos (SQLite) and upload to Google Drive
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/apps/memos
+ExecStart=/root/apps/memos/scripts/backup.sh
+ExecStartPost=/root/apps/memos/scripts/upload-backups.sh
+Environment=RETENTION_DAYS=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Backup Memos daily at 05:30
+
+[Timer]
+OnCalendar=*-*-* 05:30:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=memos-backup.service
+
+[Install]
+WantedBy=timers.target
