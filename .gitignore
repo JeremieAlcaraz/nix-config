@@ -16,6 +16,8 @@
 !.gitea/workflows/*.yml
 # 2.3. On autorise la config act_runner (nécessaire pour le fonctionnement)
 !hosts/dandelion/act_runner_config.yaml
+# 2.4. On autorise l'inventaire déclaratif non-secret de poppy
+!hosts/poppy/inventory.yaml
 # 3. On autorise les fichiers d'exemple (documentation)
 !*.example
 .zcompdump*

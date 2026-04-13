@@ -1,0 +1,40 @@
+host: poppy
+updated_at: "2026-04-13"
+role: "Proxmox Backup Server"
+os:
+  distro: "Debian GNU/Linux 13 (trixie)"
+  kernel: "6.17.2-1-pve"
+pbs:
+  package_version: "proxmox-backup-server 4.1.6-1"
+  runtime_version: "4.1.0"
+network:
+  tailscale_ip: "100.120.10.61"
+  tailscale_dns: "poppy.inanga-sirius.ts.net"
+monitoring:
+  node_exporter:
+    installed: false
+    service_name: "node-exporter"
+    endpoint: "http://127.0.0.1:9100/metrics"
+backup:
+  datastore:
+    name: "capsule"
+    path: "/backup-disk"
+  sync:
+    script: "/root/sync-capsule.sh"
+    cron: "0 4 * * *"
+    destination: "gdrive_capsule:proxmox"
+apps:
+  root_path: "/root/apps"
+  detected:
+    - memos
+    - moodboard
+    - vikunja
+  notes:
+    - "Le chemin /apps n'existe pas sur l'hôte au moment de l'audit."
+backup_scripts_detected:
+  - "/root/sync-capsule.sh"
+  - "/root/apps/moodboard/backup-moodboard.sh"
+  - "/root/apps/moodboard/scripts/backup-moodboard.sh"
+  - "/root/apps/memos/scripts/backup.sh"
+  - "/root/apps/vikunja/scripts/backup.sh"
+  - "/root/apps/vikunja/scripts/upload-backups.sh"

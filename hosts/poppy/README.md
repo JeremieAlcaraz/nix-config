@@ -21,9 +21,10 @@ Ce dossier existe pour la déclaration, la traçabilité et la reproductibilité
 - Hostname: `poppy`
 - FQDN local: `poppy.local`
 - Role: `Proxmox Backup Server` (backup central)
-- Version PBS package: `proxmox-backup-server 4.1.2-1`
+- Version PBS package: `proxmox-backup-server 4.1.6-1`
 - Version runtime relevee: `4.1.0`
-- OS base: `Debian GNU/Linux 13 (trixie)` (`13.2`)
+- OS base: `Debian GNU/Linux 13 (trixie)`
+- Kernel: `6.17.2-1-pve`
 - Tailscale IPv4: `100.120.10.61`
 - Tailscale DNS: `poppy.inanga-sirius.ts.net`
 
@@ -40,6 +41,15 @@ Ce dossier existe pour la déclaration, la traçabilité et la reproductibilité
 - `hosts/poppy/cron/`: exemples de scheduling (cron/systemd).
 - `hosts/poppy/runbook.md`: procédures d'exploitation et incident.
 - `hosts/poppy/inventory.yaml`: métadonnées hôte (inventaire local).
+
+## Audit technique (2026-04-13)
+
+- Service `node-exporter`: **absent** (`systemd: not-found`, port `9100` non exposé)
+- Endpoint métriques local `http://127.0.0.1:9100/metrics`: **KO**
+- Arborescence applicative détectée: `/root/apps` (et non `/apps`)
+- Apps détectées: `memos`, `moodboard`, `vikunja`
+- Script de sync PBS actif: `/root/sync-capsule.sh`
+- Scheduling actuel: cron root `0 4 * * *`
 
 ## Stockage PBS (etat actuel)
 

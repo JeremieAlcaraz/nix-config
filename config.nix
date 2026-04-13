@@ -142,6 +142,6 @@
     # Hosts monitorés par VictoriaMetrics (scrape métriques Node Exporter)
     # Ajouter un host ici = automatiquement scrapé par myosotis
     # Utilise les hostnames MagicDNS (pas les IPs) pour la résilience
-    monitoredHosts = [ "magnolia" "hawthorn" "mimosa" "dandelion" "whitelily" "rhizanthella" "muscari" "crocus" ];
+    monitoredHosts = [ "magnolia" "hawthorn" "mimosa" "dandelion" "whitelily" "rhizanthella" "muscari" "crocus" "poppy" ];
   };
 }

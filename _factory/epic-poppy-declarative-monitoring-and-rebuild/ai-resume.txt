@@ -1,0 +1,10 @@
+Epic: epic-poppy-declarative-monitoring-and-rebuild
+Current status: in_progress
+Last sync: 2026-04-13T14:22:39Z
+Token usage: total=unknown input=unknown (+ unknown cached) output=unknown (reasoning unknown)
+Resume command: codex resume epic-poppy-declarative-monitoring-and-rebuild
+Resume id stable for epic: epic-poppy-declarative-monitoring-and-rebuild
+Previous resume ids: -
+What changed: T01 exécutée (audit SSH poppy), README + inventory.yaml mis à jour avec baseline technique réelle (node-exporter absent, apps sous /root/apps).
+Blockers: -
+Next 3 actions: 1) Ouvrir T02 (ajout poppy dans monitoredHosts) 2) Déployer node-exporter (T03) 3) Vérifier `up{host="poppy"}` dans VictoriaMetrics (T04)
