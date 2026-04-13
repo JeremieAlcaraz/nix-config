@@ -12,8 +12,8 @@ network:
   tailscale_dns: "poppy.inanga-sirius.ts.net"
 monitoring:
   node_exporter:
-    installed: false
-    service_name: "node-exporter"
+    installed: true
+    service_name: "prometheus-node-exporter"
     endpoint: "http://127.0.0.1:9100/metrics"
 backup:
   datastore:

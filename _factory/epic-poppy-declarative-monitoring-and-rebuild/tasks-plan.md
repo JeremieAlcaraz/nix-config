@@ -26,12 +26,13 @@ Mettre `poppy` au même niveau de déclarativité opérationnelle que les autres
   Commit: feat(monitoring): add poppy to monitored hosts
   Status: Terminé — `poppy` ajouté à `tailscale.monitoredHosts` dans `config.nix`.
 
-- [ ] T03 Déployer/valider node_exporter sur poppy (flux Debian non-NixOS)
+- [x] T03 Déployer/valider node_exporter sur poppy (flux Debian non-NixOS)
   Depends on: T02
   Changes: `scripts/deploy-proxmox.nix` (si nécessaire), `hosts/poppy/runbook.md`
   Benefits: Exposition des métriques système standards (CPU/RAM/disk).
   Tests: `curl -fsS http://poppy:9100/metrics | head` + `systemctl is-active node-exporter`
   Commit: chore(monitoring): ensure node-exporter on poppy
+  Status: Terminé — paquet `prometheus-node-exporter` installé sur poppy, service actif, endpoint `:9100/metrics` OK, target VictoriaMetrics en `health: up`.
 
 - [ ] T04 Valider l'affichage Grafana/VictoriaMetrics pour poppy
   Depends on: T03

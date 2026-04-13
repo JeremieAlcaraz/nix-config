@@ -5,6 +5,6 @@ Token usage: total=unknown input=unknown (+ unknown cached) output=unknown (reas
 Resume command: codex resume epic-poppy-declarative-monitoring-and-rebuild
 Resume id stable for epic: epic-poppy-declarative-monitoring-and-rebuild
 Previous resume ids: -
-What changed: T01 exécutée (audit SSH poppy), README + inventory.yaml mis à jour avec baseline technique réelle (node-exporter absent, apps sous /root/apps).
+What changed: T03 exécutée: `prometheus-node-exporter` installé sur poppy, service actif, scrape `poppy:9100` visible côté myosotis; runbook/README/inventory mis à jour.
 Blockers: -
-Next 3 actions: 1) Ouvrir T02 (ajout poppy dans monitoredHosts) 2) Déployer node-exporter (T03) 3) Vérifier `up{host="poppy"}` dans VictoriaMetrics (T04)
+Next 3 actions: 1) Finaliser T04 (validation Grafana UI + queries) 2) Avancer T05 (inventaire déclaratif /root/apps) 3) Avancer T06 (scripts backup versionnés + doc)

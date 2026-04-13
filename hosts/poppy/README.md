@@ -44,12 +44,17 @@ Ce dossier existe pour la déclaration, la traçabilité et la reproductibilité
 
 ## Audit technique (2026-04-13)
 
-- Service `node-exporter`: **absent** (`systemd: not-found`, port `9100` non exposé)
-- Endpoint métriques local `http://127.0.0.1:9100/metrics`: **KO**
 - Arborescence applicative détectée: `/root/apps` (et non `/apps`)
 - Apps détectées: `memos`, `moodboard`, `vikunja`
 - Script de sync PBS actif: `/root/sync-capsule.sh`
 - Scheduling actuel: cron root `0 4 * * *`
+
+### Monitoring status
+
+- Audit initial: `node-exporter` absent, endpoint `9100` KO.
+- Correctif appliqué: installation du paquet Debian `prometheus-node-exporter`.
+- Etat courant: service actif + endpoint `http://127.0.0.1:9100/metrics` OK.
+- Côté `myosotis`: target `http://poppy:9100/metrics` détectée et scrape actif.
 
 ## Stockage PBS (etat actuel)
 

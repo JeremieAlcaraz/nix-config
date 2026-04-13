@@ -25,6 +25,23 @@
    - `tail -n 80 /var/log/rclone-sync.log`
 4. Verifier la cible Drive attendue:
    - `./hosts/poppy/scripts/verify-drive-target.sh`
+5. Verifier le monitoring node exporter:
+   - `systemctl is-active prometheus-node-exporter`
+   - `curl -fsS http://127.0.0.1:9100/metrics | head`
+
+## Monitoring Node Exporter (poppy)
+
+Etat cible:
+- service systemd: `prometheus-node-exporter` actif et enabled,
+- endpoint local: `http://127.0.0.1:9100/metrics` repond,
+- scrape distant: `myosotis` voit `http://poppy:9100/metrics` en `health: up`.
+
+Installation (Debian/PBS):
+- `apt-get update && apt-get install -y prometheus-node-exporter`
+
+Validation depuis myosotis:
+- `curl -fsS http://127.0.0.1:8428/api/v1/targets | jq -c '.data.activeTargets[] | select(.labels.instance=="poppy:9100") | {health,lastError}'`
+- `curl -fsS 'http://127.0.0.1:8428/api/v1/query?query=up{instance="poppy:9100",job="node"}' | jq -c .data.result`
 
 ## Verification de cible Drive (read-only)
 
