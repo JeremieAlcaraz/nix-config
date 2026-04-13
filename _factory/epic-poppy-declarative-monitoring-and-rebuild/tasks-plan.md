@@ -34,12 +34,13 @@ Mettre `poppy` au même niveau de déclarativité opérationnelle que les autres
   Commit: chore(monitoring): ensure node-exporter on poppy
   Status: Terminé — paquet `prometheus-node-exporter` installé sur poppy, service actif, endpoint `:9100/metrics` OK, target VictoriaMetrics en `health: up`.
 
-- [ ] T04 Valider l'affichage Grafana/VictoriaMetrics pour poppy
+- [x] T04 Valider l'affichage Grafana/VictoriaMetrics pour poppy
   Depends on: T03
-  Changes: `hosts/myosotis/configuration.nix` (uniquement si ajustement requis), docs de validation
+  Changes: `hosts/myosotis/configuration.nix`, `hosts/myosotis/dashboards/poppy-storage.json`, docs de validation
   Benefits: Visibilité opérationnelle complète de `poppy`.
-  Tests: requêtes `up{host="poppy"}` / panels Node Exporter Full
-  Commit: test(grafana): validate poppy host metrics visibility
+  Tests: requêtes VictoriaMetrics (`up{instance="poppy:9100",job="node"}`), dashboard provisionné `Poppy Storage` (UID `poppy-storage`), panels Node Exporter Full
+  Commit: feat(grafana): provision poppy storage dashboard declaratively
+  Status: Terminé — dashboard provisionné déclaré dans Nix, commit/push effectués, rebuild `myosotis` réalisé, provisioning Grafana validé.
 
 - [ ] T05 Capturer l'inventaire déclaratif du dossier `/apps` de poppy
   Depends on: T01
