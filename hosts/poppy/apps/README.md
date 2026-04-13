@@ -16,6 +16,7 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
   - `/root/apps/memos/scripts/backup.sh` (snapshot SQLite cohérent via `sqlite3 .backup`)
   - `/root/apps/memos/scripts/upload-backups.sh`
 - Scheduler: `memos-backup.timer` (05:30, systemd)
+- Upload distant: `gdrive_capsule:memos`
 
 ### vikunja
 - Chemin: `/root/apps/vikunja`
@@ -29,6 +30,7 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
 - Scripts backup:
   - `/root/apps/vikunja/scripts/backup.sh`
   - `/root/apps/vikunja/scripts/upload-backups.sh`
+- Upload distant: `gdrive_capsule:vikunja`
 
 ### moodboard
 - Chemin: `/root/apps/moodboard`
@@ -43,6 +45,7 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
 - Scripts backup:
   - `/root/apps/moodboard/backup-moodboard.sh`
   - `/root/apps/moodboard/scripts/backup-moodboard.sh`
+- Upload distant: `gdrive_capsule:moodboard`
 
 ## Vérifications minimales
 

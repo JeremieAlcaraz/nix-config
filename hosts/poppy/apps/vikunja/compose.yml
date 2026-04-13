@@ -1,0 +1,22 @@
+services:
+  vikunja:
+    image: vikunja/vikunja:latest
+    restart: unless-stopped
+    ports:
+      - "3456:3456"
+    volumes:
+      - ./config:/app/vikunja/config
+      - ./data/files:/app/vikunja/files
+    environment:
+      - VIKUNJA_SERVICE_JWTSECRET=${VIKUNJA_JWT_SECRET:?missing}
+      - VIKUNJA_SERVICE_PUBLICURL=${VIKUNJA_PUBLIC_URL:?missing}
+      - VIKUNJA_SERVICE_TIMEZONE=Europe/Paris
+      - VIKUNJA_SERVICE_ENABLECALDAV=true
+      - VIKUNJA_SERVICE_ENABLEREGISTRATION=true
+      - VIKUNJA_SERVICE_ENABLETASKATTACHMENTS=true
+      - VIKUNJA_DATABASE_TYPE=sqlite
+      - VIKUNJA_DATABASE_PATH=/app/vikunja/files/vikunja.db
+      - VIKUNJA_FILES_BASEPATH=/app/vikunja/files
+      - VIKUNJA_FILES_MAXSIZE=20MB
+      - VIKUNJA_LOG_ENABLED=true
+      - VIKUNJA_LOG_LEVEL=INFO

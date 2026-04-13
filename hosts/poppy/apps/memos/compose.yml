@@ -1,0 +1,10 @@
+services:
+  memos:
+    image: neosmemo/memos:stable
+    restart: unless-stopped
+    ports:
+      - "5230:5230"
+    volumes:
+      - ./data:/var/opt/memos
+    environment:
+      - MEMOS_MODE=prod
