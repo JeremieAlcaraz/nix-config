@@ -13,7 +13,7 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
 - Données: `/root/apps/memos/data`
 - Sauvegardes: `/root/apps/memos/backups`
 - Scripts backup:
-  - `/root/apps/memos/scripts/backup.sh`
+  - `/root/apps/memos/scripts/backup.sh` (snapshot SQLite cohérent via `sqlite3 .backup`)
   - `/root/apps/memos/scripts/upload-backups.sh`
 - Scheduler: `memos-backup.timer` (05:30, systemd)
 

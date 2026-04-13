@@ -30,6 +30,7 @@ TARGET_MOODBOARD_BACKUP_A="/root/apps/moodboard/backup-moodboard.sh"
 TARGET_MOODBOARD_BACKUP_B="/root/apps/moodboard/scripts/backup-moodboard.sh"
 NODE_EXPORTER_PKG="prometheus-node-exporter"
 NODE_EXPORTER_SERVICE="prometheus-node-exporter"
+SQLITE_PKG="sqlite3"
 
 run() {
   if [[ "${DRY_RUN}" -eq 1 ]]; then
@@ -79,6 +80,7 @@ ensure_service_enabled_active() {
 }
 
 ensure_pkg_installed "${NODE_EXPORTER_PKG}"
+ensure_pkg_installed "${SQLITE_PKG}"
 ensure_service_enabled_active "${NODE_EXPORTER_SERVICE}"
 
 mkdir -p /root/.config/rclone
