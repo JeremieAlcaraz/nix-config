@@ -13,6 +13,8 @@ CRON_LINE_STAGE="${STAGE_DIR}/cron-line.txt"
 
 TARGET_RCLONE_CONF="/root/.config/rclone/rclone.conf"
 TARGET_SYNC_SCRIPT="/root/sync-capsule.sh"
+NODE_EXPORTER_PKG="prometheus-node-exporter"
+NODE_EXPORTER_SERVICE="prometheus-node-exporter"
 
 run() {
   if [[ "${DRY_RUN}" -eq 1 ]]; then
@@ -30,6 +32,32 @@ require_file() {
 require_file "${RCLONE_CONF_STAGE}"
 require_file "${SYNC_SCRIPT_STAGE}"
 require_file "${CRON_LINE_STAGE}"
+
+ensure_pkg_installed() {
+  local pkg="$1"
+  if dpkg -s "${pkg}" >/dev/null 2>&1; then
+    echo "[INFO] package already installed: ${pkg}"
+    return 0
+  fi
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    echo "[DRY-RUN] would run: apt-get update -qq && apt-get install -y ${pkg}"
+    return 0
+  fi
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y "${pkg}"
+}
+
+ensure_service_enabled_active() {
+  local svc="$1"
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    echo "[DRY-RUN] would run: systemctl enable --now ${svc}"
+    return 0
+  fi
+  systemctl enable --now "${svc}" >/dev/null
+}
+
+ensure_pkg_installed "${NODE_EXPORTER_PKG}"
+ensure_service_enabled_active "${NODE_EXPORTER_SERVICE}"
 
 mkdir -p /root/.config/rclone
 chmod 700 /root/.config/rclone

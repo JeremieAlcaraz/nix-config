@@ -36,7 +36,10 @@ Etat cible:
 - endpoint local: `http://127.0.0.1:9100/metrics` repond,
 - scrape distant: `myosotis` voit `http://poppy:9100/metrics` en `health: up`.
 
-Installation (Debian/PBS):
+Installation (declarative via repo):
+- `just poppy-apply` (convergence idempotente: installe/active `prometheus-node-exporter` si absent)
+
+Installation manuelle (fallback):
 - `apt-get update && apt-get install -y prometheus-node-exporter`
 
 Validation depuis myosotis:
