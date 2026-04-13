@@ -9,7 +9,9 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
 ### memos
 - Chemin: `/root/apps/memos`
 - Compose: `/root/apps/memos/compose.yml`
+- Env: `/root/apps/memos/.env` (depuis `hosts/poppy/apps/memos/.env.template`)
 - Port exposé: `5230:5230`
+- Secrets: dans `secrets/poppy.yaml` (SOPS, section `apps.memos`)
 - Données: `/root/apps/memos/data`
 - Sauvegardes: `/root/apps/memos/backups`
 - Scripts backup:
@@ -21,8 +23,9 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
 ### vikunja
 - Chemin: `/root/apps/vikunja`
 - Compose: `/root/apps/vikunja/compose.yml`
-- Env: `/root/apps/vikunja/.env`
+- Env: `/root/apps/vikunja/.env` (depuis `hosts/poppy/apps/vikunja/.env.template`)
 - Port exposé: `3456:3456`
+- Secrets: dans `secrets/poppy.yaml` (SOPS, section `apps.vikunja`)
 - Données:
   - `/root/apps/vikunja/config`
   - `/root/apps/vikunja/data/files`
@@ -35,10 +38,14 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
 ### moodboard
 - Chemin: `/root/apps/moodboard`
 - Compose: `/root/apps/moodboard/compose.yml`
+- Dockerfile: `/root/apps/moodboard/Dockerfile`
+- Garage config: `/root/apps/moodboard/infra/garage/garage-prod.toml`
+- Env: `/root/apps/moodboard/.env.prod` (depuis `hosts/poppy/apps/moodboard/.env.template`)
 - Ports exposés:
   - `3005:3005` (app)
   - `3900:3900` (garage S3)
   - `3903:3903` (garage admin)
+- Secrets: dans `secrets/poppy.yaml` (SOPS, section `apps.moodboard`)
 - Données:
   - `/root/apps/moodboard/assets`
   - `/root/apps/moodboard/.local`
