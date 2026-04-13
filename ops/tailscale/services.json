@@ -17,6 +17,18 @@
       "host": "poppy",
       "port": 3005,
       "autoApproveTag": "tag:newmachine"
+    },
+    {
+      "name": "memos",
+      "host": "poppy",
+      "port": 5230,
+      "autoApproveTag": "tag:newmachine"
+    },
+    {
+      "name": "vikunja",
+      "host": "poppy",
+      "port": 3456,
+      "autoApproveTag": "tag:newmachine"
     }
   ]
 }
