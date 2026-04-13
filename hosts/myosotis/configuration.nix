@@ -24,6 +24,9 @@ let
         hash = "sha256-iT9AKe6bPgeX662YndR7jfUW7U0Hjyje0tbY33u9EGU=";
         name = "node-exporter-overview.json";
       }} > $out/node-exporter-overview.json
+
+    # Dashboard custom provisionné (déclaratif) pour poppy
+    cp ${./dashboards/poppy-storage.json} $out/poppy-storage.json
   '';
 
   # Génère les scrape targets depuis config.nix (hostnames MagicDNS)
