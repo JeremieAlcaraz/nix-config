@@ -41,6 +41,7 @@ Ce dossier existe pour la déclaration, la traçabilité et la reproductibilité
 - `hosts/poppy/cron/`: exemples de scheduling (cron/systemd).
 - `hosts/poppy/runbook.md`: procédures d'exploitation et incident.
 - `hosts/poppy/inventory.yaml`: métadonnées hôte (inventaire local).
+- `hosts/poppy/apps/README.md`: inventaire déclaratif des applications sous `/root/apps`.
 
 ## Audit technique (2026-04-13)
 

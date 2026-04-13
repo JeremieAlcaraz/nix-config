@@ -6,6 +6,7 @@
 - `hosts/poppy/runbook.md`: exploitation, verifications, incidents, rollback.
 - `hosts/poppy/BACKLOG-V2.md`: suite du chantier (hardening et evolution ops).
 - `hosts/poppy/inventory.yaml`: metadonnees d'inventaire local.
+- `hosts/poppy/apps/README.md`: inventaire declaratif des apps (`/root/apps`).
 
 ## Scripts
 

@@ -25,16 +25,51 @@ backup:
     destination: "gdrive_capsule:proxmox"
 apps:
   root_path: "/root/apps"
-  detected:
-    - memos
-    - moodboard
-    - vikunja
   notes:
     - "Le chemin /apps n'existe pas sur l'hôte au moment de l'audit."
+  services:
+    memos:
+      path: "/root/apps/memos"
+      compose_file: "/root/apps/memos/compose.yml"
+      exposed_ports:
+        - "5230:5230"
+      data_paths:
+        - "/root/apps/memos/data"
+      backup_paths:
+        - "/root/apps/memos/backups"
+      backup_scripts:
+        - "/root/apps/memos/scripts/backup.sh"
+    vikunja:
+      path: "/root/apps/vikunja"
+      compose_file: "/root/apps/vikunja/compose.yml"
+      env_file: "/root/apps/vikunja/.env"
+      exposed_ports:
+        - "3456:3456"
+      data_paths:
+        - "/root/apps/vikunja/config"
+        - "/root/apps/vikunja/data/files"
+      backup_paths:
+        - "/root/apps/vikunja/backups"
+      backup_scripts:
+        - "/root/apps/vikunja/scripts/backup.sh"
+        - "/root/apps/vikunja/scripts/upload-backups.sh"
+    moodboard:
+      path: "/root/apps/moodboard"
+      compose_file: "/root/apps/moodboard/compose.yml"
+      exposed_ports:
+        - "3005:3005"
+        - "3900:3900"
+        - "3903:3903"
+      data_paths:
+        - "/root/apps/moodboard/assets"
+        - "/root/apps/moodboard/.local"
+      backup_scripts:
+        - "/root/apps/moodboard/backup-moodboard.sh"
+        - "/root/apps/moodboard/scripts/backup-moodboard.sh"
 backup_scripts_detected:
   - "/root/sync-capsule.sh"
-  - "/root/apps/moodboard/backup-moodboard.sh"
-  - "/root/apps/moodboard/scripts/backup-moodboard.sh"
   - "/root/apps/memos/scripts/backup.sh"
   - "/root/apps/vikunja/scripts/backup.sh"
   - "/root/apps/vikunja/scripts/upload-backups.sh"
+  - "/root/apps/moodboard/backup-moodboard.sh"
+  - "/root/apps/moodboard/scripts/backup-moodboard.sh"
