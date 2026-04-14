@@ -60,6 +60,7 @@ RESTIC_INIT_STAGE="${STAGE_DIR}/restic-init.sh"
 RESTIC_PRUNE_STAGE="${STAGE_DIR}/restic-prune.sh"
 RESTIC_PRUNE_SVC_STAGE="${STAGE_DIR}/restic-prune.service"
 RESTIC_PRUNE_TMR_STAGE="${STAGE_DIR}/restic-prune.timer"
+RESTIC_RESTORE_STAGE="${STAGE_DIR}/restic-restore.sh"
 
 # Legacy Garage config path (for migration)
 LEGACY_GARAGE_DATA_VOLUME="moodboard_garage-data"
@@ -105,6 +106,7 @@ TARGET_RESTIC_DIR="/root/apps/restic"
 TARGET_RESTIC_PRUNE="/root/apps/restic/restic-prune.sh"
 TARGET_RESTIC_PRUNE_SERVICE="/etc/systemd/system/restic-prune.service"
 TARGET_RESTIC_PRUNE_TIMER="/etc/systemd/system/restic-prune.timer"
+TARGET_RESTIC_RESTORE="/root/apps/restic/restic-restore.sh"
 
 TARGET_MEMOS_SVC="/etc/systemd/system/memos.service"
 TARGET_VIKUNJA_SVC="/etc/systemd/system/vikunja.service"
@@ -197,7 +199,8 @@ for f in \
   "${TWENTY_COMPOSE_STAGE}" "${TWENTY_ENV_STAGE}" "${TWENTY_SVC_STAGE}" \
   "${TWENTY_BACKUP_STAGE}" "${TWENTY_BACKUP_SVC_STAGE}" "${TWENTY_BACKUP_TMR_STAGE}" \
   "${RESTIC_ENV_STAGE}" "${RESTIC_INIT_STAGE}" \
-  "${RESTIC_PRUNE_STAGE}" "${RESTIC_PRUNE_SVC_STAGE}" "${RESTIC_PRUNE_TMR_STAGE}"; do
+  "${RESTIC_PRUNE_STAGE}" "${RESTIC_PRUNE_SVC_STAGE}" "${RESTIC_PRUNE_TMR_STAGE}" \
+  "${RESTIC_RESTORE_STAGE}" ; do
   require_file "${f}"
 done
 
@@ -209,6 +212,7 @@ run mkdir -p "${BAK_DIR}" /root/apps/memos/scripts /root/apps/vikunja/scripts /r
 # Ensure packages/services
 ensure_pkg_installed "${NODE_EXPORTER_PKG}"
 ensure_pkg_installed "${SQLITE_PKG}"
+ensure_pkg_installed "gum"
 if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "[DRY-RUN] would run: systemctl enable --now ${NODE_EXPORTER_SERVICE}"
 else
@@ -287,6 +291,7 @@ run install -m 700 "${RESTIC_INIT_STAGE}" "${TARGET_RESTIC_DIR}/init.sh"
 run install -m 700 "${RESTIC_PRUNE_STAGE}" "${TARGET_RESTIC_PRUNE}"
 run install -m 644 "${RESTIC_PRUNE_SVC_STAGE}" "${TARGET_RESTIC_PRUNE_SERVICE}"
 run install -m 644 "${RESTIC_PRUNE_TMR_STAGE}" "${TARGET_RESTIC_PRUNE_TIMER}"
+run install -m 700 "${RESTIC_RESTORE_STAGE}" "${TARGET_RESTIC_RESTORE}"
 
 # Garage standalone
 run install -m 644 "${GARAGE_COMPOSE_STAGE}" "${TARGET_GARAGE_COMPOSE}"
@@ -337,6 +342,7 @@ lock_file "${TARGET_TWENTY_BACKUP_TMR}" 444
 lock_file "${TARGET_RESTIC_ENV}" 444
 lock_file "${TARGET_RESTIC_PRUNE_SERVICE}" 444
 lock_file "${TARGET_RESTIC_PRUNE_TIMER}" 444
+lock_file "${TARGET_RESTIC_RESTORE}" 444
 
 # cron
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"

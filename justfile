@@ -51,3 +51,13 @@ ts-service-ensure service port:
 
 ts-service-add service host port tag='tag:newmachine':
 	./scripts/tailscale/ts-service-add.py {{service}} {{host}} {{port}} --tag {{tag}}
+
+# ── Restic ──────────────────────────────────────────────────────────
+poppy-restic-status:
+	ssh root@poppy 'RESTIC_PASSWORD="$(grep ^RESTIC_PASSWORD= /root/.config/restic/env | tr -d "\047" | cut -d= -f2)" && export RESTIC_PASSWORD && echo "=== Snapshots ===" && for repo in memos-bak vikunja-bak moodboard-bak twenty-bak; do echo "--- $repo ---" && timeout 60 restic snapshots --repo "rclone:gdrive_capsule:$repo" 2>&1 | head -3; done && echo "" && echo "=== Timers ===" && systemctl list-timers --all | grep restic'
+
+poppy-restic-backup app:
+	ssh root@poppy 'RESTIC_PASSWORD="$(grep ^RESTIC_PASSWORD= /root/.config/restic/env | tr -d "\047" | cut -d= -f2)" && export RESTIC_PASSWORD && bash /root/apps/restic/{{app}}-restic-backup.sh'
+
+poppy-restic-restore:
+	ssh root@poppy 'bash /root/apps/restic/restic-restore.sh'

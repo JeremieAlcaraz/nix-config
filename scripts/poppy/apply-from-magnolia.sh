@@ -56,6 +56,8 @@ RESTIC_INIT="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-init.sh"
 RESTIC_PRUNE="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-prune.sh"
 RESTIC_PRUNE_SVC="${REPO_ROOT}/hosts/poppy/systemd/restic-prune.service"
 RESTIC_PRUNE_TMR="${REPO_ROOT}/hosts/poppy/systemd/restic-prune.timer"
+RESTIC_RESTORE="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-restore.sh"
+JUSTFILE_POPPYP="${REPO_ROOT}/hosts/poppy/justfile"
 
 # ── Garage bootstrap ──────────────────────────────────────
 GARAGE_BOOTSTRAP="${REPO_ROOT}/hosts/poppy/scripts/garage-bootstrap.sh"
@@ -84,6 +86,7 @@ for f in \
   "${TWENTY_BACKUP}" "${TWENTY_BACKUP_SVC}" "${TWENTY_BACKUP_TMR}" \
   "${RESTIC_ENV_TPL}" "${RESTIC_INIT}" \
   "${RESTIC_PRUNE}" "${RESTIC_PRUNE_SVC}" "${RESTIC_PRUNE_TMR}" \
+  "${RESTIC_RESTORE}" "${JUSTFILE_POPPYP}" \
   "${MEMOS_ENV_S3_TPL}" "${AGENTS_MD}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
@@ -286,6 +289,7 @@ scp -q "${RESTIC_INIT}" "${SSH_HOST}:${REMOTE_STAGE}/restic-init.sh"
 scp -q "${RESTIC_PRUNE}" "${SSH_HOST}:${REMOTE_STAGE}/restic-prune.sh"
 scp -q "${RESTIC_PRUNE_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/restic-prune.service"
 scp -q "${RESTIC_PRUNE_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/restic-prune.timer"
+scp -q "${RESTIC_RESTORE}" "${SSH_HOST}:${REMOTE_STAGE}/restic-restore.sh"
 
 # Twenty backup
 scp -q "${TWENTY_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-backup.sh"

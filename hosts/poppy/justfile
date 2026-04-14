@@ -1,0 +1,21 @@
+# Justfile for poppy host
+# Run from repo root: just poppy-restore
+# Or from hosts/poppy/ just --justfile justfile poppy-restore
+
+SSH_HOST := "root@poppy"
+
+# Interactive restore via gum picker
+restore:
+    @ssh {{SSH_HOST}} 'bash /root/apps/restic/restic-restore.sh'
+
+# Run restic backup for a specific app (manual)
+backup app:
+    @ssh {{SSH_HOST}} 'RESTIC_PASSWORD="$(grep ^RESTIC_PASSWORD= /root/.config/restic/env | tr -d "\047" | cut -d= -f2)" && export RESTIC_PASSWORD && bash "/root/apps/restic/{{app}}-restic-backup.sh"' 
+
+# List snapshots for all repos
+snapshots:
+    @ssh {{SSH_HOST}} 'RESTIC_PASSWORD="$(grep ^RESTIC_PASSWORD= /root/.config/restic/env | tr -d "\047" | cut -d= -f2)" && export RESTIC_PASSWORD && for repo in memos-bak vikunja-bak moodboard-bak twenty-bak; do echo "=== $repo ==="; timeout 60 restic snapshots --repo "rclone:gdrive_capsule:$repo"; echo ""; done'
+
+# Check restic timer status
+status:
+    @ssh {{SSH_HOST}} 'systemctl status restic-prune.timer --no-pager; echo ""; systemctl list-timers --all | grep restic'
