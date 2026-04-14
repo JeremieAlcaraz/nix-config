@@ -5,22 +5,12 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+EnvironmentFile=/root/apps/vikunja/.env
 ExecStartPre=-/usr/bin/podman rm -f vikunja
 ExecStart=/usr/bin/podman run --replace --name vikunja \
     --network=host \
     -v /root/apps/vikunja/data:/app/vikunja/files \
-    -e VIKUNJA_SERVICE_JWTSECRET=${VIKUNJA_JWT_SECRET:?missing} \
-    -e VIKUNJA_SERVICE_PUBLICURL=${VIKUNJA_PUBLIC_URL:?missing} \
-    -e VIKUNJA_SERVICE_TIMEZONE=Europe/Paris \
-    -e VIKUNJA_SERVICE_ENABLECALDAV=true \
-    -e VIKUNJA_SERVICE_ENABLEREGISTRATION=true \
-    -e VIKUNJA_SERVICE_ENABLETASKATTACHMENTS=true \
-    -e VIKUNJA_DATABASE_TYPE=sqlite \
-    -e VIKUNJA_DATABASE_PATH=/app/vikunja/files/vikunja.db \
-    -e VIKUNJA_FILES_BASEPATH=/app/vikunja/files \
-    -e VIKUNJA_FILES_MAXSIZE=20MB \
-    -e VIKUNJA_LOG_ENABLED=true \
-    -e VIKUNJA_LOG_LEVEL=INFO \
+    --env-file /root/apps/vikunja/.env \
     docker.io/vikunja/vikunja:latest
 ExecStop=/usr/bin/podman stop -t 10 vikunja
 Restart=always

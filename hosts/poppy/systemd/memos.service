@@ -1,18 +1,23 @@
 [Unit]
-Description=Memos (Podman)
+Description=Memos (Podman) — boot only, managed by docker compose
 After=network-online.target
 Wants=network-online.target
 
 [Service]
-Type=simple
-ExecStartPre=-/usr/bin/podman rm -f memos
-ExecStart=/usr/bin/podman run --replace --name memos \
-    --network=host \
-    -v /root/apps/memos/data:/var/opt/memos \
-    neosmemo/memos:stable
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/bash -c '
+  if podman ps --format "{{.Names}}" | grep -q "^memos$"; then
+    echo "[memos] already running via podman, skip"
+  elif docker ps --format "{{.Names}}" 2>/dev/null | grep -q "memos_memos_1"; then
+    echo "[memos] already running via docker compose, skip"
+  else
+    podman run --replace --name memos --network=host \
+      -v /root/apps/memos/data:/var/opt/memos \
+      neosmemo/memos:stable
+  fi
+'
 ExecStop=/usr/bin/podman stop -t 10 memos
-Restart=always
-RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
