@@ -6,53 +6,58 @@ if [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN=1
 fi
 
-STAGE_DIR="${STAGE_DIR:-/tmp/poppy-bootstrap}"
+STAGE_DIR="${STAGE_DIR:-/var/lib/poppy-deploy}"
+
+# Stage files
 RCLONE_CONF_STAGE="${STAGE_DIR}/rclone.conf"
 SYNC_SCRIPT_STAGE="${STAGE_DIR}/sync-capsule.sh"
 CRON_LINE_STAGE="${STAGE_DIR}/cron-line.txt"
 
-# Backup scripts
 MEMOS_BACKUP_STAGE="${STAGE_DIR}/memos-backup.sh"
 MEMOS_UPLOAD_STAGE="${STAGE_DIR}/memos-upload-backups.sh"
 VIKUNJA_BACKUP_STAGE="${STAGE_DIR}/vikunja-backup.sh"
 VIKUNJA_UPLOAD_STAGE="${STAGE_DIR}/vikunja-upload-backups.sh"
 MOODBOARD_BACKUP_STAGE="${STAGE_DIR}/moodboard-backup.sh"
 
-# Systemd backup units
 MEMOS_BACKUP_SERVICE_STAGE="${STAGE_DIR}/memos-backup.service"
 MEMOS_BACKUP_TIMER_STAGE="${STAGE_DIR}/memos-backup.timer"
 
-# App compose
 MEMOS_COMPOSE_STAGE="${STAGE_DIR}/memos-compose.yml"
 VIKUNJA_COMPOSE_STAGE="${STAGE_DIR}/vikunja-compose.yml"
 MOODBOARD_COMPOSE_STAGE="${STAGE_DIR}/moodboard-compose.yml"
-
-# App .env (generated from template + secrets)
 VIKUNJA_ENV_STAGE="${STAGE_DIR}/vikunja.env"
 MOODBOARD_ENV_STAGE="${STAGE_DIR}/moodboard.env"
 
-# App systemd units
 MEMOS_SERVICE_STAGE="${STAGE_DIR}/memos.service"
 VIKUNJA_SERVICE_STAGE="${STAGE_DIR}/vikunja.service"
+MOODBOARD_SERVICE_STAGE="${STAGE_DIR}/moodboard.service"
 
-# ── Target paths ─────────────────────────────────────────
+# Targets
 TARGET_RCLONE_CONF="/root/.config/rclone/rclone.conf"
 TARGET_SYNC_SCRIPT="/root/sync-capsule.sh"
+
 TARGET_MEMOS_BACKUP="/root/apps/memos/scripts/backup.sh"
 TARGET_MEMOS_UPLOAD="/root/apps/memos/scripts/upload-backups.sh"
-TARGET_MEMOS_SERVICE="/etc/systemd/system/memos-backup.service"
-TARGET_MEMOS_TIMER="/etc/systemd/system/memos-backup.timer"
 TARGET_VIKUNJA_BACKUP="/root/apps/vikunja/scripts/backup.sh"
 TARGET_VIKUNJA_UPLOAD="/root/apps/vikunja/scripts/upload-backups.sh"
 TARGET_MOODBOARD_BACKUP_A="/root/apps/moodboard/backup-moodboard.sh"
 TARGET_MOODBOARD_BACKUP_B="/root/apps/moodboard/scripts/backup-moodboard.sh"
+
+TARGET_MEMOS_BACKUP_SERVICE="/etc/systemd/system/memos-backup.service"
+TARGET_MEMOS_BACKUP_TIMER="/etc/systemd/system/memos-backup.timer"
+
 TARGET_MEMOS_COMPOSE="/root/apps/memos/compose.yml"
 TARGET_VIKUNJA_COMPOSE="/root/apps/vikunja/compose.yml"
 TARGET_MOODBOARD_COMPOSE="/root/apps/moodboard/compose.yml"
 TARGET_VIKUNJA_ENV="/root/apps/vikunja/.env"
-TARGET_MOODBOARD_ENV="/root/apps/moodboard/.env.prod"
+TARGET_MOODBOARD_ENV="/root/apps/moodboard/.env"
+TARGET_MOODBOARD_ENV_PROD="/root/apps/moodboard/.env.prod"
+
 TARGET_MEMOS_SVC="/etc/systemd/system/memos.service"
 TARGET_VIKUNJA_SVC="/etc/systemd/system/vikunja.service"
+TARGET_MOODBOARD_SVC="/etc/systemd/system/moodboard.service"
+
+BAK_DIR="/root/.bak"
 
 NODE_EXPORTER_PKG="prometheus-node-exporter"
 NODE_EXPORTER_SERVICE="prometheus-node-exporter"
@@ -66,31 +71,11 @@ run() {
   "$@"
 }
 
-# Lock files after install to prevent manual editing on poppy
-# (will be unlocked automatically on next deploy run)
-lock_file() {
+require_file() {
   local f="$1"
-  local mode="$2"
-  if [[ "${DRY_RUN}" -eq 1 ]]; then
-    echo "[DRY-RUN] chmod ${mode} ${f}"
-    return 0
-  fi
-  chmod "${mode}" "${f}" 2>/dev/null || true
-  chattr +i "${f}" 2>/dev/null || true
+  [[ -f "${f}" ]] || { echo "[ERROR] missing file: ${f}"; exit 1; }
 }
 
-# Remove immutable flag then delete (so install can overwrite)
-remove_immutable() {
-  local f="$1"
-  if [[ "${DRY_RUN}" -eq 1 ]]; then
-    echo "[DRY-RUN] chattr -i ${f} && rm -f ${f}"
-    return 0
-  fi
-  chattr -i "${f}" 2>/dev/null || true
-  rm -f "${f}"
-}
-
-# Unlock for next deploy (must be writable when re-installing)
 unlock_file() {
   local f="$1"
   if [[ "${DRY_RUN}" -eq 1 ]]; then
@@ -100,31 +85,25 @@ unlock_file() {
   chmod u+w "${f}" 2>/dev/null || true
 }
 
-require_file() {
+lock_file() {
   local f="$1"
-  [[ -f "${f}" ]] || { echo "[ERROR] missing file: ${f}"; exit 1; }
+  local mode="$2"
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    echo "[DRY-RUN] chmod ${mode} ${f} && chattr +i ${f}"
+    return 0
+  fi
+  chmod "${mode}" "${f}" 2>/dev/null || true
+  chattr +i "${f}" 2>/dev/null || true
 }
 
-# Backup scripts + systemd backup
-require_file "${RCLONE_CONF_STAGE}"
-require_file "${SYNC_SCRIPT_STAGE}"
-require_file "${CRON_LINE_STAGE}"
-require_file "${MEMOS_BACKUP_STAGE}"
-require_file "${MEMOS_UPLOAD_STAGE}"
-require_file "${VIKUNJA_BACKUP_STAGE}"
-require_file "${VIKUNJA_UPLOAD_STAGE}"
-require_file "${MOODBOARD_BACKUP_STAGE}"
-require_file "${MEMOS_BACKUP_SERVICE_STAGE}"
-require_file "${MEMOS_BACKUP_TIMER_STAGE}"
-
-# App stacks
-require_file "${MEMOS_COMPOSE_STAGE}"
-require_file "${VIKUNJA_COMPOSE_STAGE}"
-require_file "${MOODBOARD_COMPOSE_STAGE}"
-require_file "${VIKUNJA_ENV_STAGE}"
-require_file "${MOODBOARD_ENV_STAGE}"
-require_file "${MEMOS_SERVICE_STAGE}"
-require_file "${VIKUNJA_SERVICE_STAGE}"
+backup_if_exists() {
+  local f="$1"
+  if [[ -f "${f}" ]]; then
+    local key
+    key="$(echo "${f}" | sed 's#^/##; s#/#__#g')"
+    run cp "${f}" "${BAK_DIR}/${key}.bak-${TS}"
+  fi
+}
 
 ensure_pkg_installed() {
   local pkg="$1"
@@ -140,80 +119,57 @@ ensure_pkg_installed() {
   DEBIAN_FRONTEND=noninteractive apt-get install -y "${pkg}"
 }
 
-ensure_service_enabled_active() {
-  local svc="$1"
-  if [[ "${DRY_RUN}" -eq 1 ]]; then
-    echo "[DRY-RUN] would run: systemctl enable --now ${svc}"
-    return 0
-  fi
-  systemctl enable --now "${svc}" >/dev/null
-}
-
-ensure_pkg_installed "${NODE_EXPORTER_PKG}"
-ensure_pkg_installed "${SQLITE_PKG}"
-ensure_service_enabled_active "${NODE_EXPORTER_SERVICE}"
-
-mkdir -p /root/.config/rclone
-chmod 700 /root/.config/rclone
-
-# All app dirs
-run mkdir -p \
-  /root/apps/memos/scripts \
-  /root/apps/vikunja/scripts \
-  /root/apps/moodboard/scripts \
-  /root/apps/memos \
-  /root/apps/vikunja \
-  /root/apps/moodboard
-
-# ── Backup existing files ─────────────────────────────────
-ts="$(date +%Y%m%d-%H%M%S)"
-if [[ -f "${TARGET_RCLONE_CONF}" ]]; then
-  run cp "${TARGET_RCLONE_CONF}" "/root/.bak/$(basename "${TARGET_RCLONE_CONF}").bak-${ts}"
-fi
-if [[ -f "${TARGET_SYNC_SCRIPT}" ]]; then
-  run cp "${TARGET_SYNC_SCRIPT}" "/root/.bak/$(basename "${TARGET_SYNC_SCRIPT}").bak-${ts}"
-fi
+# Validate stage files
 for f in \
-  "${TARGET_MEMOS_BACKUP}" "${TARGET_MEMOS_UPLOAD}" \
-  "${TARGET_VIKUNJA_BACKUP}" "${TARGET_VIKUNJA_UPLOAD}" \
-  "${TARGET_MOODBOARD_BACKUP_A}" "${TARGET_MOODBOARD_BACKUP_B}" \
-  "${TARGET_MEMOS_SERVICE}" "${TARGET_MEMOS_TIMER}" \
-  "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" \
-  "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_VIKUNJA_ENV}" \
-  "${TARGET_MOODBOARD_ENV}" "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}"; do
-  if [[ -f "${f}" ]]; then
-    remove_immutable "${f}"  # unlock + remove so install can overwrite
-  fi
+  "${RCLONE_CONF_STAGE}" "${SYNC_SCRIPT_STAGE}" "${CRON_LINE_STAGE}" \
+  "${MEMOS_BACKUP_STAGE}" "${MEMOS_UPLOAD_STAGE}" "${VIKUNJA_BACKUP_STAGE}" "${VIKUNJA_UPLOAD_STAGE}" "${MOODBOARD_BACKUP_STAGE}" \
+  "${MEMOS_BACKUP_SERVICE_STAGE}" "${MEMOS_BACKUP_TIMER_STAGE}" \
+  "${MEMOS_COMPOSE_STAGE}" "${VIKUNJA_COMPOSE_STAGE}" "${MOODBOARD_COMPOSE_STAGE}" \
+  "${VIKUNJA_ENV_STAGE}" "${MOODBOARD_ENV_STAGE}" \
+  "${MEMOS_SERVICE_STAGE}" "${VIKUNJA_SERVICE_STAGE}" "${MOODBOARD_SERVICE_STAGE}"; do
+  require_file "${f}"
 done
 
-unlock_file() {
-  local f="$1"
-  if [[ "${DRY_RUN}" -eq 1 ]]; then
-    return 0
-  fi
-  chmod u+w "${f}" 2>/dev/null || true
-}
+# Ensure dirs
+run mkdir -p /root/.config/rclone
+run chmod 700 /root/.config/rclone
+run mkdir -p "${BAK_DIR}" /root/apps/memos/scripts /root/apps/vikunja/scripts /root/apps/moodboard/scripts
 
-unlock_all() {
-  for f in "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" \
-           "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" \
-           "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}"; do
-    unlock_file "${f}"
-  done
-}
-
-if [[ "${DRY_RUN}" -ne 1 ]]; then
-  unlock_all
-  for f in \
-    "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" \
-    "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_VIKUNJA_ENV}" \
-    "${TARGET_MOODBOARD_ENV}" "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}"; do
-    remove_immutable "${f}"
-  done
+# Ensure packages/services
+ensure_pkg_installed "${NODE_EXPORTER_PKG}"
+ensure_pkg_installed "${SQLITE_PKG}"
+if [[ "${DRY_RUN}" -eq 1 ]]; then
+  echo "[DRY-RUN] would run: systemctl enable --now ${NODE_EXPORTER_SERVICE}"
+else
+  systemctl enable --now "${NODE_EXPORTER_SERVICE}" >/dev/null
 fi
+
+TS="$(date +%Y%m%d-%H%M%S)"
+
+# unlock managed immutable files before replacing
+for f in \
+  "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" \
+  "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" \
+  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}"; do
+  unlock_file "${f}"
+done
+
+# backup old files
+for f in \
+  "${TARGET_RCLONE_CONF}" "${TARGET_SYNC_SCRIPT}" \
+  "${TARGET_MEMOS_BACKUP}" "${TARGET_MEMOS_UPLOAD}" "${TARGET_VIKUNJA_BACKUP}" "${TARGET_VIKUNJA_UPLOAD}" \
+  "${TARGET_MOODBOARD_BACKUP_A}" "${TARGET_MOODBOARD_BACKUP_B}" \
+  "${TARGET_MEMOS_BACKUP_SERVICE}" "${TARGET_MEMOS_BACKUP_TIMER}" \
+  "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" \
+  "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" \
+  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}"; do
+  backup_if_exists "${f}"
+done
+
+# install files
+run install -m 600 "${RCLONE_CONF_STAGE}" "${TARGET_RCLONE_CONF}"
 run install -m 700 "${SYNC_SCRIPT_STAGE}" "${TARGET_SYNC_SCRIPT}"
 
-# Backup scripts
 run install -m 700 "${MEMOS_BACKUP_STAGE}" "${TARGET_MEMOS_BACKUP}"
 run install -m 700 "${MEMOS_UPLOAD_STAGE}" "${TARGET_MEMOS_UPLOAD}"
 run install -m 700 "${VIKUNJA_BACKUP_STAGE}" "${TARGET_VIKUNJA_BACKUP}"
@@ -221,33 +177,32 @@ run install -m 700 "${VIKUNJA_UPLOAD_STAGE}" "${TARGET_VIKUNJA_UPLOAD}"
 run install -m 700 "${MOODBOARD_BACKUP_STAGE}" "${TARGET_MOODBOARD_BACKUP_A}"
 run install -m 700 "${MOODBOARD_BACKUP_STAGE}" "${TARGET_MOODBOARD_BACKUP_B}"
 
-# Systemd backup units
-run install -m 644 "${MEMOS_BACKUP_SERVICE_STAGE}" "${TARGET_MEMOS_SERVICE}"
-run install -m 644 "${MEMOS_BACKUP_TIMER_STAGE}" "${TARGET_MEMOS_TIMER}"
+run install -m 644 "${MEMOS_BACKUP_SERVICE_STAGE}" "${TARGET_MEMOS_BACKUP_SERVICE}"
+run install -m 644 "${MEMOS_BACKUP_TIMER_STAGE}" "${TARGET_MEMOS_BACKUP_TIMER}"
 
-# App compose files
 run install -m 644 "${MEMOS_COMPOSE_STAGE}" "${TARGET_MEMOS_COMPOSE}"
 run install -m 644 "${VIKUNJA_COMPOSE_STAGE}" "${TARGET_VIKUNJA_COMPOSE}"
 run install -m 644 "${MOODBOARD_COMPOSE_STAGE}" "${TARGET_MOODBOARD_COMPOSE}"
-
-# App .env (from SOPS)
 run install -m 600 "${VIKUNJA_ENV_STAGE}" "${TARGET_VIKUNJA_ENV}"
 run install -m 600 "${MOODBOARD_ENV_STAGE}" "${TARGET_MOODBOARD_ENV}"
+run install -m 600 "${MOODBOARD_ENV_STAGE}" "${TARGET_MOODBOARD_ENV_PROD}"
 
-# App systemd units
 run install -m 644 "${MEMOS_SERVICE_STAGE}" "${TARGET_MEMOS_SVC}"
 run install -m 644 "${VIKUNJA_SERVICE_STAGE}" "${TARGET_VIKUNJA_SVC}"
+run install -m 644 "${MOODBOARD_SERVICE_STAGE}" "${TARGET_MOODBOARD_SVC}"
 
-# Lock files to prevent manual editing on poppy (444 = read-only for all, incl. root)
+# lock critical files
 lock_file "${TARGET_MEMOS_COMPOSE}" 444
 lock_file "${TARGET_VIKUNJA_COMPOSE}" 444
 lock_file "${TARGET_MOODBOARD_COMPOSE}" 444
 lock_file "${TARGET_VIKUNJA_ENV}" 444
 lock_file "${TARGET_MOODBOARD_ENV}" 444
+lock_file "${TARGET_MOODBOARD_ENV_PROD}" 444
 lock_file "${TARGET_MEMOS_SVC}" 444
 lock_file "${TARGET_VIKUNJA_SVC}" 444
+lock_file "${TARGET_MOODBOARD_SVC}" 444
 
-# ── Cron ──────────────────────────────────────────────────
+# cron
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"
 CURRENT_CRON="$(mktemp)"
 NEW_CRON="$(mktemp)"
@@ -258,24 +213,24 @@ grep -v "/root/sync-capsule.sh" "${CURRENT_CRON}" > "${NEW_CRON}" || true
 printf "%s\n" "${CRON_LINE}" >> "${NEW_CRON}"
 
 if [[ "${DRY_RUN}" -eq 1 ]]; then
-  echo "[DRY-RUN] would install cron line:"
-  echo "${CRON_LINE}"
+  echo "[DRY-RUN] would install cron line: ${CRON_LINE}"
 else
   crontab "${NEW_CRON}"
 fi
 
-# ── Systemd reload + enable ────────────────────────────────
+# systemd
 if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "[DRY-RUN] would run: systemctl daemon-reload"
   echo "[DRY-RUN] would run: systemctl enable --now memos-backup.timer"
   echo "[DRY-RUN] would run: systemctl enable --now memos.service"
   echo "[DRY-RUN] would run: systemctl enable --now vikunja.service"
+  echo "[DRY-RUN] would run: systemctl enable --now moodboard.service"
 else
   systemctl daemon-reload
   systemctl enable --now memos-backup.timer >/dev/null
-  # App units — enable only, don't restart running ones unless needed
-  systemctl enable memos.service 2>/dev/null || true
-  systemctl enable vikunja.service 2>/dev/null || true
+  systemctl enable --now memos.service >/dev/null || true
+  systemctl enable --now vikunja.service >/dev/null || true
+  systemctl enable --now moodboard.service >/dev/null || true
 fi
 
 if [[ "${DRY_RUN}" -eq 1 ]]; then
