@@ -50,6 +50,10 @@ TWENTY_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/twenty-backup.sh"
 TWENTY_BACKUP_SVC="${REPO_ROOT}/hosts/poppy/systemd/twenty-backup.service"
 TWENTY_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/twenty-backup.timer"
 
+# ── Restic ─────────────────────────────────────────────────
+RESTIC_ENV_TPL="${REPO_ROOT}/hosts/poppy/.env.restic.template"
+RESTIC_INIT="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-init.sh"
+
 # ── Garage bootstrap ──────────────────────────────────────
 GARAGE_BOOTSTRAP="${REPO_ROOT}/hosts/poppy/scripts/garage-bootstrap.sh"
 MEMOS_S3_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/memos-backup-s3.sh"
@@ -75,6 +79,7 @@ for f in \
   "${MEMOS_SVC}" "${VIKUNJA_SVC}" "${MOODBOARD_SVC}" "${GARAGE_SVC}" "${GARAGE_BOOTSTRAP}" \
   "${TWENTY_COMPOSE}" "${TWENTY_ENV_TPL}" "${TWENTY_SVC}" \
   "${TWENTY_BACKUP}" "${TWENTY_BACKUP_SVC}" "${TWENTY_BACKUP_TMR}" \
+  "${RESTIC_ENV_TPL}" "${RESTIC_INIT}" \
   "${MEMOS_ENV_S3_TPL}" "${AGENTS_MD}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
@@ -125,7 +130,9 @@ TWENTY_SERVER_URL="$(yq -r '.apps.twenty.server_url' "${DECRYPTED}")"
 TWENTY_STORAGE_ACCESS_KEY_ID="$(yq -r '.apps.twenty.storage_access_key_id' "${DECRYPTED}")"
 TWENTY_STORAGE_SECRET_ACCESS_KEY="$(yq -r '.apps.twenty.storage_secret_access_key' "${DECRYPTED}")"
 
-for v in SSH_HOST CLIENT_ID CLIENT_SECRET GDRIVE_TOKEN CAPSULE_TOKEN ROOT_FOLDER_ID DEST_SUBPATH SCHEDULE_CRON MEMOS_GARAGE_ACCESS_KEY_ID MEMOS_GARAGE_SECRET_ACCESS_KEY TWENTY_PG_PASSWORD TWENTY_APP_SECRET TWENTY_GOOGLE_CLIENT_ID TWENTY_GOOGLE_CLIENT_SECRET TWENTY_STORAGE_ACCESS_KEY_ID TWENTY_STORAGE_SECRET_ACCESS_KEY; do
+RESTIC_PASSWORD="$(yq -r '.apps.restic.password' "${DECRYPTED}")"
+
+for v in SSH_HOST CLIENT_ID CLIENT_SECRET GDRIVE_TOKEN CAPSULE_TOKEN ROOT_FOLDER_ID DEST_SUBPATH SCHEDULE_CRON MEMOS_GARAGE_ACCESS_KEY_ID MEMOS_GARAGE_SECRET_ACCESS_KEY TWENTY_PG_PASSWORD TWENTY_APP_SECRET TWENTY_GOOGLE_CLIENT_ID TWENTY_GOOGLE_CLIENT_SECRET TWENTY_STORAGE_ACCESS_KEY_ID TWENTY_STORAGE_SECRET_ACCESS_KEY RESTIC_PASSWORD; do
   val="${!v}"
   [[ -n "${val}" && "${val}" != "null" ]] || { echo "[ERROR] missing value: ${v}" >&2; exit 1; }
 done
@@ -195,6 +202,12 @@ print(template.replace("{{MEMOS_GARAGE_ACCESS_KEY_ID}}", key_id)
      .replace("{{MEMOS_GARAGE_SECRET_ACCESS_KEY}}", secret))
 PY3B
 
+# ── Génère restic.env ────────────────────────────────
+python3 - "${RESTIC_ENV_TPL}" "${RESTIC_PASSWORD}" > "${TMP_DIR}/restic.env" <<'PYRESTIC'
+import sys
+print(open(sys.argv[1]).read().replace("{{RESTIC_PASSWORD}}", sys.argv[2]))
+PYRESTIC
+
 # ── Génère .env pour twenty ─────────────────────────────
 python3 - "${TWENTY_ENV_TPL}" "${TWENTY_PG_PASSWORD}" "${TWENTY_APP_SECRET}" \
   "${TWENTY_GOOGLE_CLIENT_ID}" "${TWENTY_GOOGLE_CLIENT_SECRET}" "${TWENTY_SERVER_URL}" \
@@ -262,6 +275,10 @@ scp -q "${GARAGE_CONFIG}" "${SSH_HOST}:${REMOTE_STAGE}/garage-prod.toml"
 
 # App systemd units
 scp -q "${TWENTY_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/twenty.service"
+
+# Restic
+scp -q "${TMP_DIR}/restic.env" "${SSH_HOST}:${REMOTE_STAGE}/restic.env"
+scp -q "${RESTIC_INIT}" "${SSH_HOST}:${REMOTE_STAGE}/restic-init.sh"
 
 # Twenty backup
 scp -q "${TWENTY_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-backup.sh"

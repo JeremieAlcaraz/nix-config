@@ -54,6 +54,10 @@ TWENTY_BACKUP_STAGE="${STAGE_DIR}/twenty-backup.sh"
 TWENTY_BACKUP_SVC_STAGE="${STAGE_DIR}/twenty-backup.service"
 TWENTY_BACKUP_TMR_STAGE="${STAGE_DIR}/twenty-backup.timer"
 
+# Restic
+RESTIC_ENV_STAGE="${STAGE_DIR}/restic.env"
+RESTIC_INIT_STAGE="${STAGE_DIR}/restic-init.sh"
+
 # Legacy Garage config path (for migration)
 LEGACY_GARAGE_DATA_VOLUME="moodboard_garage-data"
 LEGACY_GARAGE_CONFIG="/root/apps/moodboard/infra/garage/garage-prod.toml"
@@ -92,6 +96,9 @@ TARGET_TWENTY_SVC="/etc/systemd/system/twenty.service"
 TARGET_TWENTY_BACKUP="/root/apps/twenty/scripts/backup.sh"
 TARGET_TWENTY_BACKUP_SVC="/etc/systemd/system/twenty-backup.service"
 TARGET_TWENTY_BACKUP_TMR="/etc/systemd/system/twenty-backup.timer"
+
+TARGET_RESTIC_ENV="/root/.config/restic/env"
+TARGET_RESTIC_DIR="/root/apps/restic"
 
 TARGET_MEMOS_SVC="/etc/systemd/system/memos.service"
 TARGET_VIKUNJA_SVC="/etc/systemd/system/vikunja.service"
@@ -182,14 +189,15 @@ for f in \
   "${MEMOS_S3_BACKUP_STAGE}" "${MEMOS_ENV_S3_STAGE}" "${MEMOS_STORAGE_INIT_STAGE}" "${MEMOS_STORAGE_MIGRATE_STAGE}" \
   "${MEMOS_S3_BACKUP_SVC_STAGE}" "${MEMOS_S3_BACKUP_TMR_STAGE}" \
   "${TWENTY_COMPOSE_STAGE}" "${TWENTY_ENV_STAGE}" "${TWENTY_SVC_STAGE}" \
-  "${TWENTY_BACKUP_STAGE}" "${TWENTY_BACKUP_SVC_STAGE}" "${TWENTY_BACKUP_TMR_STAGE}"; do
+  "${TWENTY_BACKUP_STAGE}" "${TWENTY_BACKUP_SVC_STAGE}" "${TWENTY_BACKUP_TMR_STAGE}" \
+  "${RESTIC_ENV_STAGE}" "${RESTIC_INIT_STAGE}"; do
   require_file "${f}"
 done
 
 # Ensure dirs
 run mkdir -p /root/.config/rclone
 run chmod 700 /root/.config/rclone
-run mkdir -p "${BAK_DIR}" /root/apps/memos/scripts /root/apps/vikunja/scripts /root/apps/moodboard/scripts /root/apps/garage/data /root/apps/twenty /root/apps/twenty/scripts
+run mkdir -p "${BAK_DIR}" /root/apps/memos/scripts /root/apps/vikunja/scripts /root/apps/moodboard/scripts /root/apps/garage/data /root/apps/twenty /root/apps/twenty/scripts /root/apps/restic
 
 # Ensure packages/services
 ensure_pkg_installed "${NODE_EXPORTER_PKG}"
@@ -208,7 +216,7 @@ for f in \
   "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" "${TARGET_MEMOS_ENV_S3}" \
   "${TARGET_TWENTY_COMPOSE}" "${TARGET_TWENTY_ENV}" "${TARGET_TWENTY_BACKUP}" \
   "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" "${TARGET_TWENTY_SVC}" \
-  "${TARGET_TWENTY_BACKUP_SVC}" "${TARGET_TWENTY_BACKUP_TMR}" \
+  "${TARGET_TWENTY_BACKUP_SVC}" "${TARGET_TWENTY_BACKUP_TMR}" "${TARGET_RESTIC_ENV}" \
   "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" "${TARGET_GARAGE_SVC}"; do
   unlock_file "${f}"
 done
@@ -265,6 +273,10 @@ run install -m 700 "${TWENTY_BACKUP_STAGE}" "${TARGET_TWENTY_BACKUP}"
 run install -m 644 "${TWENTY_BACKUP_SVC_STAGE}" "${TARGET_TWENTY_BACKUP_SVC}"
 run install -m 644 "${TWENTY_BACKUP_TMR_STAGE}" "${TARGET_TWENTY_BACKUP_TMR}"
 
+# Restic
+run install -m 600 "${RESTIC_ENV_STAGE}" "${TARGET_RESTIC_ENV}"
+run install -m 700 "${RESTIC_INIT_STAGE}" "${TARGET_RESTIC_DIR}/init.sh"
+
 # Garage standalone
 run install -m 644 "${GARAGE_COMPOSE_STAGE}" "${TARGET_GARAGE_COMPOSE}"
 run install -m 600 "${GARAGE_CONFIG_STAGE}" "${TARGET_GARAGE_CONFIG}"
@@ -311,6 +323,7 @@ lock_file "${TARGET_TWENTY_ENV}" 444
 lock_file "${TARGET_TWENTY_SVC}" 444
 lock_file "${TARGET_TWENTY_BACKUP_SVC}" 444
 lock_file "${TARGET_TWENTY_BACKUP_TMR}" 444
+lock_file "${TARGET_RESTIC_ENV}" 444
 
 # cron
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"
