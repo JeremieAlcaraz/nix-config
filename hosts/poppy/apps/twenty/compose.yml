@@ -2,16 +2,24 @@
 # Runtime: podman-compose (not docker)
 name: twenty
 
+networks:
+  twenty:
+    name: twenty
+    driver: bridge
+
 services:
   server:
     image: twentycrm/twenty:${TAG:-v1.18.1}
+    container_name: twenty-server
     extra_hosts:
       - "host.containers.internal:host-gateway"
     ports:
       - "3000:3000"
+    networks:
+      - twenty
     environment:
       NODE_PORT: 3000
-      PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD}@${PG_DATABASE_HOST:-db}:${PG_DATABASE_PORT:-5432}/default
+      PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD}@db:${PG_DATABASE_PORT:-5432}/default
       SERVER_URL: ${SERVER_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       DISABLE_DB_MIGRATIONS: ${DISABLE_DB_MIGRATIONS:-false}
@@ -21,6 +29,8 @@ services:
       STORAGE_S3_REGION: ${STORAGE_S3_REGION:-garage}
       STORAGE_S3_NAME: ${STORAGE_S3_NAME:-twenty}
       STORAGE_S3_ENDPOINT: ${STORAGE_S3_ENDPOINT:-http://host.containers.internal:3900}
+      AWS_ACCESS_KEY_ID: ${STORAGE_S3_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_S3_SECRET_ACCESS_KEY:-}
 
       APP_SECRET: ${APP_SECRET}
       MESSAGING_PROVIDER_GMAIL_ENABLED: ${MESSAGING_PROVIDER_GMAIL_ENABLED:-false}
@@ -45,11 +55,14 @@ services:
 
   worker:
     image: twentycrm/twenty:${TAG:-v1.18.1}
+    container_name: twenty-worker
     extra_hosts:
       - "host.containers.internal:host-gateway"
+    networks:
+      - twenty
     command: ["yarn", "worker:prod"]
     environment:
-      PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD}@${PG_DATABASE_HOST:-db}:${PG_DATABASE_PORT:-5432}/default
+      PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD}@db:${PG_DATABASE_PORT:-5432}/default
       SERVER_URL: ${SERVER_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       DISABLE_DB_MIGRATIONS: "true"
@@ -59,6 +72,8 @@ services:
       STORAGE_S3_REGION: ${STORAGE_S3_REGION:-garage}
       STORAGE_S3_NAME: ${STORAGE_S3_NAME:-twenty}
       STORAGE_S3_ENDPOINT: ${STORAGE_S3_ENDPOINT:-http://host.containers.internal:3900}
+      AWS_ACCESS_KEY_ID: ${STORAGE_S3_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_S3_SECRET_ACCESS_KEY:-}
 
       APP_SECRET: ${APP_SECRET}
       MESSAGING_PROVIDER_GMAIL_ENABLED: ${MESSAGING_PROVIDER_GMAIL_ENABLED:-false}
@@ -78,8 +93,11 @@ services:
 
   db:
     image: postgres:16
+    container_name: twenty-db
     extra_hosts:
       - "host.containers.internal:host-gateway"
+    networks:
+      - twenty
     volumes:
       - twenty-db-data:/var/lib/postgresql/data
     environment:
@@ -97,6 +115,9 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: twenty-redis
+    networks:
+      - twenty
     restart: always
     command: ["redis-server", "--maxmemory-policy", "noeviction"]
     healthcheck:
@@ -104,6 +125,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+networks:
+  twenty:
+    name: twenty
 
 volumes:
   twenty-db-data:
