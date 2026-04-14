@@ -127,7 +127,7 @@ ssh "${SSH_HOST}" "systemctl is-active memos-s3-backup.timer >/dev/null && echo 
 ssh "${SSH_HOST}" "systemctl is-enabled garage.service >/dev/null && echo '[OK] garage.service enabled'"
 ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^garage$' && echo '[OK] garage podman running' || echo '[WARN] garage not in podman'"
 ssh "${SSH_HOST}" "systemctl is-enabled twenty.service >/dev/null && echo '[OK] twenty.service enabled'"
-ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^twenty-server-$' && echo '[OK] twenty podman running' || echo '[WARN] twenty not in podman'"
+ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^twenty_server_1$' && echo '[OK] twenty podman running' || echo '[WARN] twenty not in podman'"
 
 # Check memos S3 storage status
 MEMOS_STORAGE_TYPE=$(ssh "${SSH_HOST}" "sqlite3 /root/apps/memos/data/memos_prod.db 'SELECT json_extract(value,'\''$.storageType'\'''') FROM system_setting WHERE name = '\''STORAGE'\'';' 2>/dev/null || echo ''")
