@@ -40,6 +40,9 @@ GARAGE_SVC="${REPO_ROOT}/hosts/poppy/systemd/garage.service"
 
 # ── Garage bootstrap ──────────────────────────────────────
 GARAGE_BOOTSTRAP="${REPO_ROOT}/hosts/poppy/scripts/garage-bootstrap.sh"
+MEMOS_S3_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/memos-backup-s3.sh"
+MEMOS_STORAGE_INIT="${REPO_ROOT}/hosts/poppy/scripts/memos-storage-init.sh"
+MEMOS_STORAGE_MIGRATE="${REPO_ROOT}/hosts/poppy/scripts/memos-storage-migrate.sh"
 
 for cmd in sops yq ssh scp python3; do
   command -v "${cmd}" >/dev/null 2>&1 || { echo "[ERROR] missing command: ${cmd}" >&2; exit 1; }
@@ -202,6 +205,11 @@ scp -q "${GARAGE_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/garage.service"
 
 # Garage bootstrap script
 scp -q "${GARAGE_BOOTSTRAP}" "${SSH_HOST}:${REMOTE_STAGE}/garage-bootstrap.sh"
+
+# S3 scripts
+scp -q "${MEMOS_S3_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/memos-backup-s3.sh"
+scp -q "${MEMOS_STORAGE_INIT}" "${SSH_HOST}:${REMOTE_STAGE}/memos-storage-init.sh"
+scp -q "${MEMOS_STORAGE_MIGRATE}" "${SSH_HOST}:${REMOTE_STAGE}/memos-storage-migrate.sh"
 
 # AGENTS.md -> /root/ (permanent, doc for anyone SSHing)
 scp -q "${REPO_ROOT}/hosts/poppy/AGENTS.md" "${SSH_HOST}:/root/AGENTS.md"

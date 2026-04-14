@@ -91,6 +91,13 @@ ssh "${SSH_HOST}" "systemctl is-enabled memos-backup.timer >/dev/null && echo '[
 ssh "${SSH_HOST}" "systemctl is-active memos-backup.timer >/dev/null && echo '[OK] memos-backup.timer active'"
 ssh "${SSH_HOST}" "systemctl is-enabled garage.service >/dev/null && echo '[OK] garage.service enabled'"
 ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^garage$' && echo '[OK] garage podman running' || echo '[WARN] garage not in podman'"
+# Check memos S3 storage status
+MEMOS_STORAGE_TYPE=$(ssh "${SSH_HOST}" "sqlite3 /root/apps/memos/data/memos_prod.db 'SELECT json_extract(value,'\''$.storageType'\'''') FROM system_setting WHERE name = '\''STORAGE'\'';' 2>/dev/null || echo ''")
+if [[ "${MEMOS_STORAGE_TYPE}" == "S3" ]]; then
+  echo "[OK] memos storage type: S3"
+else
+  echo "[WARN] memos storage type: ${MEMOS_STORAGE_TYPE:-unknown}"
+fi
 ssh "${SSH_HOST}" "EXPECTED_ROOT_FOLDER_ID='${EXPECTED_ROOT_FOLDER_ID}' bash -s" < "${VERIFY_SCRIPT}"
 
 echo "[INFO] Drift check (SoT vs remote files)"

@@ -9,3 +9,5 @@ services:
       - ./data:/var/opt/memos
     environment:
       - MEMOS_MODE=prod
+    extra_hosts:
+      - "host.containers.internal:host-gateway"

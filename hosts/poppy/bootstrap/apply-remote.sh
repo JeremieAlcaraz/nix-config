@@ -37,6 +37,9 @@ GARAGE_COMPOSE_STAGE="${STAGE_DIR}/garage-compose.yml"
 GARAGE_CONFIG_STAGE="${STAGE_DIR}/garage-prod.toml"
 GARAGE_SERVICE_STAGE="${STAGE_DIR}/garage.service"
 GARAGE_BOOTSTRAP_STAGE="${STAGE_DIR}/garage-bootstrap.sh"
+MEMOS_S3_BACKUP_STAGE="${STAGE_DIR}/memos-backup-s3.sh"
+MEMOS_STORAGE_INIT_STAGE="${STAGE_DIR}/memos-storage-init.sh"
+MEMOS_STORAGE_MIGRATE_STAGE="${STAGE_DIR}/memos-storage-migrate.sh"
 
 # Legacy Garage config path (for migration)
 LEGACY_GARAGE_DATA_VOLUME="moodboard_garage-data"
@@ -48,6 +51,8 @@ TARGET_SYNC_SCRIPT="/root/sync-capsule.sh"
 
 TARGET_MEMOS_BACKUP="/root/apps/memos/scripts/backup.sh"
 TARGET_MEMOS_UPLOAD="/root/apps/memos/scripts/upload-backups.sh"
+TARGET_MEMOS_S3_BACKUP="/root/apps/memos/scripts/backup-s3.sh"
+TARGET_MEMOS_STORAGE_MIGRATE="/root/apps/memos/scripts/migrate-to-s3.sh"
 TARGET_VIKUNJA_BACKUP="/root/apps/vikunja/scripts/backup.sh"
 TARGET_VIKUNJA_UPLOAD="/root/apps/vikunja/scripts/upload-backups.sh"
 TARGET_MOODBOARD_BACKUP_A="/root/apps/moodboard/backup-moodboard.sh"
@@ -73,6 +78,8 @@ TARGET_GARAGE_COMPOSE="/root/apps/garage/compose.yml"
 TARGET_GARAGE_CONFIG="/root/apps/garage/garage-prod.toml"
 TARGET_GARAGE_DATA="/root/apps/garage/data"
 TARGET_GARAGE_SVC="/etc/systemd/system/garage.service"
+TARGET_GARAGE_BOOTSTRAP="/root/apps/garage/garage-bootstrap.sh"
+TARGET_MEMOS_STORAGE_INIT="/root/apps/garage/memos-storage-init.sh"
 
 BAK_DIR="/root/.bak"
 
@@ -144,7 +151,8 @@ for f in \
   "${MEMOS_COMPOSE_STAGE}" "${VIKUNJA_COMPOSE_STAGE}" "${MOODBOARD_COMPOSE_STAGE}" "${MOODBOARD_CONTAINERFILE_STAGE}" \
   "${VIKUNJA_ENV_STAGE}" "${MOODBOARD_ENV_STAGE}" \
   "${MEMOS_SERVICE_STAGE}" "${VIKUNJA_SERVICE_STAGE}" "${MOODBOARD_SERVICE_STAGE}" \
-  "${GARAGE_COMPOSE_STAGE}" "${GARAGE_CONFIG_STAGE}" "${GARAGE_SERVICE_STAGE}" "${GARAGE_BOOTSTRAP_STAGE}"; do
+  "${GARAGE_COMPOSE_STAGE}" "${GARAGE_CONFIG_STAGE}" "${GARAGE_SERVICE_STAGE}" "${GARAGE_BOOTSTRAP_STAGE}" \
+  "${MEMOS_S3_BACKUP_STAGE}" "${MEMOS_STORAGE_INIT_STAGE}" "${MEMOS_STORAGE_MIGRATE_STAGE}"; do
   require_file "${f}"
 done
 
@@ -176,13 +184,14 @@ done
 # backup old files
 for f in \
   "${TARGET_RCLONE_CONF}" "${TARGET_SYNC_SCRIPT}" \
-  "${TARGET_MEMOS_BACKUP}" "${TARGET_MEMOS_UPLOAD}" "${TARGET_VIKUNJA_BACKUP}" "${TARGET_VIKUNJA_UPLOAD}" \
+  "${TARGET_MEMOS_BACKUP}" "${TARGET_MEMOS_UPLOAD}" "${TARGET_MEMOS_S3_BACKUP}" "${TARGET_MEMOS_STORAGE_MIGRATE}" \
+  "${TARGET_VIKUNJA_BACKUP}" "${TARGET_VIKUNJA_UPLOAD}" \
   "${TARGET_MOODBOARD_BACKUP_A}" "${TARGET_MOODBOARD_BACKUP_B}" \
   "${TARGET_MEMOS_BACKUP_SERVICE}" "${TARGET_MEMOS_BACKUP_TIMER}" \
   "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_MOODBOARD_CONTAINERFILE}" \
   "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" \
   "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" \
-  "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" \
+  "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" "${TARGET_GARAGE_BOOTSTRAP}" "${TARGET_MEMOS_STORAGE_INIT}" \
   "${LEGACY_GARAGE_CONFIG}"; do
   backup_if_exists "${f}"
 done
@@ -217,7 +226,12 @@ run install -m 644 "${MOODBOARD_SERVICE_STAGE}" "${TARGET_MOODBOARD_SVC}"
 run install -m 644 "${GARAGE_COMPOSE_STAGE}" "${TARGET_GARAGE_COMPOSE}"
 run install -m 600 "${GARAGE_CONFIG_STAGE}" "${TARGET_GARAGE_CONFIG}"
 run install -m 700 "${GARAGE_BOOTSTRAP_STAGE}" "${TARGET_GARAGE_DIR}/garage-bootstrap.sh"
+run install -m 700 "${MEMOS_STORAGE_INIT_STAGE}" "${TARGET_GARAGE_DIR}/memos-storage-init.sh"
 run install -m 644 "${GARAGE_SERVICE_STAGE}" "${TARGET_GARAGE_SVC}"
+
+# S3 backup + migrate scripts
+run install -m 700 "${MEMOS_S3_BACKUP_STAGE}" "${TARGET_MEMOS_S3_BACKUP}"
+run install -m 700 "${MEMOS_STORAGE_MIGRATE_STAGE}" "${TARGET_MEMOS_STORAGE_MIGRATE}"
 
 # ── Garage data migration (one-time) ────────────────────────
 # If Garage data exists in the old named volume but not in the new host path,

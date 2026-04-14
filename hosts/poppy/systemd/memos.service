@@ -1,6 +1,6 @@
 [Unit]
 Description=Memos (podman-compose)
-After=network-online.target
+After=network-online.target garage.service
 Wants=network-online.target
 
 [Service]

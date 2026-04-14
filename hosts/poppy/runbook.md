@@ -46,17 +46,60 @@ Validation depuis myosotis:
 - `curl -fsS http://127.0.0.1:8428/api/v1/targets | jq -c '.data.activeTargets[] | select(.labels.instance=="poppy:9100") | {health,lastError}'`
 - `curl -fsS 'http://127.0.0.1:8428/api/v1/query?query=up{instance="poppy:9100",job="node"}' | jq -c .data.result`
 
+## Garage S3 — memos storage backend
+
+Garage S3 tourne en service standalone (`garage.service`).
+Memos utilise Garage comme storage backend pour les attachments (bucket `memos`).
+Les credentials S3 sont stockes dans la DB memos, pas dans les env vars.
+
+### Configuration S3 memos (API declarative)
+
+Le storage S3 est configure via l'API Connect-RPC (et non env vars) :
+
+```bash
+# 1. Sign-in (necessite le mot de passe admin memos)
+TOKEN=$(curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"passwordCredentials":{"username":"jeremie","password":"<PASS>"}}' \
+  http://localhost:5230/memos.api.v1.AuthService/SignIn \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])")
+
+# 2. Configurer S3 (voir hosts/poppy/scripts/memos-storage-init.sh)
+bash /root/apps/garage/memos-storage-init.sh --password "<PASS>"
+```
+
+Le script `memos-storage-init.sh` est deploye par `just poppy-apply`.
+Il est idempotent (verification du storage type avant action).
+
+### Backup S3 memos (rclone -> Drive)
+
+```bash
+bash /root/apps/memos/scripts/backup-s3.sh
+```
+Sync le bucket Garage `memos` vers `gdrive_capsule:memos/s3-objects/`.
+
+### Status Garage
+
+```bash
+podman exec garage /garage bucket list
+podman exec garage /garage key list
+```
+
 ## Scripts backup versionnes (source de verite)
 
 Scripts versionnes dans ce depot (et deployes via `just poppy-apply`):
 - `hosts/poppy/scripts/sync-capsule.sh` -> `/root/sync-capsule.sh`
 - `hosts/poppy/scripts/memos-backup.sh` -> `/root/apps/memos/scripts/backup.sh`
 - `hosts/poppy/scripts/memos-upload-backups.sh` -> `/root/apps/memos/scripts/upload-backups.sh`
+- `hosts/poppy/scripts/memos-backup-s3.sh` -> `/root/apps/memos/scripts/backup-s3.sh`
 - `hosts/poppy/systemd/memos-backup.service` -> `/etc/systemd/system/memos-backup.service`
 - `hosts/poppy/systemd/memos-backup.timer` -> `/etc/systemd/system/memos-backup.timer`
 - `hosts/poppy/scripts/vikunja-backup.sh` -> `/root/apps/vikunja/scripts/backup.sh`
 - `hosts/poppy/scripts/vikunja-upload-backups.sh` -> `/root/apps/vikunja/scripts/upload-backups.sh`
 - `hosts/poppy/scripts/moodboard-backup.sh` -> `/root/apps/moodboard/{backup-moodboard.sh,scripts/backup-moodboard.sh}`
+- `hosts/poppy/scripts/garage-bootstrap.sh` -> `/root/apps/garage/garage-bootstrap.sh`
+- `hosts/poppy/scripts/memos-storage-init.sh` -> `/root/apps/garage/memos-storage-init.sh` (S3 config API)
+- `hosts/poppy/scripts/memos-storage-migrate.sh` -> `/root/apps/memos/scripts/migrate-to-s3.sh` (migration DB->S3)
 
 ## Verification de cible Drive (read-only)
 
