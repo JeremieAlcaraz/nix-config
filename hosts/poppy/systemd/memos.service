@@ -1,0 +1,18 @@
+[Unit]
+Description=Memos (Podman)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/bin/podman rm -f memos
+ExecStart=/usr/bin/podman run --replace --name memos \
+    --network=host \
+    -v /root/apps/memos/data:/var/opt/memos \
+    neosmemo/memos:stable
+ExecStop=/usr/bin/podman stop -t 10 memos
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

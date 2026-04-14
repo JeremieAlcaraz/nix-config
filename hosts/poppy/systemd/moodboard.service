@@ -1,0 +1,11 @@
+# Moodboard — managed via nerdctl compose (pas de systemd unit独立的)
+# Le service moodboard tourne via docker compose / nerdctl compose
+# dans /root/apps/moodboard/
+#
+# Commandes de gestion:
+#   cd /root/apps/moodboard && docker compose up -d
+#   cd /root/apps/moodboard && docker compose down
+#   cd /root/apps/moodboard && docker compose restart app
+#
+# Units systemd backup (déclarées ailleurs):
+#   - backup-moodboard.service / backup-moodboard.timer
