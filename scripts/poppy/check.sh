@@ -62,6 +62,8 @@ TWENTY_APP_SECRET="$(yq -r '.apps.twenty.app_secret' "${TMP_DEC}")"
 TWENTY_GOOGLE_CLIENT_ID="$(yq -r '.apps.twenty.google_client_id' "${TMP_DEC}")"
 TWENTY_GOOGLE_CLIENT_SECRET="$(yq -r '.apps.twenty.google_client_secret' "${TMP_DEC}")"
 TWENTY_SERVER_URL="$(yq -r '.apps.twenty.server_url' "${TMP_DEC}")"
+TWENTY_STORAGE_ACCESS_KEY_ID="$(yq -r '.apps.twenty.storage_access_key_id' "${TMP_DEC}")"
+TWENTY_STORAGE_SECRET_ACCESS_KEY="$(yq -r '.apps.twenty.storage_secret_access_key' "${TMP_DEC}")"
 
 python3 - "${VIKUNJA_ENV_TPL}" "${VIKUNJA_JWT_SECRET}" "${VIKUNJA_PUBLIC_URL}" > "${VIKUNJA_ENV_EXPECTED}" <<'PY'
 import sys
@@ -89,7 +91,8 @@ print(template
 PY
 
 python3 - "${TWENTY_ENV_TPL}" "${TWENTY_PG_PASSWORD}" "${TWENTY_APP_SECRET}" \
-  "${TWENTY_GOOGLE_CLIENT_ID}" "${TWENTY_GOOGLE_CLIENT_SECRET}" "${TWENTY_SERVER_URL}" > "${TWENTY_ENV_EXPECTED}" <<'PYTW'
+  "${TWENTY_GOOGLE_CLIENT_ID}" "${TWENTY_GOOGLE_CLIENT_SECRET}" "${TWENTY_SERVER_URL}" \
+  "${TWENTY_STORAGE_ACCESS_KEY_ID}" "${TWENTY_STORAGE_SECRET_ACCESS_KEY}" > "${TWENTY_ENV_EXPECTED}" <<'PYTW'
 import sys
 template = open(sys.argv[1]).read()
 print(template
@@ -97,7 +100,9 @@ print(template
     .replace("{{APP_SECRET}}", sys.argv[3])
     .replace("{{GOOGLE_CLIENT_ID}}", sys.argv[4])
     .replace("{{GOOGLE_CLIENT_SECRET}}", sys.argv[5])
-    .replace("{{SERVER_URL}}", sys.argv[6]))
+    .replace("{{SERVER_URL}}", sys.argv[6])
+    .replace("{{STORAGE_ACCESS_KEY_ID}}", sys.argv[7])
+    .replace("{{STORAGE_SECRET_ACCESS_KEY}}", sys.argv[8]))
 PYTW
 
 python3 - "${GARAGE_CONFIG_TPL}"  "${GARAGE_RPC_SECRET}" "${GARAGE_ADMIN_TOKEN}" "${GARAGE_METRICS_TOKEN}" > "${GARAGE_CONFIG_EXPECTED}" <<'PY'
@@ -127,7 +132,7 @@ ssh "${SSH_HOST}" "systemctl is-active memos-s3-backup.timer >/dev/null && echo 
 ssh "${SSH_HOST}" "systemctl is-enabled garage.service >/dev/null && echo '[OK] garage.service enabled'"
 ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^garage$' && echo '[OK] garage podman running' || echo '[WARN] garage not in podman'"
 ssh "${SSH_HOST}" "systemctl is-enabled twenty.service >/dev/null && echo '[OK] twenty.service enabled'"
-ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^twenty_server_1$' && echo '[OK] twenty podman running' || echo '[WARN] twenty not in podman'"
+ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^twenty-server$' && echo '[OK] twenty podman running' || echo '[WARN] twenty not in podman'"
 
 # Check memos S3 storage status
 MEMOS_STORAGE_TYPE=$(ssh "${SSH_HOST}" "sqlite3 /root/apps/memos/data/memos_prod.db 'SELECT json_extract(value,'\''$.storageType'\'''') FROM system_setting WHERE name = '\''STORAGE'\'';' 2>/dev/null || echo ''")
