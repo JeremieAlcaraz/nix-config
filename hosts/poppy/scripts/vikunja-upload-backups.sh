@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REMOTE="gdrive_capsule:proxmox/vikunja"
+REMOTE="gdrive_capsule:vikunja"
 BACKUP_DIR="/root/apps/vikunja/backups"
 RETENTION_DAYS="${RETENTION_DAYS:-30}"
 

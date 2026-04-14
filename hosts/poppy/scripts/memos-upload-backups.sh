@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REMOTE="${MEMOS_REMOTE:-gdrive_capsule:proxmox/memos}"
+REMOTE="${MEMOS_REMOTE:-gdrive_capsule:memos}"
 BACKUP_DIR="${MEMOS_BACKUP_DIR:-/root/apps/memos/backups}"
 RETENTION_DAYS="${RETENTION_DAYS:-30}"
 
