@@ -31,6 +31,8 @@ MOODBOARD_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/moodboard-backup.sh"
 # ── Systemd backup ─────────────────────────────────────────
 MEMOS_BACKUP_SVC="${REPO_ROOT}/hosts/poppy/systemd/memos-backup.service"
 MEMOS_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/memos-backup.timer"
+MEMOS_S3_BACKUP_SVC="${REPO_ROOT}/hosts/poppy/systemd/memos-s3-backup.service"
+MEMOS_S3_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/memos-s3-backup.timer"
 
 # ── Systemd app units ──────────────────────────────────────
 MEMOS_SVC="${REPO_ROOT}/hosts/poppy/systemd/memos.service"
@@ -43,6 +45,7 @@ GARAGE_BOOTSTRAP="${REPO_ROOT}/hosts/poppy/scripts/garage-bootstrap.sh"
 MEMOS_S3_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/memos-backup-s3.sh"
 MEMOS_STORAGE_INIT="${REPO_ROOT}/hosts/poppy/scripts/memos-storage-init.sh"
 MEMOS_STORAGE_MIGRATE="${REPO_ROOT}/hosts/poppy/scripts/memos-storage-migrate.sh"
+MEMOS_ENV_S3_TPL="${REPO_ROOT}/hosts/poppy/apps/memos/.env.template.s3"
 
 for cmd in sops yq ssh scp python3; do
   command -v "${cmd}" >/dev/null 2>&1 || { echo "[ERROR] missing command: ${cmd}" >&2; exit 1; }
@@ -55,9 +58,12 @@ for f in \
   "${MEMOS_COMPOSE}" "${VIKUNJA_COMPOSE}" "${VIKUNJA_ENV_TPL}" \
   "${MOODBOARD_COMPOSE}" "${MOODBOARD_CONTAINERFILE}" "${MOODBOARD_ENV_TPL}" \
   "${GARAGE_COMPOSE}" "${GARAGE_CONFIG_TPL}" \
-  "${MEMOS_BACKUP}" "${MEMOS_UPLOAD}" "${VIKUNJA_BACKUP}" "${VIKUNJA_UPLOAD}" "${MOODBOARD_BACKUP}" \
+  "${MEMOS_BACKUP}" "${MEMOS_UPLOAD}" "${MEMOS_S3_BACKUP}" "${MEMOS_STORAGE_INIT}" "${MEMOS_STORAGE_MIGRATE}" \
+  "${VIKUNJA_BACKUP}" "${VIKUNJA_UPLOAD}" "${MOODBOARD_BACKUP}" \
   "${MEMOS_BACKUP_SVC}" "${MEMOS_BACKUP_TMR}" \
-  "${MEMOS_SVC}" "${VIKUNJA_SVC}" "${MOODBOARD_SVC}" "${GARAGE_SVC}" "${GARAGE_BOOTSTRAP}" "${AGENTS_MD}"; do
+  "${MEMOS_S3_BACKUP_SVC}" "${MEMOS_S3_BACKUP_TMR}" \
+  "${MEMOS_SVC}" "${VIKUNJA_SVC}" "${MOODBOARD_SVC}" "${GARAGE_SVC}" "${GARAGE_BOOTSTRAP}" \
+  "${MEMOS_ENV_S3_TPL}" "${AGENTS_MD}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
 
@@ -95,8 +101,10 @@ GEMINI_API_KEY="$(yq -r '.apps.moodboard.gemini_api_key' "${DECRYPTED}")"
 GARAGE_RPC_SECRET="$(yq -r '.apps.garage.rpc_secret' "${DECRYPTED}")"
 GARAGE_ADMIN_TOKEN="$(yq -r '.apps.garage.admin_token' "${DECRYPTED}")"
 GARAGE_METRICS_TOKEN="$(yq -r '.apps.garage.metrics_token' "${DECRYPTED}")"
+MEMOS_GARAGE_ACCESS_KEY_ID="$(yq -r '.apps.memos.garage_access_key_id' "${DECRYPTED}")"
+MEMOS_GARAGE_SECRET_ACCESS_KEY="$(yq -r '.apps.memos.garage_secret_access_key' "${DECRYPTED}")"
 
-for v in SSH_HOST CLIENT_ID CLIENT_SECRET GDRIVE_TOKEN CAPSULE_TOKEN ROOT_FOLDER_ID DEST_SUBPATH SCHEDULE_CRON; do
+for v in SSH_HOST CLIENT_ID CLIENT_SECRET GDRIVE_TOKEN CAPSULE_TOKEN ROOT_FOLDER_ID DEST_SUBPATH SCHEDULE_CRON MEMOS_GARAGE_ACCESS_KEY_ID MEMOS_GARAGE_SECRET_ACCESS_KEY; do
   val="${!v}"
   [[ -n "${val}" && "${val}" != "null" ]] || { echo "[ERROR] missing value: ${v}" >&2; exit 1; }
 done
@@ -156,6 +164,16 @@ result = result.replace("{{GEMINI_API_KEY}}", gemini)
 print(result)
 PY3
 
+# ── Génère .env.s3 pour memos ───────────────────────────
+python3 - "${MEMOS_ENV_S3_TPL}" "${MEMOS_GARAGE_ACCESS_KEY_ID}" "${MEMOS_GARAGE_SECRET_ACCESS_KEY}" > "${TMP_DIR}/memos.env.s3" <<'PY3B'
+import sys
+template = open(sys.argv[1]).read()
+key_id = sys.argv[2]
+secret = sys.argv[3]
+print(template.replace("{{MEMOS_GARAGE_ACCESS_KEY_ID}}", key_id)
+     .replace("{{MEMOS_GARAGE_SECRET_ACCESS_KEY}}", secret))
+PY3B
+
 # ── Génère garage-prod.toml depuis template ───────────────
 python3 - "${GARAGE_CONFIG_TPL}" "${GARAGE_RPC_SECRET}" "${GARAGE_ADMIN_TOKEN}" "${GARAGE_METRICS_TOKEN}" > "${GARAGE_CONFIG}" <<'PY4'
 import sys
@@ -179,6 +197,9 @@ scp -q "${REMOTE_APPLY}" "${SSH_HOST}:${REMOTE_STAGE}/apply-remote.sh"
 # Backup scripts
 scp -q "${MEMOS_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/memos-backup.sh"
 scp -q "${MEMOS_UPLOAD}" "${SSH_HOST}:${REMOTE_STAGE}/memos-upload-backups.sh"
+scp -q "${MEMOS_S3_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/memos-backup-s3.sh"
+scp -q "${MEMOS_STORAGE_INIT}" "${SSH_HOST}:${REMOTE_STAGE}/memos-storage-init.sh"
+scp -q "${MEMOS_STORAGE_MIGRATE}" "${SSH_HOST}:${REMOTE_STAGE}/memos-storage-migrate.sh"
 scp -q "${VIKUNJA_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja-backup.sh"
 scp -q "${VIKUNJA_UPLOAD}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja-upload-backups.sh"
 scp -q "${MOODBOARD_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-backup.sh"
@@ -186,6 +207,8 @@ scp -q "${MOODBOARD_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-backup.sh"
 # Systemd backup units
 scp -q "${MEMOS_BACKUP_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/memos-backup.service"
 scp -q "${MEMOS_BACKUP_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/memos-backup.timer"
+scp -q "${MEMOS_S3_BACKUP_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/memos-s3-backup.service"
+scp -q "${MEMOS_S3_BACKUP_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/memos-s3-backup.timer"
 
 # App compose + env
 scp -q "${MEMOS_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/memos-compose.yml"
@@ -194,6 +217,7 @@ scp -q "${VIKUNJA_ENV}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja.env"
 scp -q "${MOODBOARD_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-compose.yml"
 scp -q "${MOODBOARD_CONTAINERFILE}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-Containerfile"
 scp -q "${MOODBOARD_ENV}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard.env"
+scp -q "${TMP_DIR}/memos.env.s3" "${SSH_HOST}:${REMOTE_STAGE}/memos.env.s3"
 scp -q "${GARAGE_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/garage-compose.yml"
 scp -q "${GARAGE_CONFIG}" "${SSH_HOST}:${REMOTE_STAGE}/garage-prod.toml"
 

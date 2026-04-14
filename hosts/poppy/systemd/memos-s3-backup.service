@@ -1,0 +1,7 @@
+[Unit]
+Description=Memos S3 backup (sync Garage bucket to Drive)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/apps/memos/scripts
+ExecStart=/root/apps/memos/scripts/backup-s3.sh

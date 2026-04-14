@@ -38,8 +38,11 @@ GARAGE_CONFIG_STAGE="${STAGE_DIR}/garage-prod.toml"
 GARAGE_SERVICE_STAGE="${STAGE_DIR}/garage.service"
 GARAGE_BOOTSTRAP_STAGE="${STAGE_DIR}/garage-bootstrap.sh"
 MEMOS_S3_BACKUP_STAGE="${STAGE_DIR}/memos-backup-s3.sh"
+MEMOS_ENV_S3_STAGE="${STAGE_DIR}/memos.env.s3"
 MEMOS_STORAGE_INIT_STAGE="${STAGE_DIR}/memos-storage-init.sh"
 MEMOS_STORAGE_MIGRATE_STAGE="${STAGE_DIR}/memos-storage-migrate.sh"
+MEMOS_S3_BACKUP_SVC_STAGE="${STAGE_DIR}/memos-s3-backup.service"
+MEMOS_S3_BACKUP_TMR_STAGE="${STAGE_DIR}/memos-s3-backup.timer"
 
 # Legacy Garage config path (for migration)
 LEGACY_GARAGE_DATA_VOLUME="moodboard_garage-data"
@@ -52,6 +55,7 @@ TARGET_SYNC_SCRIPT="/root/sync-capsule.sh"
 TARGET_MEMOS_BACKUP="/root/apps/memos/scripts/backup.sh"
 TARGET_MEMOS_UPLOAD="/root/apps/memos/scripts/upload-backups.sh"
 TARGET_MEMOS_S3_BACKUP="/root/apps/memos/scripts/backup-s3.sh"
+TARGET_MEMOS_ENV_S3="/root/apps/memos/.env.s3"
 TARGET_MEMOS_STORAGE_MIGRATE="/root/apps/memos/scripts/migrate-to-s3.sh"
 TARGET_VIKUNJA_BACKUP="/root/apps/vikunja/scripts/backup.sh"
 TARGET_VIKUNJA_UPLOAD="/root/apps/vikunja/scripts/upload-backups.sh"
@@ -60,6 +64,8 @@ TARGET_MOODBOARD_BACKUP_B="/root/apps/moodboard/scripts/backup-moodboard.sh"
 
 TARGET_MEMOS_BACKUP_SERVICE="/etc/systemd/system/memos-backup.service"
 TARGET_MEMOS_BACKUP_TIMER="/etc/systemd/system/memos-backup.timer"
+TARGET_MEMOS_S3_BACKUP_SERVICE="/etc/systemd/system/memos-s3-backup.service"
+TARGET_MEMOS_S3_BACKUP_TIMER="/etc/systemd/system/memos-s3-backup.timer"
 
 TARGET_MEMOS_COMPOSE="/root/apps/memos/compose.yml"
 TARGET_VIKUNJA_COMPOSE="/root/apps/vikunja/compose.yml"
@@ -97,6 +103,9 @@ run() {
 
 require_file() {
   local f="$1"
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    return 0
+  fi
   [[ -f "${f}" ]] || { echo "[ERROR] missing file: ${f}"; exit 1; }
 }
 
@@ -152,7 +161,8 @@ for f in \
   "${VIKUNJA_ENV_STAGE}" "${MOODBOARD_ENV_STAGE}" \
   "${MEMOS_SERVICE_STAGE}" "${VIKUNJA_SERVICE_STAGE}" "${MOODBOARD_SERVICE_STAGE}" \
   "${GARAGE_COMPOSE_STAGE}" "${GARAGE_CONFIG_STAGE}" "${GARAGE_SERVICE_STAGE}" "${GARAGE_BOOTSTRAP_STAGE}" \
-  "${MEMOS_S3_BACKUP_STAGE}" "${MEMOS_STORAGE_INIT_STAGE}" "${MEMOS_STORAGE_MIGRATE_STAGE}"; do
+  "${MEMOS_S3_BACKUP_STAGE}" "${MEMOS_ENV_S3_STAGE}" "${MEMOS_STORAGE_INIT_STAGE}" "${MEMOS_STORAGE_MIGRATE_STAGE}" \
+  "${MEMOS_S3_BACKUP_SVC_STAGE}" "${MEMOS_S3_BACKUP_TMR_STAGE}"; do
   require_file "${f}"
 done
 
@@ -175,7 +185,7 @@ TS="$(date +%Y%m%d-%H%M%S)"
 # unlock managed immutable files before replacing
 for f in \
   "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_MOODBOARD_CONTAINERFILE}" \
-  "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" \
+  "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" "${TARGET_MEMOS_ENV_S3}" \
   "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" \
   "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" "${TARGET_GARAGE_SVC}"; do
   unlock_file "${f}"
@@ -184,10 +194,11 @@ done
 # backup old files
 for f in \
   "${TARGET_RCLONE_CONF}" "${TARGET_SYNC_SCRIPT}" \
-  "${TARGET_MEMOS_BACKUP}" "${TARGET_MEMOS_UPLOAD}" "${TARGET_MEMOS_S3_BACKUP}" "${TARGET_MEMOS_STORAGE_MIGRATE}" \
+  "${TARGET_MEMOS_BACKUP}" "${TARGET_MEMOS_UPLOAD}" "${TARGET_MEMOS_S3_BACKUP}" "${TARGET_MEMOS_ENV_S3}" "${TARGET_MEMOS_STORAGE_MIGRATE}" \
   "${TARGET_VIKUNJA_BACKUP}" "${TARGET_VIKUNJA_UPLOAD}" \
   "${TARGET_MOODBOARD_BACKUP_A}" "${TARGET_MOODBOARD_BACKUP_B}" \
   "${TARGET_MEMOS_BACKUP_SERVICE}" "${TARGET_MEMOS_BACKUP_TIMER}" \
+  "${TARGET_MEMOS_S3_BACKUP_SERVICE}" "${TARGET_MEMOS_S3_BACKUP_TIMER}" \
   "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_MOODBOARD_CONTAINERFILE}" \
   "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" \
   "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" \
@@ -217,6 +228,7 @@ run install -m 644 "${MOODBOARD_CONTAINERFILE_STAGE}" "${TARGET_MOODBOARD_CONTAI
 run install -m 600 "${VIKUNJA_ENV_STAGE}" "${TARGET_VIKUNJA_ENV}"
 run install -m 600 "${MOODBOARD_ENV_STAGE}" "${TARGET_MOODBOARD_ENV}"
 run install -m 600 "${MOODBOARD_ENV_STAGE}" "${TARGET_MOODBOARD_ENV_PROD}"
+run install -m 600 "${MEMOS_ENV_S3_STAGE}" "${TARGET_MEMOS_ENV_S3}"
 
 run install -m 644 "${MEMOS_SERVICE_STAGE}" "${TARGET_MEMOS_SVC}"
 run install -m 644 "${VIKUNJA_SERVICE_STAGE}" "${TARGET_VIKUNJA_SVC}"
@@ -232,6 +244,10 @@ run install -m 644 "${GARAGE_SERVICE_STAGE}" "${TARGET_GARAGE_SVC}"
 # S3 backup + migrate scripts
 run install -m 700 "${MEMOS_S3_BACKUP_STAGE}" "${TARGET_MEMOS_S3_BACKUP}"
 run install -m 700 "${MEMOS_STORAGE_MIGRATE_STAGE}" "${TARGET_MEMOS_STORAGE_MIGRATE}"
+
+# S3 backup timer + service
+run install -m 644 "${MEMOS_S3_BACKUP_SVC_STAGE}" "${TARGET_MEMOS_S3_BACKUP_SERVICE}"
+run install -m 644 "${MEMOS_S3_BACKUP_TMR_STAGE}" "${TARGET_MEMOS_S3_BACKUP_TIMER}"
 
 # ── Garage data migration (one-time) ────────────────────────
 # If Garage data exists in the old named volume but not in the new host path,
@@ -258,6 +274,7 @@ lock_file "${TARGET_VIKUNJA_SVC}" 444
 lock_file "${TARGET_MOODBOARD_SVC}" 444
 lock_file "${TARGET_GARAGE_COMPOSE}" 444
 lock_file "${TARGET_GARAGE_CONFIG}" 444
+lock_file "${TARGET_MEMOS_ENV_S3}" 444
 
 # cron
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"
@@ -280,6 +297,7 @@ if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "[DRY-RUN] would run: systemctl daemon-reload"
   echo "[DRY-RUN] would run: systemctl enable --now garage.service"
   echo "[DRY-RUN] would run: systemctl enable --now memos-backup.timer"
+  echo "[DRY-RUN] would run: systemctl enable --now memos-s3-backup.timer"
   echo "[DRY-RUN] would run: systemctl enable --now memos.service"
   echo "[DRY-RUN] would run: systemctl enable --now vikunja.service"
   echo "[DRY-RUN] would run: systemctl enable --now moodboard.service"
@@ -289,6 +307,7 @@ else
   echo "[INFO] Waiting for Garage to be ready..."
   sleep 3
   systemctl enable --now memos-backup.timer >/dev/null
+  systemctl enable --now memos-s3-backup.timer >/dev/null
   systemctl enable --now memos.service >/dev/null || true
   systemctl enable --now vikunja.service >/dev/null || true
   systemctl enable --now moodboard.service >/dev/null || true

@@ -8,6 +8,7 @@ VERIFY_SCRIPT="${REPO_ROOT}/hosts/poppy/scripts/verify-drive-target.sh"
 VIKUNJA_ENV_TPL="${REPO_ROOT}/hosts/poppy/apps/vikunja/.env.template"
 MOODBOARD_ENV_TPL="${REPO_ROOT}/hosts/poppy/apps/moodboard/.env.template"
 GARAGE_CONFIG_TPL="${REPO_ROOT}/hosts/poppy/apps/garage/garage-prod.toml.template"
+MEMOS_ENV_S3_TPL="${REPO_ROOT}/hosts/poppy/apps/memos/.env.template.s3"
 
 command -v sops >/dev/null 2>&1 || { echo "[ERROR] missing sops" >&2; exit 1; }
 command -v yq >/dev/null 2>&1 || { echo "[ERROR] missing yq" >&2; exit 1; }
@@ -32,6 +33,7 @@ TMP_DEC="${TMP_DIR}/poppy.dec.yaml"
 VIKUNJA_ENV_EXPECTED="${TMP_DIR}/vikunja.env"
 MOODBOARD_ENV_EXPECTED="${TMP_DIR}/moodboard.env"
 GARAGE_CONFIG_EXPECTED="${TMP_DIR}/garage-prod.toml"
+MEMOS_ENV_S3_EXPECTED="${TMP_DIR}/memos.env.s3"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
 sops -d "${SECRETS_FILE}" > "${TMP_DEC}"
@@ -49,6 +51,8 @@ GEMINI_API_KEY="$(yq -r '.apps.moodboard.gemini_api_key' "${TMP_DEC}")"
 GARAGE_RPC_SECRET="$(yq -r '.apps.garage.rpc_secret' "${TMP_DEC}")"
 GARAGE_ADMIN_TOKEN="$(yq -r '.apps.garage.admin_token' "${TMP_DEC}")"
 GARAGE_METRICS_TOKEN="$(yq -r '.apps.garage.metrics_token' "${TMP_DEC}")"
+MEMOS_GARAGE_ACCESS_KEY_ID="$(yq -r '.apps.memos.garage_access_key_id' "${TMP_DEC}")"
+MEMOS_GARAGE_SECRET_ACCESS_KEY="$(yq -r '.apps.memos.garage_secret_access_key' "${TMP_DEC}")"
 
 python3 - "${VIKUNJA_ENV_TPL}" "${VIKUNJA_JWT_SECRET}" "${VIKUNJA_PUBLIC_URL}" > "${VIKUNJA_ENV_EXPECTED}" <<'PY'
 import sys
@@ -67,7 +71,15 @@ result = result.replace("{{GEMINI_API_KEY}}", gemini)
 print(result)
 PY
 
-python3 - "${GARAGE_CONFIG_TPL}" "${GARAGE_RPC_SECRET}" "${GARAGE_ADMIN_TOKEN}" "${GARAGE_METRICS_TOKEN}" > "${GARAGE_CONFIG_EXPECTED}" <<'PY'
+python3 - "${MEMOS_ENV_S3_TPL}" "${MEMOS_GARAGE_ACCESS_KEY_ID}" "${MEMOS_GARAGE_SECRET_ACCESS_KEY}" > "${MEMOS_ENV_S3_EXPECTED}" <<'PY'
+import sys
+template = open(sys.argv[1]).read()
+print(template
+    .replace("{{MEMOS_GARAGE_ACCESS_KEY_ID}}", sys.argv[2])
+    .replace("{{MEMOS_GARAGE_SECRET_ACCESS_KEY}}", sys.argv[3]))
+PY
+
+python3 - "${GARAGE_CONFIG_TPL}"  "${GARAGE_RPC_SECRET}" "${GARAGE_ADMIN_TOKEN}" "${GARAGE_METRICS_TOKEN}" > "${GARAGE_CONFIG_EXPECTED}" <<'PY'
 import sys
 template = open(sys.argv[1]).read()
 rpc, admin, metrics = sys.argv[2:]
@@ -89,6 +101,8 @@ ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^moodboard-app$' &
 ssh "${SSH_HOST}" "curl -fsS http://127.0.0.1:9100/metrics >/dev/null && echo '[OK] node exporter endpoint local'"
 ssh "${SSH_HOST}" "systemctl is-enabled memos-backup.timer >/dev/null && echo '[OK] memos-backup.timer enabled'"
 ssh "${SSH_HOST}" "systemctl is-active memos-backup.timer >/dev/null && echo '[OK] memos-backup.timer active'"
+ssh "${SSH_HOST}" "systemctl is-enabled memos-s3-backup.timer >/dev/null && echo '[OK] memos-s3-backup.timer enabled'"
+ssh "${SSH_HOST}" "systemctl is-active memos-s3-backup.timer >/dev/null && echo '[OK] memos-s3-backup.timer active'"
 ssh "${SSH_HOST}" "systemctl is-enabled garage.service >/dev/null && echo '[OK] garage.service enabled'"
 ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^garage$' && echo '[OK] garage podman running' || echo '[WARN] garage not in podman'"
 # Check memos S3 storage status
@@ -117,6 +131,9 @@ DRIFT_MAP=(
   "${REPO_ROOT}/hosts/poppy/systemd/vikunja.service|/etc/systemd/system/vikunja.service"
   "${REPO_ROOT}/hosts/poppy/systemd/moodboard.service|/etc/systemd/system/moodboard.service"
   "${REPO_ROOT}/hosts/poppy/systemd/garage.service|/etc/systemd/system/garage.service"
+  "${REPO_ROOT}/hosts/poppy/systemd/memos-s3-backup.service|/etc/systemd/system/memos-s3-backup.service"
+  "${REPO_ROOT}/hosts/poppy/systemd/memos-s3-backup.timer|/etc/systemd/system/memos-s3-backup.timer"
+  "${MEMOS_ENV_S3_EXPECTED}|/root/apps/memos/.env.s3"
 )
 
 for pair in "${DRIFT_MAP[@]}"; do

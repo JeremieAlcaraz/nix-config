@@ -35,14 +35,18 @@ force_path_style = true
 no_check_bucket = true
 EOF
 
+# Combine S3 remote config with the main rclone.conf (append S3 remote section)
+COMBINED_CONF="${TEMP_CONF}.combined"
+cp "${RCLONE_CONF}" "${COMBINED_CONF}"
+cat "${TEMP_CONF}" >> "${COMBINED_CONF}"
+
 # Sync S3 bucket to Drive
 rclone sync "garage_s3_backup:${S3_BUCKET}" "${REMOTE_PATH}/" \
-  --config "${TEMP_CONF}" \
-  --config "${RCLONE_CONF}" \
+  --config "${COMBINED_CONF}" \
   --transfers=4 \
   --fast-list \
   --log-level INFO \
   --log-file "/var/log/memos-s3-backup.log"
 
-rm -f "${TEMP_CONF}"
+rm -f "${TEMP_CONF}" "${TEMP_CONF}.combined"
 echo "[$(date)] S3 backup complete: s3://${S3_BUCKET} -> ${REMOTE_PATH}"
