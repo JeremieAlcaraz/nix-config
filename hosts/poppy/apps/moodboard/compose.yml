@@ -1,27 +1,10 @@
 services:
-  garage:
-    image: dxflrs/garage:v2.2.0
-    container_name: moodboard-garage
-    restart: unless-stopped
-    volumes:
-      - garage-data:/data
-      - ./infra/garage/garage-prod.toml:/etc/garage.toml:ro
-    networks:
-      - moodboard
-    ports:
-      - "3900:3900"
-      - "3903:3903"
-
   app:
     build:
       context: .
       dockerfile: Containerfile
     container_name: moodboard-app
     restart: unless-stopped
-    depends_on:
-      - garage
-    networks:
-      - moodboard
     ports:
       - "3005:3005"
     volumes:
@@ -29,15 +12,11 @@ services:
       - ./.local:/app/.local
     environment:
       - PORT=3005
-      - GARAGE_S3_ENDPOINT=http://garage:3900
+      - GARAGE_S3_ENDPOINT=http://host.containers.internal:3900
       - GARAGE_BUCKET=${GARAGE_BUCKET:-moodboard-dev}
       - GARAGE_ACCESS_KEY_ID=${GARAGE_ACCESS_KEY_ID:-GK0123456789abcdef01234567}
       - GARAGE_SECRET_ACCESS_KEY=${GARAGE_SECRET_ACCESS_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
       - AWS_DEFAULT_REGION=garage
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-
-volumes:
-  garage-data:
-
-networks:
-  moodboard:
+    extra_hosts:
+      - "host.containers.internal:host-gateway"

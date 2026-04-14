@@ -33,6 +33,15 @@ MEMOS_SERVICE_STAGE="${STAGE_DIR}/memos.service"
 VIKUNJA_SERVICE_STAGE="${STAGE_DIR}/vikunja.service"
 MOODBOARD_SERVICE_STAGE="${STAGE_DIR}/moodboard.service"
 
+GARAGE_COMPOSE_STAGE="${STAGE_DIR}/garage-compose.yml"
+GARAGE_CONFIG_STAGE="${STAGE_DIR}/garage-prod.toml"
+GARAGE_SERVICE_STAGE="${STAGE_DIR}/garage.service"
+GARAGE_BOOTSTRAP_STAGE="${STAGE_DIR}/garage-bootstrap.sh"
+
+# Legacy Garage config path (for migration)
+LEGACY_GARAGE_DATA_VOLUME="moodboard_garage-data"
+LEGACY_GARAGE_CONFIG="/root/apps/moodboard/infra/garage/garage-prod.toml"
+
 # Targets
 TARGET_RCLONE_CONF="/root/.config/rclone/rclone.conf"
 TARGET_SYNC_SCRIPT="/root/sync-capsule.sh"
@@ -58,6 +67,12 @@ TARGET_MOODBOARD_ENV_PROD="/root/apps/moodboard/.env.prod"
 TARGET_MEMOS_SVC="/etc/systemd/system/memos.service"
 TARGET_VIKUNJA_SVC="/etc/systemd/system/vikunja.service"
 TARGET_MOODBOARD_SVC="/etc/systemd/system/moodboard.service"
+
+TARGET_GARAGE_DIR="/root/apps/garage"
+TARGET_GARAGE_COMPOSE="/root/apps/garage/compose.yml"
+TARGET_GARAGE_CONFIG="/root/apps/garage/garage-prod.toml"
+TARGET_GARAGE_DATA="/root/apps/garage/data"
+TARGET_GARAGE_SVC="/etc/systemd/system/garage.service"
 
 BAK_DIR="/root/.bak"
 
@@ -128,14 +143,15 @@ for f in \
   "${MEMOS_BACKUP_SERVICE_STAGE}" "${MEMOS_BACKUP_TIMER_STAGE}" \
   "${MEMOS_COMPOSE_STAGE}" "${VIKUNJA_COMPOSE_STAGE}" "${MOODBOARD_COMPOSE_STAGE}" "${MOODBOARD_CONTAINERFILE_STAGE}" \
   "${VIKUNJA_ENV_STAGE}" "${MOODBOARD_ENV_STAGE}" \
-  "${MEMOS_SERVICE_STAGE}" "${VIKUNJA_SERVICE_STAGE}" "${MOODBOARD_SERVICE_STAGE}"; do
+  "${MEMOS_SERVICE_STAGE}" "${VIKUNJA_SERVICE_STAGE}" "${MOODBOARD_SERVICE_STAGE}" \
+  "${GARAGE_COMPOSE_STAGE}" "${GARAGE_CONFIG_STAGE}" "${GARAGE_SERVICE_STAGE}" "${GARAGE_BOOTSTRAP_STAGE}"; do
   require_file "${f}"
 done
 
 # Ensure dirs
 run mkdir -p /root/.config/rclone
 run chmod 700 /root/.config/rclone
-run mkdir -p "${BAK_DIR}" /root/apps/memos/scripts /root/apps/vikunja/scripts /root/apps/moodboard/scripts
+run mkdir -p "${BAK_DIR}" /root/apps/memos/scripts /root/apps/vikunja/scripts /root/apps/moodboard/scripts /root/apps/garage/data
 
 # Ensure packages/services
 ensure_pkg_installed "${NODE_EXPORTER_PKG}"
@@ -152,7 +168,8 @@ TS="$(date +%Y%m%d-%H%M%S)"
 for f in \
   "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_MOODBOARD_CONTAINERFILE}" \
   "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" \
-  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}"; do
+  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" \
+  "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" "${TARGET_GARAGE_SVC}"; do
   unlock_file "${f}"
 done
 
@@ -164,7 +181,9 @@ for f in \
   "${TARGET_MEMOS_BACKUP_SERVICE}" "${TARGET_MEMOS_BACKUP_TIMER}" \
   "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_MOODBOARD_CONTAINERFILE}" \
   "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" \
-  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}"; do
+  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" \
+  "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" \
+  "${LEGACY_GARAGE_CONFIG}"; do
   backup_if_exists "${f}"
 done
 
@@ -194,6 +213,24 @@ run install -m 644 "${MEMOS_SERVICE_STAGE}" "${TARGET_MEMOS_SVC}"
 run install -m 644 "${VIKUNJA_SERVICE_STAGE}" "${TARGET_VIKUNJA_SVC}"
 run install -m 644 "${MOODBOARD_SERVICE_STAGE}" "${TARGET_MOODBOARD_SVC}"
 
+# Garage standalone
+run install -m 644 "${GARAGE_COMPOSE_STAGE}" "${TARGET_GARAGE_COMPOSE}"
+run install -m 600 "${GARAGE_CONFIG_STAGE}" "${TARGET_GARAGE_CONFIG}"
+run install -m 700 "${GARAGE_BOOTSTRAP_STAGE}" "${TARGET_GARAGE_DIR}/garage-bootstrap.sh"
+run install -m 644 "${GARAGE_SERVICE_STAGE}" "${TARGET_GARAGE_SVC}"
+
+# ── Garage data migration (one-time) ────────────────────────
+# If Garage data exists in the old named volume but not in the new host path,
+# migrate it before starting Garage.
+if [[ "${DRY_RUN}" -eq 0 ]]; then
+  VOL_PATH="/var/lib/containers/storage/volumes/${LEGACY_GARAGE_DATA_VOLUME}/_data"
+  if [[ -d "${VOL_PATH}/data" ]] && [[ ! -d "${TARGET_GARAGE_DATA}/data" ]]; then
+    echo "[MIGRATE] Copying Garage data from named volume to ${TARGET_GARAGE_DATA}/"
+    cp -a "${VOL_PATH}/." "${TARGET_GARAGE_DATA}/"
+    echo "[MIGRATE] Garage data migrated successfully"
+  fi
+fi
+
 # lock critical files
 lock_file "${TARGET_MEMOS_COMPOSE}" 444
 lock_file "${TARGET_VIKUNJA_COMPOSE}" 444
@@ -205,6 +242,8 @@ lock_file "${TARGET_MOODBOARD_ENV_PROD}" 444
 lock_file "${TARGET_MEMOS_SVC}" 444
 lock_file "${TARGET_VIKUNJA_SVC}" 444
 lock_file "${TARGET_MOODBOARD_SVC}" 444
+lock_file "${TARGET_GARAGE_COMPOSE}" 444
+lock_file "${TARGET_GARAGE_CONFIG}" 444
 
 # cron
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"
@@ -225,12 +264,16 @@ fi
 # systemd
 if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "[DRY-RUN] would run: systemctl daemon-reload"
+  echo "[DRY-RUN] would run: systemctl enable --now garage.service"
   echo "[DRY-RUN] would run: systemctl enable --now memos-backup.timer"
   echo "[DRY-RUN] would run: systemctl enable --now memos.service"
   echo "[DRY-RUN] would run: systemctl enable --now vikunja.service"
   echo "[DRY-RUN] would run: systemctl enable --now moodboard.service"
 else
   systemctl daemon-reload
+  systemctl enable --now garage.service >/dev/null || true
+  echo "[INFO] Waiting for Garage to be ready..."
+  sleep 3
   systemctl enable --now memos-backup.timer >/dev/null
   systemctl enable --now memos.service >/dev/null || true
   systemctl enable --now vikunja.service >/dev/null || true

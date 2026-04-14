@@ -1,0 +1,11 @@
+services:
+  garage:
+    image: dxflrs/garage:v2.2.0
+    container_name: garage
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+      - ./garage-prod.toml:/etc/garage.toml:ro
+    ports:
+      - "3900:3900"
+      - "3903:3903"

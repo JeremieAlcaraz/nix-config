@@ -1,0 +1,15 @@
+[Unit]
+Description=Garage S3 (podman-compose)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/root/apps/garage
+ExecStart=/usr/local/bin/podman-compose -f compose.yml up -d
+ExecStop=/usr/local/bin/podman-compose -f compose.yml down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

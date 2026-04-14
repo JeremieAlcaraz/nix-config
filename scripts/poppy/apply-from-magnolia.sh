@@ -18,6 +18,8 @@ VIKUNJA_ENV_TPL="${REPO_ROOT}/hosts/poppy/apps/vikunja/.env.template"
 MOODBOARD_COMPOSE="${REPO_ROOT}/hosts/poppy/apps/moodboard/compose.yml"
 MOODBOARD_CONTAINERFILE="${REPO_ROOT}/hosts/poppy/apps/moodboard/Containerfile"
 MOODBOARD_ENV_TPL="${REPO_ROOT}/hosts/poppy/apps/moodboard/.env.template"
+GARAGE_COMPOSE="${REPO_ROOT}/hosts/poppy/apps/garage/compose.yml"
+GARAGE_CONFIG_TPL="${REPO_ROOT}/hosts/poppy/apps/garage/garage-prod.toml.template"
 
 # ── Script backups ─────────────────────────────────────────
 MEMOS_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/memos-backup.sh"
@@ -34,6 +36,10 @@ MEMOS_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/memos-backup.timer"
 MEMOS_SVC="${REPO_ROOT}/hosts/poppy/systemd/memos.service"
 VIKUNJA_SVC="${REPO_ROOT}/hosts/poppy/systemd/vikunja.service"
 MOODBOARD_SVC="${REPO_ROOT}/hosts/poppy/systemd/moodboard.service"
+GARAGE_SVC="${REPO_ROOT}/hosts/poppy/systemd/garage.service"
+
+# ── Garage bootstrap ──────────────────────────────────────
+GARAGE_BOOTSTRAP="${REPO_ROOT}/hosts/poppy/scripts/garage-bootstrap.sh"
 
 for cmd in sops yq ssh scp python3; do
   command -v "${cmd}" >/dev/null 2>&1 || { echo "[ERROR] missing command: ${cmd}" >&2; exit 1; }
@@ -45,9 +51,10 @@ for f in \
   "${SECRETS_FILE}" "${REMOTE_APPLY}" \
   "${MEMOS_COMPOSE}" "${VIKUNJA_COMPOSE}" "${VIKUNJA_ENV_TPL}" \
   "${MOODBOARD_COMPOSE}" "${MOODBOARD_CONTAINERFILE}" "${MOODBOARD_ENV_TPL}" \
+  "${GARAGE_COMPOSE}" "${GARAGE_CONFIG_TPL}" \
   "${MEMOS_BACKUP}" "${MEMOS_UPLOAD}" "${VIKUNJA_BACKUP}" "${VIKUNJA_UPLOAD}" "${MOODBOARD_BACKUP}" \
   "${MEMOS_BACKUP_SVC}" "${MEMOS_BACKUP_TMR}" \
-  "${MEMOS_SVC}" "${VIKUNJA_SVC}" "${MOODBOARD_SVC}" "${AGENTS_MD}"; do
+  "${MEMOS_SVC}" "${VIKUNJA_SVC}" "${MOODBOARD_SVC}" "${GARAGE_SVC}" "${GARAGE_BOOTSTRAP}" "${AGENTS_MD}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
 
@@ -61,6 +68,7 @@ SYNC_SCRIPT="${TMP_DIR}/sync-capsule.sh"
 CRON_LINE_FILE="${TMP_DIR}/cron-line.txt"
 VIKUNJA_ENV="${TMP_DIR}/vikunja.env"
 MOODBOARD_ENV="${TMP_DIR}/moodboard.env"
+GARAGE_CONFIG="${TMP_DIR}/garage-prod.toml"
 
 sops -d "${SECRETS_FILE}" > "${DECRYPTED}"
 
@@ -81,6 +89,9 @@ GARAGE_BUCKET="$(yq -r '.apps.moodboard.garage_bucket' "${DECRYPTED}")"
 GARAGE_ACCESS_KEY_ID="$(yq -r '.apps.moodboard.garage_access_key_id' "${DECRYPTED}")"
 GARAGE_SECRET_ACCESS_KEY="$(yq -r '.apps.moodboard.garage_secret_access_key' "${DECRYPTED}")"
 GEMINI_API_KEY="$(yq -r '.apps.moodboard.gemini_api_key' "${DECRYPTED}")"
+GARAGE_RPC_SECRET="$(yq -r '.apps.garage.rpc_secret' "${DECRYPTED}")"
+GARAGE_ADMIN_TOKEN="$(yq -r '.apps.garage.admin_token' "${DECRYPTED}")"
+GARAGE_METRICS_TOKEN="$(yq -r '.apps.garage.metrics_token' "${DECRYPTED}")"
 
 for v in SSH_HOST CLIENT_ID CLIENT_SECRET GDRIVE_TOKEN CAPSULE_TOKEN ROOT_FOLDER_ID DEST_SUBPATH SCHEDULE_CRON; do
   val="${!v}"
@@ -142,6 +153,17 @@ result = result.replace("{{GEMINI_API_KEY}}", gemini)
 print(result)
 PY3
 
+# ── Génère garage-prod.toml depuis template ───────────────
+python3 - "${GARAGE_CONFIG_TPL}" "${GARAGE_RPC_SECRET}" "${GARAGE_ADMIN_TOKEN}" "${GARAGE_METRICS_TOKEN}" > "${GARAGE_CONFIG}" <<'PY4'
+import sys
+template = open(sys.argv[1]).read()
+rpc, admin, metrics = sys.argv[2:]
+result = template.replace("{{RPC_SECRET}}", rpc)
+result = result.replace("{{ADMIN_TOKEN}}", admin)
+result = result.replace("{{METRICS_TOKEN}}", metrics)
+print(result)
+PY4
+
 REMOTE_STAGE="/var/lib/poppy-deploy"
 ssh "${SSH_HOST}" "mkdir -p '${REMOTE_STAGE}' && chmod 700 '${REMOTE_STAGE}'"
 
@@ -169,11 +191,17 @@ scp -q "${VIKUNJA_ENV}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja.env"
 scp -q "${MOODBOARD_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-compose.yml"
 scp -q "${MOODBOARD_CONTAINERFILE}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-Containerfile"
 scp -q "${MOODBOARD_ENV}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard.env"
+scp -q "${GARAGE_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/garage-compose.yml"
+scp -q "${GARAGE_CONFIG}" "${SSH_HOST}:${REMOTE_STAGE}/garage-prod.toml"
 
 # App systemd units
 scp -q "${MEMOS_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/memos.service"
 scp -q "${VIKUNJA_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja.service"
 scp -q "${MOODBOARD_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard.service"
+scp -q "${GARAGE_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/garage.service"
+
+# Garage bootstrap script
+scp -q "${GARAGE_BOOTSTRAP}" "${SSH_HOST}:${REMOTE_STAGE}/garage-bootstrap.sh"
 
 # AGENTS.md -> /root/ (permanent, doc for anyone SSHing)
 scp -q "${REPO_ROOT}/hosts/poppy/AGENTS.md" "${SSH_HOST}:/root/AGENTS.md"
