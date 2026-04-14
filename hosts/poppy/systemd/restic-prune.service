@@ -1,0 +1,8 @@
+[Unit]
+Description=Restic prune all repos
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /root/apps/restic/restic-prune.sh
+StandardOutput=journal
+StandardError=journal

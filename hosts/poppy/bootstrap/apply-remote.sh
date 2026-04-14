@@ -57,6 +57,9 @@ TWENTY_BACKUP_TMR_STAGE="${STAGE_DIR}/twenty-backup.timer"
 # Restic
 RESTIC_ENV_STAGE="${STAGE_DIR}/restic.env"
 RESTIC_INIT_STAGE="${STAGE_DIR}/restic-init.sh"
+RESTIC_PRUNE_STAGE="${STAGE_DIR}/restic-prune.sh"
+RESTIC_PRUNE_SVC_STAGE="${STAGE_DIR}/restic-prune.service"
+RESTIC_PRUNE_TMR_STAGE="${STAGE_DIR}/restic-prune.timer"
 
 # Legacy Garage config path (for migration)
 LEGACY_GARAGE_DATA_VOLUME="moodboard_garage-data"
@@ -99,6 +102,9 @@ TARGET_TWENTY_BACKUP_TMR="/etc/systemd/system/twenty-backup.timer"
 
 TARGET_RESTIC_ENV="/root/.config/restic/env"
 TARGET_RESTIC_DIR="/root/apps/restic"
+TARGET_RESTIC_PRUNE="/root/apps/restic/restic-prune.sh"
+TARGET_RESTIC_PRUNE_SERVICE="/etc/systemd/system/restic-prune.service"
+TARGET_RESTIC_PRUNE_TIMER="/etc/systemd/system/restic-prune.timer"
 
 TARGET_MEMOS_SVC="/etc/systemd/system/memos.service"
 TARGET_VIKUNJA_SVC="/etc/systemd/system/vikunja.service"
@@ -190,7 +196,8 @@ for f in \
   "${MEMOS_S3_BACKUP_SVC_STAGE}" "${MEMOS_S3_BACKUP_TMR_STAGE}" \
   "${TWENTY_COMPOSE_STAGE}" "${TWENTY_ENV_STAGE}" "${TWENTY_SVC_STAGE}" \
   "${TWENTY_BACKUP_STAGE}" "${TWENTY_BACKUP_SVC_STAGE}" "${TWENTY_BACKUP_TMR_STAGE}" \
-  "${RESTIC_ENV_STAGE}" "${RESTIC_INIT_STAGE}"; do
+  "${RESTIC_ENV_STAGE}" "${RESTIC_INIT_STAGE}" \
+  "${RESTIC_PRUNE_STAGE}" "${RESTIC_PRUNE_SVC_STAGE}" "${RESTIC_PRUNE_TMR_STAGE}"; do
   require_file "${f}"
 done
 
@@ -217,6 +224,7 @@ for f in \
   "${TARGET_TWENTY_COMPOSE}" "${TARGET_TWENTY_ENV}" "${TARGET_TWENTY_BACKUP}" \
   "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" "${TARGET_TWENTY_SVC}" \
   "${TARGET_TWENTY_BACKUP_SVC}" "${TARGET_TWENTY_BACKUP_TMR}" "${TARGET_RESTIC_ENV}" \
+  "${TARGET_RESTIC_PRUNE}" \
   "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" "${TARGET_GARAGE_SVC}"; do
   unlock_file "${f}"
 done
@@ -276,6 +284,9 @@ run install -m 644 "${TWENTY_BACKUP_TMR_STAGE}" "${TARGET_TWENTY_BACKUP_TMR}"
 # Restic
 run install -m 600 "${RESTIC_ENV_STAGE}" "${TARGET_RESTIC_ENV}"
 run install -m 700 "${RESTIC_INIT_STAGE}" "${TARGET_RESTIC_DIR}/init.sh"
+run install -m 700 "${RESTIC_PRUNE_STAGE}" "${TARGET_RESTIC_PRUNE}"
+run install -m 644 "${RESTIC_PRUNE_SVC_STAGE}" "${TARGET_RESTIC_PRUNE_SERVICE}"
+run install -m 644 "${RESTIC_PRUNE_TMR_STAGE}" "${TARGET_RESTIC_PRUNE_TIMER}"
 
 # Garage standalone
 run install -m 644 "${GARAGE_COMPOSE_STAGE}" "${TARGET_GARAGE_COMPOSE}"
@@ -324,6 +335,8 @@ lock_file "${TARGET_TWENTY_SVC}" 444
 lock_file "${TARGET_TWENTY_BACKUP_SVC}" 444
 lock_file "${TARGET_TWENTY_BACKUP_TMR}" 444
 lock_file "${TARGET_RESTIC_ENV}" 444
+lock_file "${TARGET_RESTIC_PRUNE_SERVICE}" 444
+lock_file "${TARGET_RESTIC_PRUNE_TIMER}" 444
 
 # cron
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"
@@ -349,6 +362,7 @@ if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "[DRY-RUN] would run: systemctl enable --now memos-s3-backup.timer"
   echo "[DRY-RUN] would run: systemctl enable --now twenty.service"
   echo "[DRY-RUN] would run: systemctl enable --now twenty-backup.timer"
+  echo "[DRY-RUN] would run: systemctl enable --now restic-prune.timer"
   echo "[DRY-RUN] would run: systemctl enable --now memos.service"
   echo "[DRY-RUN] would run: systemctl enable --now vikunja.service"
   echo "[DRY-RUN] would run: systemctl enable --now moodboard.service"
@@ -362,6 +376,7 @@ else
   systemctl enable --now memos.service >/dev/null || true
   systemctl enable --now twenty.service >/dev/null || true
   systemctl enable --now twenty-backup.timer >/dev/null
+  systemctl enable --now restic-prune.timer >/dev/null
   systemctl enable --now vikunja.service >/dev/null || true
   systemctl enable --now moodboard.service >/dev/null || true
 fi

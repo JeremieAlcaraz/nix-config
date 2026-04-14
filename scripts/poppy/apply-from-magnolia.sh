@@ -53,6 +53,9 @@ TWENTY_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/twenty-backup.timer"
 # ── Restic ─────────────────────────────────────────────────
 RESTIC_ENV_TPL="${REPO_ROOT}/hosts/poppy/.env.restic.template"
 RESTIC_INIT="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-init.sh"
+RESTIC_PRUNE="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-prune.sh"
+RESTIC_PRUNE_SVC="${REPO_ROOT}/hosts/poppy/systemd/restic-prune.service"
+RESTIC_PRUNE_TMR="${REPO_ROOT}/hosts/poppy/systemd/restic-prune.timer"
 
 # ── Garage bootstrap ──────────────────────────────────────
 GARAGE_BOOTSTRAP="${REPO_ROOT}/hosts/poppy/scripts/garage-bootstrap.sh"
@@ -80,6 +83,7 @@ for f in \
   "${TWENTY_COMPOSE}" "${TWENTY_ENV_TPL}" "${TWENTY_SVC}" \
   "${TWENTY_BACKUP}" "${TWENTY_BACKUP_SVC}" "${TWENTY_BACKUP_TMR}" \
   "${RESTIC_ENV_TPL}" "${RESTIC_INIT}" \
+  "${RESTIC_PRUNE}" "${RESTIC_PRUNE_SVC}" "${RESTIC_PRUNE_TMR}" \
   "${MEMOS_ENV_S3_TPL}" "${AGENTS_MD}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
@@ -279,6 +283,9 @@ scp -q "${TWENTY_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/twenty.service"
 # Restic
 scp -q "${TMP_DIR}/restic.env" "${SSH_HOST}:${REMOTE_STAGE}/restic.env"
 scp -q "${RESTIC_INIT}" "${SSH_HOST}:${REMOTE_STAGE}/restic-init.sh"
+scp -q "${RESTIC_PRUNE}" "${SSH_HOST}:${REMOTE_STAGE}/restic-prune.sh"
+scp -q "${RESTIC_PRUNE_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/restic-prune.service"
+scp -q "${RESTIC_PRUNE_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/restic-prune.timer"
 
 # Twenty backup
 scp -q "${TWENTY_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-backup.sh"

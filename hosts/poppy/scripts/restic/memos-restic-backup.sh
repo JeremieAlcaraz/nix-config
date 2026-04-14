@@ -26,18 +26,4 @@ else
   exit 1
 fi
 
-# Prune old snapshots (keep 7 days)
-if restic forget \
-  --repo "${REPO}" \
-  --keep-daily "${KEEP_DAYS}" \
-  --prune \
-  2>&1 | tee -a "${LOG}"; then
-  log "[OK] Prune complete (keep ${KEEP_DAYS} days)"
-else
-  log "[WARN] Prune failed (continuing)"
-fi
-
-# Check repo stats
-restic stats --repo "${REPO}" --mode raw-data 2>&1 | tee -a "${LOG}" || true
-
 log "=== Memos restic backup done ==="
