@@ -79,6 +79,17 @@ lock_file() {
   chattr +i "${f}" 2>/dev/null || true
 }
 
+# Remove immutable flag then delete (so install can overwrite)
+remove_immutable() {
+  local f="$1"
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    echo "[DRY-RUN] chattr -i ${f} && rm -f ${f}"
+    return 0
+  fi
+  chattr -i "${f}" 2>/dev/null || true
+  rm -f "${f}"
+}
+
 # Unlock for next deploy (must be writable when re-installing)
 unlock_file() {
   local f="$1"
@@ -171,7 +182,7 @@ for f in \
   "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_VIKUNJA_ENV}" \
   "${TARGET_MOODBOARD_ENV}" "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}"; do
   if [[ -f "${f}" ]]; then
-    run cp "${f}" "${f}.bak-${ts}"
+    remove_immutable "${f}"  # unlock + remove so install can overwrite
   fi
 done
 
@@ -191,10 +202,15 @@ unlock_all() {
   done
 }
 
-unlock_all
-
-# ── Install files ─────────────────────────────────────────
-run install -m 600 "${RCLONE_CONF_STAGE}" "${TARGET_RCLONE_CONF}"
+if [[ "${DRY_RUN}" -ne 1 ]]; then
+  unlock_all
+  for f in \
+    "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" \
+    "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_VIKUNJA_ENV}" \
+    "${TARGET_MOODBOARD_ENV}" "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}"; do
+    remove_immutable "${f}"
+  done
+fi
 run install -m 700 "${SYNC_SCRIPT_STAGE}" "${TARGET_SYNC_SCRIPT}"
 
 # Backup scripts
