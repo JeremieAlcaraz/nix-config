@@ -16,6 +16,7 @@ MEMOS_COMPOSE="${REPO_ROOT}/hosts/poppy/apps/memos/compose.yml"
 VIKUNJA_COMPOSE="${REPO_ROOT}/hosts/poppy/apps/vikunja/compose.yml"
 VIKUNJA_ENV_TPL="${REPO_ROOT}/hosts/poppy/apps/vikunja/.env.template"
 MOODBOARD_COMPOSE="${REPO_ROOT}/hosts/poppy/apps/moodboard/compose.yml"
+MOODBOARD_CONTAINERFILE="${REPO_ROOT}/hosts/poppy/apps/moodboard/Containerfile"
 MOODBOARD_ENV_TPL="${REPO_ROOT}/hosts/poppy/apps/moodboard/.env.template"
 
 # ── Script backups ─────────────────────────────────────────
@@ -43,7 +44,7 @@ AGENTS_MD="${REPO_ROOT}/hosts/poppy/AGENTS.md"
 for f in \
   "${SECRETS_FILE}" "${REMOTE_APPLY}" \
   "${MEMOS_COMPOSE}" "${VIKUNJA_COMPOSE}" "${VIKUNJA_ENV_TPL}" \
-  "${MOODBOARD_COMPOSE}" "${MOODBOARD_ENV_TPL}" \
+  "${MOODBOARD_COMPOSE}" "${MOODBOARD_CONTAINERFILE}" "${MOODBOARD_ENV_TPL}" \
   "${MEMOS_BACKUP}" "${MEMOS_UPLOAD}" "${VIKUNJA_BACKUP}" "${VIKUNJA_UPLOAD}" "${MOODBOARD_BACKUP}" \
   "${MEMOS_BACKUP_SVC}" "${MEMOS_BACKUP_TMR}" \
   "${MEMOS_SVC}" "${VIKUNJA_SVC}" "${MOODBOARD_SVC}" "${AGENTS_MD}"; do
@@ -166,6 +167,7 @@ scp -q "${MEMOS_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/memos-compose.yml"
 scp -q "${VIKUNJA_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja-compose.yml"
 scp -q "${VIKUNJA_ENV}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja.env"
 scp -q "${MOODBOARD_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-compose.yml"
+scp -q "${MOODBOARD_CONTAINERFILE}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-Containerfile"
 scp -q "${MOODBOARD_ENV}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard.env"
 
 # App systemd units

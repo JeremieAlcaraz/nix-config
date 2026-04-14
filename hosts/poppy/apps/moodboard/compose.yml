@@ -15,7 +15,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Containerfile
     container_name: moodboard-app
     restart: unless-stopped
     depends_on:
