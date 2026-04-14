@@ -59,5 +59,5 @@ poppy-restic-status:
 poppy-restic-backup app:
 	ssh root@poppy 'RESTIC_PASSWORD="$(grep ^RESTIC_PASSWORD= /root/.config/restic/env | tr -d "\047" | cut -d= -f2)" && export RESTIC_PASSWORD && bash /root/apps/restic/{{app}}-restic-backup.sh'
 
-poppy-restic-restore:
-	ssh root@poppy 'bash /root/apps/restic/restic-restore.sh'
+poppy-restic-restore app='memos':
+	ssh -t root@poppy "RESTIC_PASSWORD=\"\$(grep '^RESTIC_PASSWORD=' /root/.config/restic/env | tr -d \"\\047\" | cut -d= -f2)\" && export RESTIC_PASSWORD && bash /root/apps/restic/restic-restore.sh {{app}}"
