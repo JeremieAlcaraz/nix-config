@@ -32,11 +32,12 @@ apps:
   root_path: "/root/apps"
   runtime: "podman/podman-compose"
   notes:
-    - "Le chemin /apps n'existe pas sur l'hôte au moment de l'audit."
+    - "Le chemin /apps n'existe pas sur l'hote au moment de l'audit."
   services:
     memos:
       path: "/root/apps/memos"
       compose_file: "/root/apps/memos/compose.yml"
+      env_file: "/root/apps/memos/.env.s3"
       exposed_ports:
         - "5230:5230"
       data_paths:
@@ -66,27 +67,64 @@ apps:
       backup_scripts:
         - "/root/apps/vikunja/scripts/backup.sh"
         - "/root/apps/vikunja/scripts/upload-backups.sh"
+      backup_scheduler:
+        type: "systemd-timer"
+        timer_unit: "vikunja-backup.timer"
+        schedule: "daily 04:30"
       backup_destination: "gdrive_capsule:vikunja"
     moodboard:
       path: "/root/apps/moodboard"
       compose_file: "/root/apps/moodboard/compose.yml"
       containerfile: "/root/apps/moodboard/Containerfile"
+      env_file: "/root/apps/moodboard/.env.prod"
       exposed_ports:
-        - "3005:3005"
-        - "3900:3900"
-        - "3903:3903"
+        - "8080:8080"
       data_paths:
         - "/root/apps/moodboard/assets"
         - "/root/apps/moodboard/.local"
       backup_scripts:
-        - "/root/apps/moodboard/backup-moodboard.sh"
         - "/root/apps/moodboard/scripts/backup-moodboard.sh"
+      backup_scheduler:
+        type: "systemd-timer"
+        timer_unit: "moodboard-backup.timer"
+        schedule: "daily 05:00"
       backup_destination: "gdrive_capsule:moodboard"
+    twenty:
+      path: "/root/apps/twenty"
+      compose_file: "/root/apps/twenty/compose.yml"
+      env_file: "/root/apps/twenty/.env"
+      containers:
+        - "twenty-server"
+        - "twenty-worker"
+        - "twenty-db"
+        - "twenty-redis"
+      exposed_ports:
+        - "3000:3000"
+        - "5432:5432"
+      data_paths:
+        - "/root/apps/twenty/data/volumes/twenty-db-data"
+        - "/root/apps/twenty/data/volumes/twenty-server-data"
+      storage_backend: "garage-s3"
+      storage_bucket: "twenty"
+      storage_endpoint: "http://host.containers.internal:3900"
+      backup_scripts:
+        - "/root/apps/twenty/scripts/backup.sh"
+      backup_scheduler:
+        type: "systemd-timer"
+        timer_unit: "twenty-backup.timer"
+        service_unit: "twenty-backup.service"
+        schedule: "daily 03:00"
+      backup_destination: "gdrive_capsule:twenty"
+      notes:
+        - "pg_dump via podman exec twenty-db"
+        - "S3 sync via rclone garage_backup remote"
+        - "Latest dump overwrites dump-twenty.sql.gz on Drive (single file)"
+        - "S3 objects synced to twenty/s3-objects/"
 backup_scripts_detected:
   - "/root/sync-capsule.sh"
   - "/root/apps/memos/scripts/backup.sh"
   - "/root/apps/memos/scripts/upload-backups.sh"
   - "/root/apps/vikunja/scripts/backup.sh"
   - "/root/apps/vikunja/scripts/upload-backups.sh"
-  - "/root/apps/moodboard/backup-moodboard.sh"
   - "/root/apps/moodboard/scripts/backup-moodboard.sh"
+  - "/root/apps/twenty/scripts/backup.sh"

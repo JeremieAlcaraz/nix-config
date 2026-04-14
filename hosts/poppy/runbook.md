@@ -186,6 +186,50 @@ Ce que fait l'apply:
 - pousse et active les services/timers systemd applicatifs,
 - applique de maniere idempotente avec backup legacy dans `/root/.bak/`.
 
+
+## Twenty CRM
+
+Twenty CRM tourne en service via `podman-compose` (4 containers).
+
+### URLs
+- **HTTPS**: `https://twenty.inanga-sirius.ts.net` (via Tailscale svc:twenty)
+- **Local**: `http://poppy:3000`
+
+### Containers
+```bash
+podman ps --format "{{.Names}} ({{.Status}})" | grep twenty
+# twenty-server  twenty-worker  twenty-db  twenty-redis
+```
+
+### Configuration S3 (storage)
+Twenty utilise Garage S3 comme backend storage (bucket `twenty`).
+Les credentials sont dans SOPS (`apps.twenty.*`).
+
+### Backup quotidien (03h00)
+Automatique via `twenty-backup.timer` (systemd).
+- Dump PostgreSQL (2.2 MB compressé) -> `gdrive_capsule:twenty/dump-twenty.sql.gz`
+- Sync S3 bucket `twenty` -> `gdrive_capsule:twenty/s3-objects/`
+
+Manuel:
+```bash
+bash /root/apps/twenty/scripts/backup.sh
+```
+
+### Logs
+```bash
+tail -f /var/log/twenty-backup.log
+```
+
+### Status systemd
+```bash
+systemctl status twenty.service
+systemctl status twenty-backup.timer
+```
+
+### Restoration
+Voir `hosts/poppy/justfile` (commande `just restore`).
+
+
 ## Rollback bootstrap
 
 En cas de regression apres apply:
