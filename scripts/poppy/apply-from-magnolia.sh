@@ -40,6 +40,11 @@ VIKUNJA_SVC="${REPO_ROOT}/hosts/poppy/systemd/vikunja.service"
 MOODBOARD_SVC="${REPO_ROOT}/hosts/poppy/systemd/moodboard.service"
 GARAGE_SVC="${REPO_ROOT}/hosts/poppy/systemd/garage.service"
 
+# ── Twenty ─────────────────────────────────────────────────
+TWENTY_COMPOSE="${REPO_ROOT}/hosts/poppy/apps/twenty/compose.yml"
+TWENTY_ENV_TPL="${REPO_ROOT}/hosts/poppy/apps/twenty/.env.template"
+TWENTY_SVC="${REPO_ROOT}/hosts/poppy/systemd/twenty.service"
+
 # ── Garage bootstrap ──────────────────────────────────────
 GARAGE_BOOTSTRAP="${REPO_ROOT}/hosts/poppy/scripts/garage-bootstrap.sh"
 MEMOS_S3_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/memos-backup-s3.sh"
@@ -63,6 +68,7 @@ for f in \
   "${MEMOS_BACKUP_SVC}" "${MEMOS_BACKUP_TMR}" \
   "${MEMOS_S3_BACKUP_SVC}" "${MEMOS_S3_BACKUP_TMR}" \
   "${MEMOS_SVC}" "${VIKUNJA_SVC}" "${MOODBOARD_SVC}" "${GARAGE_SVC}" "${GARAGE_BOOTSTRAP}" \
+  "${TWENTY_COMPOSE}" "${TWENTY_ENV_TPL}" "${TWENTY_SVC}" \
   "${MEMOS_ENV_S3_TPL}" "${AGENTS_MD}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
@@ -104,7 +110,14 @@ GARAGE_METRICS_TOKEN="$(yq -r '.apps.garage.metrics_token' "${DECRYPTED}")"
 MEMOS_GARAGE_ACCESS_KEY_ID="$(yq -r '.apps.memos.garage_access_key_id' "${DECRYPTED}")"
 MEMOS_GARAGE_SECRET_ACCESS_KEY="$(yq -r '.apps.memos.garage_secret_access_key' "${DECRYPTED}")"
 
-for v in SSH_HOST CLIENT_ID CLIENT_SECRET GDRIVE_TOKEN CAPSULE_TOKEN ROOT_FOLDER_ID DEST_SUBPATH SCHEDULE_CRON MEMOS_GARAGE_ACCESS_KEY_ID MEMOS_GARAGE_SECRET_ACCESS_KEY; do
+# Twenty secrets
+TWENTY_PG_PASSWORD="$(yq -r '.apps.twenty.pg_database_password' "${DECRYPTED}")"
+TWENTY_APP_SECRET="$(yq -r '.apps.twenty.app_secret' "${DECRYPTED}")"
+TWENTY_GOOGLE_CLIENT_ID="$(yq -r '.apps.twenty.google_client_id' "${DECRYPTED}")"
+TWENTY_GOOGLE_CLIENT_SECRET="$(yq -r '.apps.twenty.google_client_secret' "${DECRYPTED}")"
+TWENTY_SERVER_URL="$(yq -r '.apps.twenty.server_url' "${DECRYPTED}")"
+
+for v in SSH_HOST CLIENT_ID CLIENT_SECRET GDRIVE_TOKEN CAPSULE_TOKEN ROOT_FOLDER_ID DEST_SUBPATH SCHEDULE_CRON MEMOS_GARAGE_ACCESS_KEY_ID MEMOS_GARAGE_SECRET_ACCESS_KEY TWENTY_PG_PASSWORD TWENTY_APP_SECRET TWENTY_GOOGLE_CLIENT_ID TWENTY_GOOGLE_CLIENT_SECRET; do
   val="${!v}"
   [[ -n "${val}" && "${val}" != "null" ]] || { echo "[ERROR] missing value: ${v}" >&2; exit 1; }
 done
@@ -174,6 +187,19 @@ print(template.replace("{{MEMOS_GARAGE_ACCESS_KEY_ID}}", key_id)
      .replace("{{MEMOS_GARAGE_SECRET_ACCESS_KEY}}", secret))
 PY3B
 
+# ── Génère .env pour twenty ─────────────────────────────
+python3 - "${TWENTY_ENV_TPL}" "${TWENTY_PG_PASSWORD}" "${TWENTY_APP_SECRET}" \
+  "${TWENTY_GOOGLE_CLIENT_ID}" "${TWENTY_GOOGLE_CLIENT_SECRET}" "${TWENTY_SERVER_URL}" > "${TMP_DIR}/twenty.env" <<'PYTW'
+import sys
+template = open(sys.argv[1]).read()
+print(template
+    .replace("{{PG_DATABASE_PASSWORD}}", sys.argv[2])
+    .replace("{{APP_SECRET}}", sys.argv[3])
+    .replace("{{GOOGLE_CLIENT_ID}}", sys.argv[4])
+    .replace("{{GOOGLE_CLIENT_SECRET}}", sys.argv[5])
+    .replace("{{SERVER_URL}}", sys.argv[6]))
+PYTW
+
 # ── Génère garage-prod.toml depuis template ───────────────
 python3 - "${GARAGE_CONFIG_TPL}" "${GARAGE_RPC_SECRET}" "${GARAGE_ADMIN_TOKEN}" "${GARAGE_METRICS_TOKEN}" > "${GARAGE_CONFIG}" <<'PY4'
 import sys
@@ -211,6 +237,8 @@ scp -q "${MEMOS_S3_BACKUP_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/memos-s3-backup.ser
 scp -q "${MEMOS_S3_BACKUP_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/memos-s3-backup.timer"
 
 # App compose + env
+scp -q "${TWENTY_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-compose.yml"
+scp -q "${TMP_DIR}/twenty.env" "${SSH_HOST}:${REMOTE_STAGE}/twenty.env"
 scp -q "${MEMOS_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/memos-compose.yml"
 scp -q "${VIKUNJA_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja-compose.yml"
 scp -q "${VIKUNJA_ENV}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja.env"
@@ -222,6 +250,7 @@ scp -q "${GARAGE_COMPOSE}" "${SSH_HOST}:${REMOTE_STAGE}/garage-compose.yml"
 scp -q "${GARAGE_CONFIG}" "${SSH_HOST}:${REMOTE_STAGE}/garage-prod.toml"
 
 # App systemd units
+scp -q "${TWENTY_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/twenty.service"
 scp -q "${MEMOS_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/memos.service"
 scp -q "${VIKUNJA_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja.service"
 scp -q "${MOODBOARD_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard.service"

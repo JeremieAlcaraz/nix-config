@@ -1,0 +1,18 @@
+[Unit]
+Description=Twenty CRM (podman-compose)
+After=network.target garage.service
+Requires=garage.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/root/apps/twenty
+ExecStartPre=-/usr/local/bin/podman-compose -f /root/apps/twenty/compose.yml --env-file /root/apps/twenty/.env down --remove-orphans
+ExecStart=/usr/local/bin/podman-compose -f /root/apps/twenty/compose.yml --env-file /root/apps/twenty/.env up -d
+ExecStop=/usr/local/bin/podman-compose -f /root/apps/twenty/compose.yml --env-file /root/apps/twenty/.env down
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

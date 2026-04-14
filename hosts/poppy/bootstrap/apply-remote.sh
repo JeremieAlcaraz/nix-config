@@ -44,6 +44,11 @@ MEMOS_STORAGE_MIGRATE_STAGE="${STAGE_DIR}/memos-storage-migrate.sh"
 MEMOS_S3_BACKUP_SVC_STAGE="${STAGE_DIR}/memos-s3-backup.service"
 MEMOS_S3_BACKUP_TMR_STAGE="${STAGE_DIR}/memos-s3-backup.timer"
 
+# Twenty
+TWENTY_COMPOSE_STAGE="${STAGE_DIR}/twenty-compose.yml"
+TWENTY_ENV_STAGE="${STAGE_DIR}/twenty.env"
+TWENTY_SVC_STAGE="${STAGE_DIR}/twenty.service"
+
 # Legacy Garage config path (for migration)
 LEGACY_GARAGE_DATA_VOLUME="moodboard_garage-data"
 LEGACY_GARAGE_CONFIG="/root/apps/moodboard/infra/garage/garage-prod.toml"
@@ -74,6 +79,10 @@ TARGET_MOODBOARD_CONTAINERFILE="/root/apps/moodboard/Containerfile"
 TARGET_VIKUNJA_ENV="/root/apps/vikunja/.env"
 TARGET_MOODBOARD_ENV="/root/apps/moodboard/.env"
 TARGET_MOODBOARD_ENV_PROD="/root/apps/moodboard/.env.prod"
+
+TARGET_TWENTY_COMPOSE="/root/apps/twenty/compose.yml"
+TARGET_TWENTY_ENV="/root/apps/twenty/.env"
+TARGET_TWENTY_SVC="/etc/systemd/system/twenty.service"
 
 TARGET_MEMOS_SVC="/etc/systemd/system/memos.service"
 TARGET_VIKUNJA_SVC="/etc/systemd/system/vikunja.service"
@@ -162,14 +171,15 @@ for f in \
   "${MEMOS_SERVICE_STAGE}" "${VIKUNJA_SERVICE_STAGE}" "${MOODBOARD_SERVICE_STAGE}" \
   "${GARAGE_COMPOSE_STAGE}" "${GARAGE_CONFIG_STAGE}" "${GARAGE_SERVICE_STAGE}" "${GARAGE_BOOTSTRAP_STAGE}" \
   "${MEMOS_S3_BACKUP_STAGE}" "${MEMOS_ENV_S3_STAGE}" "${MEMOS_STORAGE_INIT_STAGE}" "${MEMOS_STORAGE_MIGRATE_STAGE}" \
-  "${MEMOS_S3_BACKUP_SVC_STAGE}" "${MEMOS_S3_BACKUP_TMR_STAGE}"; do
+  "${MEMOS_S3_BACKUP_SVC_STAGE}" "${MEMOS_S3_BACKUP_TMR_STAGE}" \
+  "${TWENTY_COMPOSE_STAGE}" "${TWENTY_ENV_STAGE}" "${TWENTY_SVC_STAGE}"; do
   require_file "${f}"
 done
 
 # Ensure dirs
 run mkdir -p /root/.config/rclone
 run chmod 700 /root/.config/rclone
-run mkdir -p "${BAK_DIR}" /root/apps/memos/scripts /root/apps/vikunja/scripts /root/apps/moodboard/scripts /root/apps/garage/data
+run mkdir -p "${BAK_DIR}" /root/apps/memos/scripts /root/apps/vikunja/scripts /root/apps/moodboard/scripts /root/apps/garage/data /root/apps/twenty
 
 # Ensure packages/services
 ensure_pkg_installed "${NODE_EXPORTER_PKG}"
@@ -186,7 +196,8 @@ TS="$(date +%Y%m%d-%H%M%S)"
 for f in \
   "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_MOODBOARD_CONTAINERFILE}" \
   "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" "${TARGET_MEMOS_ENV_S3}" \
-  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" \
+  "${TARGET_TWENTY_COMPOSE}" "${TARGET_TWENTY_ENV}" \
+  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" "${TARGET_TWENTY_SVC}" \
   "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" "${TARGET_GARAGE_SVC}"; do
   unlock_file "${f}"
 done
@@ -200,8 +211,8 @@ for f in \
   "${TARGET_MEMOS_BACKUP_SERVICE}" "${TARGET_MEMOS_BACKUP_TIMER}" \
   "${TARGET_MEMOS_S3_BACKUP_SERVICE}" "${TARGET_MEMOS_S3_BACKUP_TIMER}" \
   "${TARGET_MEMOS_COMPOSE}" "${TARGET_VIKUNJA_COMPOSE}" "${TARGET_MOODBOARD_COMPOSE}" "${TARGET_MOODBOARD_CONTAINERFILE}" \
-  "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" \
-  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" \
+  "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" "${TARGET_TWENTY_ENV}" \
+  "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" "${TARGET_TWENTY_SVC}" \
   "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" "${TARGET_GARAGE_BOOTSTRAP}" "${TARGET_MEMOS_STORAGE_INIT}" \
   "${LEGACY_GARAGE_CONFIG}"; do
   backup_if_exists "${f}"
@@ -230,9 +241,12 @@ run install -m 600 "${MOODBOARD_ENV_STAGE}" "${TARGET_MOODBOARD_ENV}"
 run install -m 600 "${MOODBOARD_ENV_STAGE}" "${TARGET_MOODBOARD_ENV_PROD}"
 run install -m 600 "${MEMOS_ENV_S3_STAGE}" "${TARGET_MEMOS_ENV_S3}"
 
+run install -m 644 "${TWENTY_COMPOSE_STAGE}" "${TARGET_TWENTY_COMPOSE}"
+
 run install -m 644 "${MEMOS_SERVICE_STAGE}" "${TARGET_MEMOS_SVC}"
 run install -m 644 "${VIKUNJA_SERVICE_STAGE}" "${TARGET_VIKUNJA_SVC}"
 run install -m 644 "${MOODBOARD_SERVICE_STAGE}" "${TARGET_MOODBOARD_SVC}"
+run install -m 644 "${TWENTY_SVC_STAGE}" "${TARGET_TWENTY_SVC}"
 
 # Garage standalone
 run install -m 644 "${GARAGE_COMPOSE_STAGE}" "${TARGET_GARAGE_COMPOSE}"
@@ -275,6 +289,9 @@ lock_file "${TARGET_MOODBOARD_SVC}" 444
 lock_file "${TARGET_GARAGE_COMPOSE}" 444
 lock_file "${TARGET_GARAGE_CONFIG}" 444
 lock_file "${TARGET_MEMOS_ENV_S3}" 444
+lock_file "${TARGET_TWENTY_COMPOSE}" 444
+lock_file "${TARGET_TWENTY_ENV}" 444
+lock_file "${TARGET_TWENTY_SVC}" 444
 
 # cron
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"
@@ -298,6 +315,7 @@ if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "[DRY-RUN] would run: systemctl enable --now garage.service"
   echo "[DRY-RUN] would run: systemctl enable --now memos-backup.timer"
   echo "[DRY-RUN] would run: systemctl enable --now memos-s3-backup.timer"
+  echo "[DRY-RUN] would run: systemctl enable --now twenty.service"
   echo "[DRY-RUN] would run: systemctl enable --now memos.service"
   echo "[DRY-RUN] would run: systemctl enable --now vikunja.service"
   echo "[DRY-RUN] would run: systemctl enable --now moodboard.service"
@@ -309,6 +327,7 @@ else
   systemctl enable --now memos-backup.timer >/dev/null
   systemctl enable --now memos-s3-backup.timer >/dev/null
   systemctl enable --now memos.service >/dev/null || true
+  systemctl enable --now twenty.service >/dev/null || true
   systemctl enable --now vikunja.service >/dev/null || true
   systemctl enable --now moodboard.service >/dev/null || true
 fi
