@@ -1,13 +1,13 @@
 Epic: epic-poppy-twenty-deploy
-Current status: ready
-Last sync: 2026-04-13T13:00:00Z
+Current status: in_progress
+Last sync: 2026-04-14T17:50:00Z
 Token usage: total=0 input=0 (+ 0 cached) output=0 (reasoning 0)
 Resume command: codex resume epic-poppy-twenty-deploy
 Resume id stable for epic: epic-poppy-twenty-deploy
 Previous resume ids: -
-What changed: Created epic, validated, synced 15 issues to Gitea (#66-80)
-Blockers: -
+What changed: T01-T06,T10 done. twenty running on Poppy (podman). OAuth URLs correct.
+Blockers: Tailscale svc not yet configured (T08,T09 blocked)
 Next 3 actions:
-- 1) T01: Créer bucket twenty + key twenty-app dans Garage
-- 2) T02: Extraire compose + .env depuis Desktop
-- 3) T03: Adapter compose pour podman + S3
+- 1) T07: Create twenty backup script + timer (dump SQL + sync S3 → Drive)
+- 2) T08: Configure Tailscale svc:twenty → https://twenty.inanga-sirius.ts.net
+- 3) T09: Verify OAuth Google login on prod domain
