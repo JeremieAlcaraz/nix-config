@@ -1,0 +1,13 @@
+Epic: epic-poppy-twenty-deploy
+Current status: ready
+Last sync: 2026-04-13T13:00:00Z
+Token usage: total=0 input=0 (+ 0 cached) output=0 (reasoning 0)
+Resume command: codex resume epic-poppy-twenty-deploy
+Resume id stable for epic: epic-poppy-twenty-deploy
+Previous resume ids: -
+What changed: Created epic, validated, synced 15 issues to Gitea (#66-80)
+Blockers: -
+Next 3 actions:
+- 1) T01: Créer bucket twenty + key twenty-app dans Garage
+- 2) T02: Extraire compose + .env depuis Desktop
+- 3) T03: Adapter compose pour podman + S3
