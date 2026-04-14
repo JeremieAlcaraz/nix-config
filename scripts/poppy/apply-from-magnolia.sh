@@ -45,6 +45,11 @@ TWENTY_COMPOSE="${REPO_ROOT}/hosts/poppy/apps/twenty/compose.yml"
 TWENTY_ENV_TPL="${REPO_ROOT}/hosts/poppy/apps/twenty/.env.template"
 TWENTY_SVC="${REPO_ROOT}/hosts/poppy/systemd/twenty.service"
 
+# ── Twenty backup ─────────────────────────────────────────
+TWENTY_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/twenty-backup.sh"
+TWENTY_BACKUP_SVC="${REPO_ROOT}/hosts/poppy/systemd/twenty-backup.service"
+TWENTY_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/twenty-backup.timer"
+
 # ── Garage bootstrap ──────────────────────────────────────
 GARAGE_BOOTSTRAP="${REPO_ROOT}/hosts/poppy/scripts/garage-bootstrap.sh"
 MEMOS_S3_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/memos-backup-s3.sh"
@@ -69,6 +74,7 @@ for f in \
   "${MEMOS_S3_BACKUP_SVC}" "${MEMOS_S3_BACKUP_TMR}" \
   "${MEMOS_SVC}" "${VIKUNJA_SVC}" "${MOODBOARD_SVC}" "${GARAGE_SVC}" "${GARAGE_BOOTSTRAP}" \
   "${TWENTY_COMPOSE}" "${TWENTY_ENV_TPL}" "${TWENTY_SVC}" \
+  "${TWENTY_BACKUP}" "${TWENTY_BACKUP_SVC}" "${TWENTY_BACKUP_TMR}" \
   "${MEMOS_ENV_S3_TPL}" "${AGENTS_MD}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
@@ -116,8 +122,10 @@ TWENTY_APP_SECRET="$(yq -r '.apps.twenty.app_secret' "${DECRYPTED}")"
 TWENTY_GOOGLE_CLIENT_ID="$(yq -r '.apps.twenty.google_client_id' "${DECRYPTED}")"
 TWENTY_GOOGLE_CLIENT_SECRET="$(yq -r '.apps.twenty.google_client_secret' "${DECRYPTED}")"
 TWENTY_SERVER_URL="$(yq -r '.apps.twenty.server_url' "${DECRYPTED}")"
+TWENTY_STORAGE_ACCESS_KEY_ID="$(yq -r '.apps.twenty.storage_access_key_id' "${DECRYPTED}")"
+TWENTY_STORAGE_SECRET_ACCESS_KEY="$(yq -r '.apps.twenty.storage_secret_access_key' "${DECRYPTED}")"
 
-for v in SSH_HOST CLIENT_ID CLIENT_SECRET GDRIVE_TOKEN CAPSULE_TOKEN ROOT_FOLDER_ID DEST_SUBPATH SCHEDULE_CRON MEMOS_GARAGE_ACCESS_KEY_ID MEMOS_GARAGE_SECRET_ACCESS_KEY TWENTY_PG_PASSWORD TWENTY_APP_SECRET TWENTY_GOOGLE_CLIENT_ID TWENTY_GOOGLE_CLIENT_SECRET; do
+for v in SSH_HOST CLIENT_ID CLIENT_SECRET GDRIVE_TOKEN CAPSULE_TOKEN ROOT_FOLDER_ID DEST_SUBPATH SCHEDULE_CRON MEMOS_GARAGE_ACCESS_KEY_ID MEMOS_GARAGE_SECRET_ACCESS_KEY TWENTY_PG_PASSWORD TWENTY_APP_SECRET TWENTY_GOOGLE_CLIENT_ID TWENTY_GOOGLE_CLIENT_SECRET TWENTY_STORAGE_ACCESS_KEY_ID TWENTY_STORAGE_SECRET_ACCESS_KEY; do
   val="${!v}"
   [[ -n "${val}" && "${val}" != "null" ]] || { echo "[ERROR] missing value: ${v}" >&2; exit 1; }
 done
@@ -189,7 +197,8 @@ PY3B
 
 # ── Génère .env pour twenty ─────────────────────────────
 python3 - "${TWENTY_ENV_TPL}" "${TWENTY_PG_PASSWORD}" "${TWENTY_APP_SECRET}" \
-  "${TWENTY_GOOGLE_CLIENT_ID}" "${TWENTY_GOOGLE_CLIENT_SECRET}" "${TWENTY_SERVER_URL}" > "${TMP_DIR}/twenty.env" <<'PYTW'
+  "${TWENTY_GOOGLE_CLIENT_ID}" "${TWENTY_GOOGLE_CLIENT_SECRET}" "${TWENTY_SERVER_URL}" \
+  "${TWENTY_STORAGE_ACCESS_KEY_ID}" "${TWENTY_STORAGE_SECRET_ACCESS_KEY}" > "${TMP_DIR}/twenty.env" <<'PYTW'
 import sys
 template = open(sys.argv[1]).read()
 print(template
@@ -197,7 +206,9 @@ print(template
     .replace("{{APP_SECRET}}", sys.argv[3])
     .replace("{{GOOGLE_CLIENT_ID}}", sys.argv[4])
     .replace("{{GOOGLE_CLIENT_SECRET}}", sys.argv[5])
-    .replace("{{SERVER_URL}}", sys.argv[6]))
+    .replace("{{SERVER_URL}}", sys.argv[6])
+    .replace("{{STORAGE_ACCESS_KEY_ID}}", sys.argv[7])
+    .replace("{{STORAGE_SECRET_ACCESS_KEY}}", sys.argv[8]))
 PYTW
 
 # ── Génère garage-prod.toml depuis template ───────────────
@@ -251,6 +262,11 @@ scp -q "${GARAGE_CONFIG}" "${SSH_HOST}:${REMOTE_STAGE}/garage-prod.toml"
 
 # App systemd units
 scp -q "${TWENTY_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/twenty.service"
+
+# Twenty backup
+scp -q "${TWENTY_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-backup.sh"
+scp -q "${TWENTY_BACKUP_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-backup.service"
+scp -q "${TWENTY_BACKUP_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-backup.timer"
 scp -q "${MEMOS_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/memos.service"
 scp -q "${VIKUNJA_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja.service"
 scp -q "${MOODBOARD_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard.service"

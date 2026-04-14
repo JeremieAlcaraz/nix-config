@@ -133,6 +133,8 @@ ssh "${SSH_HOST}" "systemctl is-enabled garage.service >/dev/null && echo '[OK] 
 ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^garage$' && echo '[OK] garage podman running' || echo '[WARN] garage not in podman'"
 ssh "${SSH_HOST}" "systemctl is-enabled twenty.service >/dev/null && echo '[OK] twenty.service enabled'"
 ssh "${SSH_HOST}" "podman ps --format '{{.Names}}' | grep -q '^twenty-server$' && echo '[OK] twenty podman running' || echo '[WARN] twenty not in podman'"
+ssh "${SSH_HOST}" "systemctl is-enabled twenty-backup.timer >/dev/null && echo '[OK] twenty-backup.timer enabled'"
+ssh "${SSH_HOST}" "systemctl is-active twenty-backup.timer >/dev/null && echo '[OK] twenty-backup.timer active'"
 
 # Check memos S3 storage status
 MEMOS_STORAGE_TYPE=$(ssh "${SSH_HOST}" "sqlite3 /root/apps/memos/data/memos_prod.db 'SELECT json_extract(value,'\''$.storageType'\'''') FROM system_setting WHERE name = '\''STORAGE'\'';' 2>/dev/null || echo ''")
@@ -166,6 +168,8 @@ DRIFT_MAP=(
   "${REPO_ROOT}/hosts/poppy/apps/twenty/compose.yml|/root/apps/twenty/compose.yml"
   "${TWENTY_ENV_EXPECTED}|/root/apps/twenty/.env"
   "${REPO_ROOT}/hosts/poppy/systemd/twenty.service|/etc/systemd/system/twenty.service"
+  "${REPO_ROOT}/hosts/poppy/systemd/twenty-backup.service|/etc/systemd/system/twenty-backup.service"
+  "${REPO_ROOT}/hosts/poppy/systemd/twenty-backup.timer|/etc/systemd/system/twenty-backup.timer"
 )
 
 for pair in "${DRIFT_MAP[@]}"; do

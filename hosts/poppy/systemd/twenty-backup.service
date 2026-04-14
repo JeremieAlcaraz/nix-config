@@ -1,0 +1,8 @@
+[Unit]
+Description=Twenty backup (dump SQL + sync S3 → Drive)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /root/apps/twenty/scripts/backup.sh
+StandardOutput=journal
+StandardError=journal
