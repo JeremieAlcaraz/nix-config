@@ -66,6 +66,27 @@ run() {
   "$@"
 }
 
+# Lock files after install to prevent manual editing on poppy
+# (will be unlocked automatically on next deploy run)
+lock_file() {
+  local f="$1"
+  local mode="$2"
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    echo "[DRY-RUN] chmod ${mode} ${f}"
+    return 0
+  fi
+  chmod "${mode}" "${f}" 2>/dev/null || true
+}
+
+# Unlock for next deploy (must be writable when re-installing)
+unlock_file() {
+  local f="$1"
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    return 0
+  fi
+  chmod u+w "${f}" 2>/dev/null || true
+}
+
 require_file() {
   local f="$1"
   [[ -f "${f}" ]] || { echo "[ERROR] missing file: ${f}"; exit 1; }
@@ -180,6 +201,24 @@ run install -m 600 "${MOODBOARD_ENV_STAGE}" "${TARGET_MOODBOARD_ENV}"
 # App systemd units
 run install -m 644 "${MEMOS_SERVICE_STAGE}" "${TARGET_MEMOS_SVC}"
 run install -m 644 "${VIKUNJA_SERVICE_STAGE}" "${TARGET_VIKUNJA_SVC}"
+
+# Lock files to prevent manual editing on poppy
+lock_file "${TARGET_MEMOS_COMPOSE}" 444
+lock_file "${TARGET_VIKUNJA_COMPOSE}" 444
+lock_file "${TARGET_MOODBOARD_COMPOSE}" 444
+lock_file "${TARGET_VIKUNJA_ENV}" 440
+lock_file "${TARGET_MOODBOARD_ENV}" 440
+lock_file "${TARGET_MEMOS_SVC}" 444
+lock_file "${TARGET_VIKUNJA_SVC}" 444
+
+# Unlock for next deploy (must be writable to re-install)
+unlock_file "${TARGET_MEMOS_COMPOSE}"
+unlock_file "${TARGET_VIKUNJA_COMPOSE}"
+unlock_file "${TARGET_MOODBOARD_COMPOSE}"
+unlock_file "${TARGET_VIKUNJA_ENV}"
+unlock_file "${TARGET_MOODBOARD_ENV}"
+unlock_file "${TARGET_MEMOS_SVC}"
+unlock_file "${TARGET_VIKUNJA_SVC}"
 
 # ── Cron ──────────────────────────────────────────────────
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"
