@@ -1,0 +1,16 @@
+Epic: epic-poppy-backup-restic
+Current status: open (ready to start)
+Last sync: 2026-04-14T19:15:00Z
+Token usage: total=0 input=0 (+ 0 cached) output=0 (reasoning 0)
+Resume command: codex resume epic-poppy-backup-restic
+Resume id stable for epic: epic-poppy-backup-restic
+Previous resume ids: -
+What changed: Epic + 3 stories + 5 tasks created on Gitea. Docs written at docs/restic/RESTIC.md.
+Blockers: -
+Next 3 actions:
+- 1) Start T01: install restic + init repos
+- 2) Update _factory/index.md with new epic
+- 3) Update secrets/poppy.yaml.example with restic password template
+Epic Gitea: #82 http://dandelion:3000/jeremiealcaraz/nix-config/issues/82
+Stories: #88 (T01), #89 (T02-T03), #90 (T04-T05)
+Tasks: #83 (T01), #84 (T02), #85 (T03), #86 (T04), #87 (T05)
