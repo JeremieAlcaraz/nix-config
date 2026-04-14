@@ -168,10 +168,10 @@ run mkdir -p \
 # ── Backup existing files ─────────────────────────────────
 ts="$(date +%Y%m%d-%H%M%S)"
 if [[ -f "${TARGET_RCLONE_CONF}" ]]; then
-  run cp "${TARGET_RCLONE_CONF}" "${TARGET_RCLONE_CONF}.bak-${ts}"
+  run cp "${TARGET_RCLONE_CONF}" "/root/.bak/$(basename "${TARGET_RCLONE_CONF}").bak-${ts}"
 fi
 if [[ -f "${TARGET_SYNC_SCRIPT}" ]]; then
-  run cp "${TARGET_SYNC_SCRIPT}" "${TARGET_SYNC_SCRIPT}.bak-${ts}"
+  run cp "${TARGET_SYNC_SCRIPT}" "/root/.bak/$(basename "${TARGET_SYNC_SCRIPT}").bak-${ts}"
 fi
 for f in \
   "${TARGET_MEMOS_BACKUP}" "${TARGET_MEMOS_UPLOAD}" \
