@@ -73,10 +73,14 @@ Il est idempotent (verification du storage type avant action).
 
 ### Backup S3 memos (rclone -> Drive)
 
+Automatique via `memos-s3-backup.timer` (quotidien 06:00).
+
+Manuel:
 ```bash
 bash /root/apps/memos/scripts/backup-s3.sh
 ```
 Sync le bucket Garage `memos` vers `gdrive_capsule:memos/s3-objects/`.
+S3 credentials lues depuis `/root/apps/memos/.env.s3` (deploye par `just poppy-apply`).
 
 ### Status Garage
 

@@ -17,10 +17,14 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
 - Scripts backup:
   - `/root/apps/memos/scripts/backup.sh` (snapshot SQLite coherent via `sqlite3 .backup`)
   - `/root/apps/memos/scripts/upload-backups.sh`
-- Scheduler: `memos-backup.timer` (05:30, systemd)
+  - `/root/apps/memos/scripts/backup-s3.sh` (sync S3 bucket -> Drive)
+- Scheduler:
+  - `memos-backup.timer` (05:30, DB backup)
+  - `memos-s3-backup.timer` (06:00, S3 backup)
 - Upload distant: `gdrive_capsule:memos`
 - **S3 Storage**: memos stocke ses attachments dans Garage S3 (bucket `memos`).
   Configuration S3 via API (storage_type = S3), credentials dans la DB.
+  S3 credentials backup: `/root/apps/memos/.env.s3`.
   See: `hosts/poppy/scripts/memos-storage-init.sh`
 
 ### vikunja
