@@ -37,13 +37,15 @@ for cmd in sops yq ssh scp python3; do
   command -v "${cmd}" >/dev/null 2>&1 || { echo "[ERROR] missing command: ${cmd}" >&2; exit 1; }
 done
 
+AGENTS_MD="${REPO_ROOT}/hosts/poppy/AGENTS.md"
+
 for f in \
   "${SECRETS_FILE}" "${REMOTE_APPLY}" \
   "${MEMOS_COMPOSE}" "${VIKUNJA_COMPOSE}" "${VIKUNJA_ENV_TPL}" \
   "${MOODBOARD_COMPOSE}" "${MOODBOARD_ENV_TPL}" \
   "${MEMOS_BACKUP}" "${MEMOS_UPLOAD}" "${VIKUNJA_BACKUP}" "${VIKUNJA_UPLOAD}" "${MOODBOARD_BACKUP}" \
   "${MEMOS_BACKUP_SVC}" "${MEMOS_BACKUP_TMR}" \
-  "${MEMOS_SVC}" "${VIKUNJA_SVC}"; do
+  "${MEMOS_SVC}" "${VIKUNJA_SVC}" "${AGENTS_MD}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
 
@@ -138,7 +140,7 @@ result = result.replace("{{GEMINI_API_KEY}}", gemini)
 print(result)
 PY3
 
-REMOTE_STAGE="/tmp/poppy-bootstrap"
+REMOTE_STAGE="/root/.deploy"
 ssh "${SSH_HOST}" "mkdir -p '${REMOTE_STAGE}' && chmod 700 '${REMOTE_STAGE}'"
 
 echo "[INFO] Copying files to ${SSH_HOST}:${REMOTE_STAGE}/"
@@ -168,6 +170,9 @@ scp -q "${MOODBOARD_ENV}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard.env"
 # App systemd units
 scp -q "${MEMOS_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/memos.service"
 scp -q "${VIKUNJA_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja.service"
+
+# AGENTS.md -> /root/ (permanent, doc for anyone SSHing)
+scp -q "${REPO_ROOT}/hosts/poppy/AGENTS.md" "${SSH_HOST}:/root/AGENTS.md"
 
 if [[ "${MODE}" == "dry-run" ]]; then
   ssh "${SSH_HOST}" "chmod 700 '${REMOTE_STAGE}/apply-remote.sh' && STAGE_DIR='${REMOTE_STAGE}' '${REMOTE_STAGE}/apply-remote.sh' --dry-run"
