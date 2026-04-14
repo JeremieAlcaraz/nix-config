@@ -7,6 +7,7 @@
 - `hosts/poppy/BACKLOG-V2.md`: suite du chantier (hardening et evolution ops).
 - `hosts/poppy/inventory.yaml`: metadonnees d'inventaire local.
 - `hosts/poppy/apps/README.md`: inventaire declaratif des apps (`/root/apps`).
+- `hosts/poppy/AGENTS.md`: guide operatoire (deploye aussi sur `/root/AGENTS.md`).
 
 ## Scripts
 
@@ -15,7 +16,7 @@
 - `hosts/poppy/scripts/test-drive-write.sh`: test d'ecriture minimal (fichier marqueur).
 - `hosts/poppy/bootstrap/apply-remote.sh`: application idempotente cote `poppy`.
 - `scripts/poppy/apply-from-magnolia.sh`: orchestrateur push (SOPS -> SSH).
-- `scripts/poppy/check.sh`: checks post-apply depuis `magnolia`.
+- `scripts/poppy/check.sh`: checks post-apply + drift detection depuis `magnolia`.
 
 ## Config templates
 

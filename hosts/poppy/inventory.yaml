@@ -1,5 +1,5 @@
 host: poppy
-updated_at: "2026-04-13"
+updated_at: "2026-04-14"
 role: "Proxmox Backup Server"
 os:
   distro: "Debian GNU/Linux 13 (trixie)"
@@ -23,8 +23,14 @@ backup:
     script: "/root/sync-capsule.sh"
     cron: "0 4 * * *"
     destination: "gdrive_capsule:proxmox"
+deployment:
+  source_of_truth_host: "marigold"
+  source_of_truth_path: "/Users/jeremiealcaraz/c/nix-config/hosts/poppy"
+  remote_stage_dir: "/var/lib/poppy-deploy"
+  legacy_backup_dir: "/root/.bak"
 apps:
   root_path: "/root/apps"
+  runtime: "podman/podman-compose"
   notes:
     - "Le chemin /apps n'existe pas sur l'hôte au moment de l'audit."
   services:
@@ -45,6 +51,7 @@ apps:
         timer_unit: "memos-backup.timer"
         service_unit: "memos-backup.service"
         schedule: "daily 05:30"
+      backup_destination: "gdrive_capsule:memos"
     vikunja:
       path: "/root/apps/vikunja"
       compose_file: "/root/apps/vikunja/compose.yml"
@@ -59,9 +66,11 @@ apps:
       backup_scripts:
         - "/root/apps/vikunja/scripts/backup.sh"
         - "/root/apps/vikunja/scripts/upload-backups.sh"
+      backup_destination: "gdrive_capsule:vikunja"
     moodboard:
       path: "/root/apps/moodboard"
       compose_file: "/root/apps/moodboard/compose.yml"
+      containerfile: "/root/apps/moodboard/Containerfile"
       exposed_ports:
         - "3005:3005"
         - "3900:3900"
@@ -72,6 +81,7 @@ apps:
       backup_scripts:
         - "/root/apps/moodboard/backup-moodboard.sh"
         - "/root/apps/moodboard/scripts/backup-moodboard.sh"
+      backup_destination: "gdrive_capsule:moodboard"
 backup_scripts_detected:
   - "/root/sync-capsule.sh"
   - "/root/apps/memos/scripts/backup.sh"

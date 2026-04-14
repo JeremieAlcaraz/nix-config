@@ -12,9 +12,9 @@ Ce dossier existe pour la déclaration, la traçabilité et la reproductibilité
 
 ## Portee
 
-- Ce dépôt ne déploie pas `poppy`.
-- Ce dépôt documente `poppy` comme source de vérité infra.
-- Les secrets ne sont pas commités en clair.
+- Ce dépôt est la **source de vérité** de `poppy` (SoT sur Marigold).
+- Ce dépôt **déploie** la configuration applicative/ops de `poppy` via `just poppy-apply`.
+- Les secrets ne sont pas commités en clair (SOPS).
 
 ## Identite machine (etat releve)
 
@@ -42,6 +42,7 @@ Ce dossier existe pour la déclaration, la traçabilité et la reproductibilité
 - `hosts/poppy/runbook.md`: procédures d'exploitation et incident.
 - `hosts/poppy/inventory.yaml`: métadonnées hôte (inventaire local).
 - `hosts/poppy/apps/README.md`: inventaire déclaratif des applications sous `/root/apps`.
+- `hosts/poppy/AGENTS.md`: guide opératoire déployé aussi sur `/root/AGENTS.md`.
 
 ## Audit technique (2026-04-13)
 
@@ -83,7 +84,12 @@ Ce dossier existe pour la déclaration, la traçabilité et la reproductibilité
 - Template rclone: `hosts/poppy/rclone/rclone.conf.example`
 - Planning cron: `hosts/poppy/cron/root.crontab.example`
 
+## Staging de deploiement
+
+- staging distant: `/var/lib/poppy-deploy/`
+- legacy backups: `/root/.bak/`
+
 ## A completer (prochaines taches)
 
 - confirmer le nom exact de l'ISO PBS utilisee a l'installation,
-- ajouter les scripts de verification (read-only + test marker) et procedures de recovery detaillees.
+- migration future hors `/root` (issue #65) avec rollback documenté.

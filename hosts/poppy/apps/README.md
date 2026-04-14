@@ -38,7 +38,7 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
 ### moodboard
 - Chemin: `/root/apps/moodboard`
 - Compose: `/root/apps/moodboard/compose.yml`
-- Dockerfile: `/root/apps/moodboard/Dockerfile`
+- Containerfile: `/root/apps/moodboard/Containerfile`
 - Garage config: `/root/apps/moodboard/infra/garage/garage-prod.toml`
 - Env: `/root/apps/moodboard/.env.prod` (depuis `hosts/poppy/apps/moodboard/.env.template`)
 - Ports exposés:
@@ -53,6 +53,11 @@ Ce document décrit l'état **déclaratif** des applications hébergées sous `/
   - `/root/apps/moodboard/backup-moodboard.sh`
   - `/root/apps/moodboard/scripts/backup-moodboard.sh`
 - Upload distant: `gdrive_capsule:moodboard`
+
+## Runtime
+
+- Toutes les apps tournent via `podman` / `podman-compose`.
+- Aucun conteneur applicatif ne doit rester sous `nerdctl`.
 
 ## Vérifications minimales
 

@@ -134,18 +134,20 @@ Commandes:
 Ce que fait l'apply:
 - decrypte localement `secrets/poppy.yaml` en temporaire securise,
 - genere `rclone.conf` + `sync-capsule.sh` + ligne cron,
-- pousse aussi les scripts backup versionnes (memos/vikunja/moodboard),
-- pousse et active le timer systemd `memos-backup.timer`,
-- applique de maniere idempotente avec backup local des scripts/conf precedents.
+- genere les `.env` depuis templates + secrets SOPS,
+- pousse compose/systemd/scripts via staging `/var/lib/poppy-deploy`,
+- pousse et active les services/timers systemd applicatifs,
+- applique de maniere idempotente avec backup legacy dans `/root/.bak/`.
 
 ## Rollback bootstrap
 
 En cas de regression apres apply:
 1. Se connecter sur `poppy`.
-2. Restaurer le dernier backup `rclone.conf.bak-*`:
-   - `cp /root/.config/rclone/rclone.conf.bak-<ts> /root/.config/rclone/rclone.conf`
-3. Restaurer le dernier backup `sync-capsule.sh.bak-*`:
-   - `cp /root/sync-capsule.sh.bak-<ts> /root/sync-capsule.sh && chmod 700 /root/sync-capsule.sh`
+2. Restaurer le dernier backup legacy depuis `/root/.bak/` (fichiers nommés avec path encodé):
+   - ex `cp /root/.bak/root__sync-capsule.sh.bak-<ts> /root/sync-capsule.sh && chmod 700 /root/sync-capsule.sh`
+   - ex `cp /root/.bak/root__.config__rclone__rclone.conf.bak-<ts> /root/.config/rclone/rclone.conf`
+3. Si besoin, re-appliquer:
+   - `just poppy-apply`
 4. Verifier la crontab:
    - `crontab -l | grep sync-capsule.sh`
 5. Revalider la cible:
