@@ -1,0 +1,10 @@
+services:
+  caddy-s3:
+    image: caddy:3
+    container_name: caddy-s3
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+networks: []

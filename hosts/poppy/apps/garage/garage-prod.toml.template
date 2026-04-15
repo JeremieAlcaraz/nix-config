@@ -12,6 +12,8 @@ rpc_secret = "{{RPC_SECRET}}"
 s3_region = "garage"
 api_bind_addr = "[::]:3900"
 root_domain = ".s3.garage.localhost"
+# URL publique pour les presigned URLs (resolue par le navigateur via Tailscale Serve :9000)
+s3_endpoint = "https://poppy.inanga-sirius.ts.net:9000"
 
 [s3_web]
 bind_addr = "[::]:3902"

@@ -11,3 +11,12 @@ services:
       - MEMOS_MODE=prod
     extra_hosts:
       - "host.containers.internal:host-gateway"
+    networks:
+      - memos_default
+      - garage_default
+
+networks:
+  memos_default:
+    external: true
+  garage_default:
+    external: true

@@ -63,6 +63,13 @@
       tailscaleIp = "100.127.90.43";
       vms = [ "whitelily" "rhizanthella" "myosotis" ];
     };
+    iris = {
+      role = "Proxmox node 3 - Hyperviseur secondaire";
+      os = "debian";
+      managed = false;
+      tailscaleIp = "100.120.122.57";
+      vms = [ ];
+    };
     poppy = {
       role = "Proxmox Backup Server - Noeud backup dedie (PBS + sync Google Drive)";
       os = "debian";
@@ -129,6 +136,9 @@
 
     # IPs Tailscale (fallback, préférer les hostnames MagicDNS)
     hosts = {
+      muscari = "100.67.122.20";
+      crocus = "100.127.90.43";
+      iris = "100.120.122.57";
       magnolia = "100.96.250.41";
       dandelion = "100.96.250.43";
       whitelily = "100.96.250.44";
@@ -142,6 +152,6 @@
     # Hosts monitorés par VictoriaMetrics (scrape métriques Node Exporter)
     # Ajouter un host ici = automatiquement scrapé par myosotis
     # Utilise les hostnames MagicDNS (pas les IPs) pour la résilience
-    monitoredHosts = [ "magnolia" "hawthorn" "mimosa" "dandelion" "whitelily" "rhizanthella" "muscari" "crocus" "poppy" ];
+    monitoredHosts = [ "magnolia" "hawthorn" "mimosa" "dandelion" "whitelily" "rhizanthella" "muscari" "crocus" "iris" "poppy" ];
   };
 }

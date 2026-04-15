@@ -25,7 +25,9 @@ PORT="$1"
 SVC="$2"
 HOST_NAME="$3"
 
-if ! curl -fsSI --max-time 5 "http://127.0.0.1:${PORT}" >/dev/null; then
+# Accept any HTTP response (incl. 4xx from S3/auth-gated services) — just check TCP reachability
+HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}" --max-time 5 "http://127.0.0.1:${PORT}" || true)
+if [[ -z "${HTTP_CODE}" || "${HTTP_CODE}" == "000" ]]; then
   echo "ERROR: backend not reachable on ${HOST_NAME}:127.0.0.1:${PORT}" >&2
   exit 1
 fi

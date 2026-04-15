@@ -1,0 +1,11 @@
+# S3 + Web proxy for Tailscale Serve
+# Listens on 127.0.0.1:2080 - route via Tailscale Serve
+
+:2080 {
+    handle_path /api/s3* {
+        reverse_proxy 127.0.0.1:3900
+    }
+    handle /* {
+        reverse_proxy 127.0.0.1:5230
+    }
+}

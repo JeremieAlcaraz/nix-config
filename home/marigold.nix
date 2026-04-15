@@ -172,16 +172,10 @@ in
   ];
 
   # === ZSH CONFIGURATION ===
-  programs.zsh = {
-    enable = true;
-    initExtra = ''
-      if [[ -o interactive ]]; then
-        ${pkgs.any-nix-shell}/bin/any-nix-shell zsh --info-right | source /dev/stdin
-      fi
-      export PATH="$HOME/.local/bin:$PATH"
-      eval "$($HOME/.local/bin/prod.rb init ~/c)"
-    '';
-  };
+  # ZSH est géré PAR DOTBOT (via ~/c/dotfiles/zsh/.zshrc.marigold)
+  # .zshrc à la racine et ~/.config/zsh/*** sont tous gérés par Dotbot
+  # Les plugins zsh (zsh-autocomplete, etc.) sont dans home.packages
+  # et activés via ~/.config/zsh/modules/99-syntax-highlighting.zsh
 
   # === STARSHIP CONFIGURATION ===
   # Config via xdg.configFile (starship.toml dans dotfiles)
@@ -203,27 +197,6 @@ in
   # Solution propre : un seul .zshenv minimal qui définit ZDOTDIR
   # Tout le reste de la config ZSH est dans ~/.config/zsh (XDG-compliant)
   home.file = {
-    ".zshenv".text = ''
-      # Point ZSH to XDG config directory
-      export ZDOTDIR="$HOME/.config/zsh"
-
-      # Load the real .zshenv from ZDOTDIR (zsh does not re-read it automatically)
-      if [[ -r "$ZDOTDIR/.zshenv" ]]; then
-        source "$ZDOTDIR/.zshenv"
-      fi
-    '';
-
-    # Fix PATH after macOS path_helper (loaded in /etc/zprofile)
-    ".zprofile".text = ''
-      # Restore paths that might be reordered/removed by /etc/zprofile's path_helper
-      [[ -d "/opt/homebrew/bin" ]] && export PATH="/opt/homebrew/bin:$PATH"
-      [[ -d "/opt/homebrew/sbin" ]] && export PATH="/opt/homebrew/sbin:$PATH"
-      [[ -d "/usr/local/bin" ]] && export PATH="/usr/local/bin:$PATH"
-      [[ -d "/opt/zerobrew/prefix/bin" ]] && export PATH="/opt/zerobrew/prefix/bin:$PATH"
-      [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
-      [[ -d "${npmGlobalBin}" ]] && export PATH="${npmGlobalBin}:$PATH"
-    '';
-
     # SSH configuration
     ".ssh/config".source = dotfilesSource "ssh/config";
     ".ssh/authorized_keys".source = dotfilesSource "ssh/public/authorized_keys";
@@ -921,6 +894,23 @@ in
       fi
     }
 
+    # Supprimer les liens zsh gérés par Dotbot (HM ne doit pas les bloquer)
+    remove_if_dotbot_link() {
+      local path="$1"
+      if [ -L "$path" ]; then
+        local target
+        target="$(readlink -f "$path")"
+        if [[ "$target" == *"/c/dotfiles/"* ]]; then
+          rm -f "$path"
+          echo "Home Manager preflight: lien Dotbot supprime (HM ne le gere plus) -> $path"
+        fi
+      fi
+    }
+
+    remove_if_dotbot_link "${config.home.homeDirectory}/.zshenv"
+    remove_if_dotbot_link "${config.home.homeDirectory}/.zshrc"
+    remove_if_dotbot_link "${config.home.homeDirectory}/.zprofile"
+
     move_broken_link "${config.xdg.configHome}/fish"
     move_broken_link "${config.xdg.configHome}/hammerspoon"
     move_broken_link "${config.xdg.configHome}/karabiner"
@@ -940,6 +930,45 @@ in
 
     ln -sfn "$REPO_PI_DIR" "$PI_LINK"
     echo "Pi: symlink direct cree -> $PI_LINK -> $REPO_PI_DIR"
+  '';
+
+  # === DOTBOT ZSH LINKS ===
+  # Ensure ~/.zshenv, ~/.zshrc, ~/.zprofile point to dotfiles (not nix-store)
+  # Géré par Dotbot, cette activation est un safety net.
+  home.activation.linkZshFromDotfiles = config.lib.dag.entryAfter ["writeBoundary"] ''
+    DOTFILES_ZSH="${dotfilesPath "zsh"}"
+    HOME_ZSHENV="${config.home.homeDirectory}/.zshenv"
+    HOME_ZSHRC="${config.home.homeDirectory}/.zshrc"
+    HOME_ZPROFILE="${config.home.homeDirectory}/.zprofile"
+    SOURCE_ZSHENV="${dotfilesPath "zsh"}/.zshenv.marigold"
+    SOURCE_ZSHRC="${dotfilesPath "zsh"}/.zshrc.marigold"
+    SOURCE_ZPROFILE="${dotfilesPath "zsh"}/.zprofile.marigold"
+
+    link_dotbot() {
+      local target="$1"
+      local source="$2"
+      local stamp backup_path
+
+      if [ -L "$target" ] && [ "$(readlink -f "$target")" = "$(readlink -f "$source")" ]; then
+        return 0
+      fi
+
+      if [ -e "$target" ] && [ ! -L "$target" ]; then
+        stamp="$(date +%Y%m%d-%H%M%S)"
+        backup_path="$target.hm-backup-$stamp"
+        mv "$target" "$backup_path"
+        echo "ZSH: fichier existant deplacé -> $backup_path"
+      elif [ -L "$target" ]; then
+        rm -f "$target"
+      fi
+
+      ln -s "$source" "$target"
+      echo "ZSH: lien cree -> $target -> $source"
+    }
+
+    link_dotbot "$HOME_ZSHENV" "$SOURCE_ZSHENV"
+    link_dotbot "$HOME_ZSHRC" "$SOURCE_ZSHRC"
+    link_dotbot "$HOME_ZPROFILE" "$SOURCE_ZPROFILE"
   '';
 
   home.activation.bootstrapSopsAgeKey = config.lib.dag.entryAfter ["writeBoundary"] ''
