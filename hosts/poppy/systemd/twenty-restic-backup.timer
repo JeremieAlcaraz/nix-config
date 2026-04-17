@@ -1,0 +1,11 @@
+[Unit]
+Description=Twenty restic backup timer (daily 01:40)
+
+[Timer]
+OnCalendar=*-*-* 01:40:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=twenty-restic-backup.service
+
+[Install]
+WantedBy=timers.target

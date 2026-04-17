@@ -5,7 +5,7 @@ set -euo pipefail
 export RESTIC_PASSWORD
 RESTIC_PASSWORD="$(grep '^RESTIC_PASSWORD=' /root/.config/restic/env | tr -d "'" | cut -d= -f2)"
 
-REPO="rclone:gdrive_capsule:vikunja-bak"
+REPO="rclone:gdrive_capsule:vikunja"
 SOURCE="/root/apps/vikunja/data"
 LOG="/var/log/vikunja-restic-backup.log"
 KEEP_DAYS=7

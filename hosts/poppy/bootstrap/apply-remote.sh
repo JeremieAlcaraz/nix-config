@@ -61,6 +61,23 @@ RESTIC_PRUNE_STAGE="${STAGE_DIR}/restic-prune.sh"
 RESTIC_PRUNE_SVC_STAGE="${STAGE_DIR}/restic-prune.service"
 RESTIC_PRUNE_TMR_STAGE="${STAGE_DIR}/restic-prune.timer"
 RESTIC_RESTORE_STAGE="${STAGE_DIR}/restic-restore.sh"
+RESTIC_RESTORE_STACK_STAGE="${STAGE_DIR}/restic-restore-stack.sh"
+RESTIC_MEMOS_BACKUP_STAGE="${STAGE_DIR}/memos-restic-backup.sh"
+RESTIC_VIKUNJA_BACKUP_STAGE="${STAGE_DIR}/vikunja-restic-backup.sh"
+RESTIC_MOODBOARD_BACKUP_STAGE="${STAGE_DIR}/moodboard-restic-backup.sh"
+RESTIC_TWENTY_BACKUP_STAGE="${STAGE_DIR}/twenty-restic-backup.sh"
+RESTIC_GARAGE_BACKUP_STAGE="${STAGE_DIR}/garage-restic-backup.sh"
+RESTIC_SMOKE_ALL_STAGE="${STAGE_DIR}/restic-smoke-restore-all.sh"
+MEMOS_RESTIC_BACKUP_SVC_STAGE="${STAGE_DIR}/memos-restic-backup.service"
+MEMOS_RESTIC_BACKUP_TMR_STAGE="${STAGE_DIR}/memos-restic-backup.timer"
+VIKUNJA_RESTIC_BACKUP_SVC_STAGE="${STAGE_DIR}/vikunja-restic-backup.service"
+VIKUNJA_RESTIC_BACKUP_TMR_STAGE="${STAGE_DIR}/vikunja-restic-backup.timer"
+MOODBOARD_RESTIC_BACKUP_SVC_STAGE="${STAGE_DIR}/moodboard-restic-backup.service"
+MOODBOARD_RESTIC_BACKUP_TMR_STAGE="${STAGE_DIR}/moodboard-restic-backup.timer"
+TWENTY_RESTIC_BACKUP_SVC_STAGE="${STAGE_DIR}/twenty-restic-backup.service"
+TWENTY_RESTIC_BACKUP_TMR_STAGE="${STAGE_DIR}/twenty-restic-backup.timer"
+GARAGE_RESTIC_BACKUP_SVC_STAGE="${STAGE_DIR}/garage-restic-backup.service"
+GARAGE_RESTIC_BACKUP_TMR_STAGE="${STAGE_DIR}/garage-restic-backup.timer"
 
 # Legacy Garage config path (for migration)
 LEGACY_GARAGE_DATA_VOLUME="moodboard_garage-data"
@@ -107,6 +124,23 @@ TARGET_RESTIC_PRUNE="/root/apps/restic/restic-prune.sh"
 TARGET_RESTIC_PRUNE_SERVICE="/etc/systemd/system/restic-prune.service"
 TARGET_RESTIC_PRUNE_TIMER="/etc/systemd/system/restic-prune.timer"
 TARGET_RESTIC_RESTORE="/root/apps/restic/restic-restore.sh"
+TARGET_RESTIC_RESTORE_STACK="/root/apps/restic/restic-restore-stack.sh"
+TARGET_RESTIC_MEMOS_BACKUP="/root/apps/restic/memos-restic-backup.sh"
+TARGET_RESTIC_VIKUNJA_BACKUP="/root/apps/restic/vikunja-restic-backup.sh"
+TARGET_RESTIC_MOODBOARD_BACKUP="/root/apps/restic/moodboard-restic-backup.sh"
+TARGET_RESTIC_TWENTY_BACKUP="/root/apps/restic/twenty-restic-backup.sh"
+TARGET_RESTIC_GARAGE_BACKUP="/root/apps/restic/garage-restic-backup.sh"
+TARGET_RESTIC_SMOKE_ALL="/root/apps/restic/restic-smoke-restore-all.sh"
+TARGET_MEMOS_RESTIC_BACKUP_SVC="/etc/systemd/system/memos-restic-backup.service"
+TARGET_MEMOS_RESTIC_BACKUP_TMR="/etc/systemd/system/memos-restic-backup.timer"
+TARGET_VIKUNJA_RESTIC_BACKUP_SVC="/etc/systemd/system/vikunja-restic-backup.service"
+TARGET_VIKUNJA_RESTIC_BACKUP_TMR="/etc/systemd/system/vikunja-restic-backup.timer"
+TARGET_MOODBOARD_RESTIC_BACKUP_SVC="/etc/systemd/system/moodboard-restic-backup.service"
+TARGET_MOODBOARD_RESTIC_BACKUP_TMR="/etc/systemd/system/moodboard-restic-backup.timer"
+TARGET_TWENTY_RESTIC_BACKUP_SVC="/etc/systemd/system/twenty-restic-backup.service"
+TARGET_TWENTY_RESTIC_BACKUP_TMR="/etc/systemd/system/twenty-restic-backup.timer"
+TARGET_GARAGE_RESTIC_BACKUP_SVC="/etc/systemd/system/garage-restic-backup.service"
+TARGET_GARAGE_RESTIC_BACKUP_TMR="/etc/systemd/system/garage-restic-backup.timer"
 
 TARGET_MEMOS_SVC="/etc/systemd/system/memos.service"
 TARGET_VIKUNJA_SVC="/etc/systemd/system/vikunja.service"
@@ -200,7 +234,9 @@ for f in \
   "${TWENTY_BACKUP_STAGE}" "${TWENTY_BACKUP_SVC_STAGE}" "${TWENTY_BACKUP_TMR_STAGE}" \
   "${RESTIC_ENV_STAGE}" "${RESTIC_INIT_STAGE}" \
   "${RESTIC_PRUNE_STAGE}" "${RESTIC_PRUNE_SVC_STAGE}" "${RESTIC_PRUNE_TMR_STAGE}" \
-  "${RESTIC_RESTORE_STAGE}" ; do
+  "${RESTIC_RESTORE_STAGE}" "${RESTIC_RESTORE_STACK_STAGE}" "${RESTIC_MEMOS_BACKUP_STAGE}" "${RESTIC_VIKUNJA_BACKUP_STAGE}" "${RESTIC_MOODBOARD_BACKUP_STAGE}" "${RESTIC_TWENTY_BACKUP_STAGE}" "${RESTIC_GARAGE_BACKUP_STAGE}" "${RESTIC_SMOKE_ALL_STAGE}" \
+  "${MEMOS_RESTIC_BACKUP_SVC_STAGE}" "${MEMOS_RESTIC_BACKUP_TMR_STAGE}" "${VIKUNJA_RESTIC_BACKUP_SVC_STAGE}" "${VIKUNJA_RESTIC_BACKUP_TMR_STAGE}" \
+  "${MOODBOARD_RESTIC_BACKUP_SVC_STAGE}" "${MOODBOARD_RESTIC_BACKUP_TMR_STAGE}" "${TWENTY_RESTIC_BACKUP_SVC_STAGE}" "${TWENTY_RESTIC_BACKUP_TMR_STAGE}" "${GARAGE_RESTIC_BACKUP_SVC_STAGE}" "${GARAGE_RESTIC_BACKUP_TMR_STAGE}" ; do
   require_file "${f}"
 done
 
@@ -228,7 +264,11 @@ for f in \
   "${TARGET_TWENTY_COMPOSE}" "${TARGET_TWENTY_ENV}" "${TARGET_TWENTY_BACKUP}" \
   "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" "${TARGET_TWENTY_SVC}" \
   "${TARGET_TWENTY_BACKUP_SVC}" "${TARGET_TWENTY_BACKUP_TMR}" "${TARGET_RESTIC_ENV}" \
-  "${TARGET_RESTIC_PRUNE}" "${TARGET_RESTIC_PRUNE_SERVICE}" "${TARGET_RESTIC_PRUNE_TIMER}" "${TARGET_RESTIC_RESTORE}" \
+  "${TARGET_RESTIC_PRUNE}" "${TARGET_RESTIC_PRUNE_SERVICE}" "${TARGET_RESTIC_PRUNE_TIMER}" "${TARGET_RESTIC_RESTORE}" "${TARGET_RESTIC_RESTORE_STACK}" \
+  "${TARGET_RESTIC_MEMOS_BACKUP}" "${TARGET_RESTIC_VIKUNJA_BACKUP}" "${TARGET_RESTIC_MOODBOARD_BACKUP}" "${TARGET_RESTIC_TWENTY_BACKUP}" "${TARGET_RESTIC_GARAGE_BACKUP}" "${TARGET_RESTIC_SMOKE_ALL}" \
+  "${TARGET_MEMOS_RESTIC_BACKUP_SVC}" "${TARGET_MEMOS_RESTIC_BACKUP_TMR}" "${TARGET_VIKUNJA_RESTIC_BACKUP_SVC}" "${TARGET_VIKUNJA_RESTIC_BACKUP_TMR}" \
+  "${TARGET_MOODBOARD_RESTIC_BACKUP_SVC}" "${TARGET_MOODBOARD_RESTIC_BACKUP_TMR}" "${TARGET_TWENTY_RESTIC_BACKUP_SVC}" "${TARGET_TWENTY_RESTIC_BACKUP_TMR}" \
+  "${TARGET_GARAGE_RESTIC_BACKUP_SVC}" "${TARGET_GARAGE_RESTIC_BACKUP_TMR}" \
   "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" "${TARGET_GARAGE_SVC}"; do
   unlock_file "${f}"
 done
@@ -245,6 +285,10 @@ for f in \
   "${TARGET_VIKUNJA_ENV}" "${TARGET_MOODBOARD_ENV}" "${TARGET_MOODBOARD_ENV_PROD}" "${TARGET_TWENTY_ENV}" \
   "${TARGET_MEMOS_SVC}" "${TARGET_VIKUNJA_SVC}" "${TARGET_MOODBOARD_SVC}" "${TARGET_TWENTY_SVC}" \
   "${TARGET_TWENTY_BACKUP_SVC}" "${TARGET_TWENTY_BACKUP_TMR}" \
+  "${TARGET_RESTIC_MEMOS_BACKUP}" "${TARGET_RESTIC_VIKUNJA_BACKUP}" "${TARGET_RESTIC_MOODBOARD_BACKUP}" "${TARGET_RESTIC_TWENTY_BACKUP}" "${TARGET_RESTIC_GARAGE_BACKUP}" "${TARGET_RESTIC_SMOKE_ALL}" \
+  "${TARGET_MEMOS_RESTIC_BACKUP_SVC}" "${TARGET_MEMOS_RESTIC_BACKUP_TMR}" "${TARGET_VIKUNJA_RESTIC_BACKUP_SVC}" "${TARGET_VIKUNJA_RESTIC_BACKUP_TMR}" \
+  "${TARGET_MOODBOARD_RESTIC_BACKUP_SVC}" "${TARGET_MOODBOARD_RESTIC_BACKUP_TMR}" "${TARGET_TWENTY_RESTIC_BACKUP_SVC}" "${TARGET_TWENTY_RESTIC_BACKUP_TMR}" \
+  "${TARGET_GARAGE_RESTIC_BACKUP_SVC}" "${TARGET_GARAGE_RESTIC_BACKUP_TMR}" \
   "${TARGET_GARAGE_COMPOSE}" "${TARGET_GARAGE_CONFIG}" "${TARGET_GARAGE_BOOTSTRAP}" "${TARGET_MEMOS_STORAGE_INIT}" \
   "${LEGACY_GARAGE_CONFIG}"; do
   backup_if_exists "${f}"
@@ -292,6 +336,23 @@ run install -m 700 "${RESTIC_PRUNE_STAGE}" "${TARGET_RESTIC_PRUNE}"
 run install -m 644 "${RESTIC_PRUNE_SVC_STAGE}" "${TARGET_RESTIC_PRUNE_SERVICE}"
 run install -m 644 "${RESTIC_PRUNE_TMR_STAGE}" "${TARGET_RESTIC_PRUNE_TIMER}"
 run install -m 700 "${RESTIC_RESTORE_STAGE}" "${TARGET_RESTIC_RESTORE}"
+run install -m 700 "${RESTIC_RESTORE_STACK_STAGE}" "${TARGET_RESTIC_RESTORE_STACK}"
+run install -m 700 "${RESTIC_MEMOS_BACKUP_STAGE}" "${TARGET_RESTIC_MEMOS_BACKUP}"
+run install -m 700 "${RESTIC_VIKUNJA_BACKUP_STAGE}" "${TARGET_RESTIC_VIKUNJA_BACKUP}"
+run install -m 700 "${RESTIC_MOODBOARD_BACKUP_STAGE}" "${TARGET_RESTIC_MOODBOARD_BACKUP}"
+run install -m 700 "${RESTIC_TWENTY_BACKUP_STAGE}" "${TARGET_RESTIC_TWENTY_BACKUP}"
+run install -m 700 "${RESTIC_GARAGE_BACKUP_STAGE}" "${TARGET_RESTIC_GARAGE_BACKUP}"
+run install -m 700 "${RESTIC_SMOKE_ALL_STAGE}" "${TARGET_RESTIC_SMOKE_ALL}"
+run install -m 644 "${MEMOS_RESTIC_BACKUP_SVC_STAGE}" "${TARGET_MEMOS_RESTIC_BACKUP_SVC}"
+run install -m 644 "${MEMOS_RESTIC_BACKUP_TMR_STAGE}" "${TARGET_MEMOS_RESTIC_BACKUP_TMR}"
+run install -m 644 "${VIKUNJA_RESTIC_BACKUP_SVC_STAGE}" "${TARGET_VIKUNJA_RESTIC_BACKUP_SVC}"
+run install -m 644 "${VIKUNJA_RESTIC_BACKUP_TMR_STAGE}" "${TARGET_VIKUNJA_RESTIC_BACKUP_TMR}"
+run install -m 644 "${MOODBOARD_RESTIC_BACKUP_SVC_STAGE}" "${TARGET_MOODBOARD_RESTIC_BACKUP_SVC}"
+run install -m 644 "${MOODBOARD_RESTIC_BACKUP_TMR_STAGE}" "${TARGET_MOODBOARD_RESTIC_BACKUP_TMR}"
+run install -m 644 "${TWENTY_RESTIC_BACKUP_SVC_STAGE}" "${TARGET_TWENTY_RESTIC_BACKUP_SVC}"
+run install -m 644 "${TWENTY_RESTIC_BACKUP_TMR_STAGE}" "${TARGET_TWENTY_RESTIC_BACKUP_TMR}"
+run install -m 644 "${GARAGE_RESTIC_BACKUP_SVC_STAGE}" "${TARGET_GARAGE_RESTIC_BACKUP_SVC}"
+run install -m 644 "${GARAGE_RESTIC_BACKUP_TMR_STAGE}" "${TARGET_GARAGE_RESTIC_BACKUP_TMR}"
 
 # Garage standalone
 run install -m 644 "${GARAGE_COMPOSE_STAGE}" "${TARGET_GARAGE_COMPOSE}"
@@ -343,6 +404,23 @@ lock_file "${TARGET_RESTIC_ENV}" 444
 lock_file "${TARGET_RESTIC_PRUNE_SERVICE}" 444
 lock_file "${TARGET_RESTIC_PRUNE_TIMER}" 444
 lock_file "${TARGET_RESTIC_RESTORE}" 444
+lock_file "${TARGET_RESTIC_RESTORE_STACK}" 444
+lock_file "${TARGET_RESTIC_MEMOS_BACKUP}" 444
+lock_file "${TARGET_RESTIC_VIKUNJA_BACKUP}" 444
+lock_file "${TARGET_RESTIC_MOODBOARD_BACKUP}" 444
+lock_file "${TARGET_RESTIC_TWENTY_BACKUP}" 444
+lock_file "${TARGET_RESTIC_GARAGE_BACKUP}" 444
+lock_file "${TARGET_RESTIC_SMOKE_ALL}" 444
+lock_file "${TARGET_MEMOS_RESTIC_BACKUP_SVC}" 444
+lock_file "${TARGET_MEMOS_RESTIC_BACKUP_TMR}" 444
+lock_file "${TARGET_VIKUNJA_RESTIC_BACKUP_SVC}" 444
+lock_file "${TARGET_VIKUNJA_RESTIC_BACKUP_TMR}" 444
+lock_file "${TARGET_MOODBOARD_RESTIC_BACKUP_SVC}" 444
+lock_file "${TARGET_MOODBOARD_RESTIC_BACKUP_TMR}" 444
+lock_file "${TARGET_TWENTY_RESTIC_BACKUP_SVC}" 444
+lock_file "${TARGET_TWENTY_RESTIC_BACKUP_TMR}" 444
+lock_file "${TARGET_GARAGE_RESTIC_BACKUP_SVC}" 444
+lock_file "${TARGET_GARAGE_RESTIC_BACKUP_TMR}" 444
 
 # cron
 CRON_LINE="$(cat "${CRON_LINE_STAGE}")"
@@ -364,10 +442,17 @@ fi
 if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "[DRY-RUN] would run: systemctl daemon-reload"
   echo "[DRY-RUN] would run: systemctl enable --now garage.service"
-  echo "[DRY-RUN] would run: systemctl enable --now memos-backup.timer"
-  echo "[DRY-RUN] would run: systemctl enable --now memos-s3-backup.timer"
+  echo "[DRY-RUN] would run: systemctl disable --now memos-backup.timer"
+  echo "[DRY-RUN] would run: systemctl disable --now memos-s3-backup.timer"
+  echo "[DRY-RUN] would run: systemctl disable --now twenty-backup.timer"
+  echo "[DRY-RUN] would run: systemctl disable --now backup-moodboard.timer"
+  echo "[DRY-RUN] would run: systemctl disable --now vikunja-backup.timer"
   echo "[DRY-RUN] would run: systemctl enable --now twenty.service"
-  echo "[DRY-RUN] would run: systemctl enable --now twenty-backup.timer"
+  echo "[DRY-RUN] would run: systemctl enable --now memos-restic-backup.timer"
+  echo "[DRY-RUN] would run: systemctl enable --now vikunja-restic-backup.timer"
+  echo "[DRY-RUN] would run: systemctl enable --now moodboard-restic-backup.timer"
+  echo "[DRY-RUN] would run: systemctl enable --now twenty-restic-backup.timer"
+  echo "[DRY-RUN] would run: systemctl enable --now garage-restic-backup.timer"
   echo "[DRY-RUN] would run: systemctl enable --now restic-prune.timer"
   echo "[DRY-RUN] would run: systemctl enable --now memos.service"
   echo "[DRY-RUN] would run: systemctl enable --now vikunja.service"
@@ -377,11 +462,18 @@ else
   systemctl enable --now garage.service >/dev/null || true
   echo "[INFO] Waiting for Garage to be ready..."
   sleep 3
-  systemctl enable --now memos-backup.timer >/dev/null
-  systemctl enable --now memos-s3-backup.timer >/dev/null
+  systemctl disable --now memos-backup.timer >/dev/null 2>&1 || true
+  systemctl disable --now memos-s3-backup.timer >/dev/null 2>&1 || true
+  systemctl disable --now twenty-backup.timer >/dev/null 2>&1 || true
+  systemctl disable --now backup-moodboard.timer >/dev/null 2>&1 || true
+  systemctl disable --now vikunja-backup.timer >/dev/null 2>&1 || true
   systemctl enable --now memos.service >/dev/null || true
   systemctl enable --now twenty.service >/dev/null || true
-  systemctl enable --now twenty-backup.timer >/dev/null
+  systemctl enable --now memos-restic-backup.timer >/dev/null
+  systemctl enable --now vikunja-restic-backup.timer >/dev/null
+  systemctl enable --now moodboard-restic-backup.timer >/dev/null
+  systemctl enable --now twenty-restic-backup.timer >/dev/null
+  systemctl enable --now garage-restic-backup.timer >/dev/null
   systemctl enable --now restic-prune.timer >/dev/null
   systemctl enable --now vikunja.service >/dev/null || true
   systemctl enable --now moodboard.service >/dev/null || true

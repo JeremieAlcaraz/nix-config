@@ -1,0 +1,11 @@
+[Unit]
+Description=Moodboard restic backup timer (daily 02:40)
+
+[Timer]
+OnCalendar=*-*-* 02:40:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=moodboard-restic-backup.service
+
+[Install]
+WantedBy=timers.target

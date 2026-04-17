@@ -4,9 +4,13 @@
 
 SSH_HOST := "root@poppy"
 
-# Interactive restore via gum picker
+# Interactive restore via gum picker (app-only)
 restore:
     @ssh {{SSH_HOST}} 'bash /root/apps/restic/restic-restore.sh'
+
+# Stack-aware restore (garage-first for S3 dependent apps)
+restore-stack app="":
+    @ssh {{SSH_HOST}} 'bash /root/apps/restic/restic-restore-stack.sh {{app}}'
 
 # Run restic backup for a specific app (manual)
 backup app:
@@ -14,7 +18,11 @@ backup app:
 
 # List snapshots for all repos
 snapshots:
-    @ssh {{SSH_HOST}} 'RESTIC_PASSWORD="$(grep ^RESTIC_PASSWORD= /root/.config/restic/env | tr -d "\047" | cut -d= -f2)" && export RESTIC_PASSWORD && for repo in memos-bak vikunja-bak moodboard-bak twenty-bak; do echo "=== $repo ==="; timeout 60 restic snapshots --repo "rclone:gdrive_capsule:$repo"; echo ""; done'
+    @ssh {{SSH_HOST}} 'RESTIC_PASSWORD="$(grep ^RESTIC_PASSWORD= /root/.config/restic/env | tr -d "\047" | cut -d= -f2)" && export RESTIC_PASSWORD && for repo in garage memos vikunja moodboard twenty; do echo "=== $repo ==="; timeout 60 restic snapshots --repo "rclone:gdrive_capsule:$repo"; echo ""; done'
+
+# Full smoke battery (backup+restore canary for all apps)
+smoke-all:
+    @ssh {{SSH_HOST}} 'bash /root/apps/restic/restic-smoke-restore-all.sh'
 
 # Check restic timer status
 status:

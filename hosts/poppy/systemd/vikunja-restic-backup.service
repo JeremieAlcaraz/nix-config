@@ -1,0 +1,10 @@
+[Unit]
+Description=Vikunja backup via restic (canonical repo)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /root/apps/restic/vikunja-restic-backup.sh
+StandardOutput=journal
+StandardError=journal

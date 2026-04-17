@@ -1,0 +1,10 @@
+[Unit]
+Description=Moodboard backup via restic (canonical repo)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /root/apps/restic/moodboard-restic-backup.sh
+StandardOutput=journal
+StandardError=journal

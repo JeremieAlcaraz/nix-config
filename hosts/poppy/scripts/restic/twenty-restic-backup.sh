@@ -6,7 +6,7 @@ set -euo pipefail
 export RESTIC_PASSWORD
 RESTIC_PASSWORD="$(grep '^RESTIC_PASSWORD=' /root/.config/restic/env | tr -d "'" | cut -d= -f2)"
 
-REPO="rclone:gdrive_capsule:twenty-bak"
+REPO="rclone:gdrive_capsule:twenty"
 LOG="/var/log/twenty-restic-backup.log"
 KEEP_DAYS=7
 

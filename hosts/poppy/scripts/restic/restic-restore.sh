@@ -7,10 +7,10 @@ export RESTIC_PASSWORD
 RESTIC_PASSWORD="$(grep '^RESTIC_PASSWORD=' /root/.config/restic/env | tr -d "'" | cut -d= -f2)"
 
 declare -A APPS=(
-  [memos]="rclone:gdrive_capsule:memos-bak|/root/apps/memos/data|/root/apps/memos"
-  [vikunja]="rclone:gdrive_capsule:vikunja-bak|/root/apps/vikunja/data|/root/apps/vikunja"
-  [moodboard]="rclone:gdrive_capsule:moodboard-bak|/root/apps/moodboard|/root/apps/moodboard"
-  [twenty]="rclone:gdrive_capsule:twenty-bak|/var/lib/containers/storage/volumes|/root/apps/twenty"
+  [memos]="rclone:gdrive_capsule:memos|/root/apps/memos/data|/root/apps/memos"
+  [vikunja]="rclone:gdrive_capsule:vikunja|/root/apps/vikunja/data|/root/apps/vikunja"
+  [moodboard]="rclone:gdrive_capsule:moodboard|/root/apps/moodboard|/root/apps/moodboard"
+  [twenty]="rclone:gdrive_capsule:twenty|/var/lib/containers/storage/volumes|/root/apps/twenty"
 )
 
 declare -A SERVICE=(
@@ -100,24 +100,93 @@ else
   exit 1
 fi
 
-# ── Step 6: list what changed ──────────────────────────────
+# ── Step 6: resolve restored paths ─────────────────────────
+RESTORED_ROOT=""
+if [[ "${APP}" == "twenty" ]]; then
+  RESTORED_DB="$(find "${RESTORE_DIR}" -type d -path "*twenty_twenty-db-data/_data" | head -n1 || true)"
+  RESTORED_SERVER="$(find "${RESTORE_DIR}" -type d -path "*twenty_twenty-server-data/_data" | head -n1 || true)"
+  if [[ -z "${RESTORED_DB}" || -z "${RESTORED_SERVER}" ]]; then
+    log "[ERROR] Could not resolve Twenty restored volume paths"
+    exit 1
+  fi
+else
+  if [[ -d "${RESTORE_DIR}${SOURCE_PATH}" ]]; then
+    RESTORED_ROOT="${RESTORE_DIR}${SOURCE_PATH}"
+  else
+    RESTORED_ROOT="$(find "${RESTORE_DIR}" -type d -path "*${SOURCE_PATH}" | head -n1 || true)"
+  fi
+  if [[ -z "${RESTORED_ROOT}" ]]; then
+    log "[ERROR] Could not resolve restored path for ${APP} (${SOURCE_PATH})"
+    exit 1
+  fi
+fi
+
+# ── Step 7: preview ───────────────────────────────────────
 echo ""
-echo "=== Files restored ==="
-du -sh "${RESTORE_DIR}"/* 2>/dev/null | sort -rh | head -20
+echo "=== Files restored (preview) ==="
+if [[ "${APP}" == "twenty" ]]; then
+  du -sh "${RESTORED_DB}" "${RESTORED_SERVER}" 2>/dev/null || true
+else
+  du -sh "${RESTORED_ROOT}" 2>/dev/null || true
+fi
 echo ""
 
-# ── Step 7: copy to target ───────────────────────────────
+# Guardrail moodboard: reject obviously incomplete snapshot (e.g. config-only)
+if [[ "${APP}" == "moodboard" ]]; then
+  for required in package.json bun.lock src server/prod.ts; do
+    if [[ ! -e "${RESTORED_ROOT}/${required}" ]]; then
+      log "[ERROR] Moodboard snapshot seems incomplete: missing ${required}"
+      log "[HINT] Choose an older snapshot from before config-only capture"
+      exit 1
+    fi
+  done
+fi
+
 gum confirm "Copy restored files to ${TARGET_PATH}? (will overwrite!)" \
   || { log "Cancelled copy. Files left in ${RESTORE_DIR}"; exit 0; }
 
 log "Copying to ${TARGET_PATH}..."
 if [[ "${APP}" == "twenty" ]]; then
-  for vol_dir in "${RESTORE_DIR}"/*/; do
-    vol_name=$(basename "${vol_dir}")
-    cp -r "${vol_dir}"* "${TARGET_PATH}/${vol_name}/" 2>/dev/null || true
-  done
+  DB_PATH="$(podman volume inspect twenty_twenty-db-data --format '{{.Mountpoint}}' 2>/dev/null || true)"
+  SERVER_PATH="$(podman volume inspect twenty_twenty-server-data --format '{{.Mountpoint}}' 2>/dev/null || true)"
+  if [[ -z "${DB_PATH}" || -z "${SERVER_PATH}" ]]; then
+    log "[ERROR] Could not resolve live Twenty volume mountpoints"
+    exit 1
+  fi
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "${RESTORED_DB}/" "${DB_PATH}/"
+    rsync -a --delete "${RESTORED_SERVER}/" "${SERVER_PATH}/"
+  else
+    find "${DB_PATH}" -mindepth 1 -delete
+    find "${SERVER_PATH}" -mindepth 1 -delete
+    cp -a "${RESTORED_DB}/." "${DB_PATH}/"
+    cp -a "${RESTORED_SERVER}/." "${SERVER_PATH}/"
+  fi
+elif [[ "${APP}" == "moodboard" ]]; then
+  # keep immutable managed files in place; restore app payload only
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete \
+      --exclude='compose.yml' \
+      --exclude='Containerfile' \
+      --exclude='.env' \
+      --exclude='.env.prod' \
+      "${RESTORED_ROOT}/" "${TARGET_PATH}/"
+  else
+    cp -a "${RESTORED_ROOT}/." "${TARGET_PATH}/"
+  fi
+  # runtime hardening: build expects this file
+  if [[ ! -f "${TARGET_PATH}/infra/garage/garage.toml" && -f "/root/apps/garage/garage-prod.toml" ]]; then
+    mkdir -p "${TARGET_PATH}/infra/garage"
+    cp -f /root/apps/garage/garage-prod.toml "${TARGET_PATH}/infra/garage/garage.toml"
+    log "[OK] Injected ${TARGET_PATH}/infra/garage/garage.toml from garage-prod.toml"
+  fi
 else
-  cp -r "${RESTORE_DIR}"/* "${TARGET_PATH}/" 2>/dev/null || true
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "${RESTORED_ROOT}/" "${TARGET_PATH}/"
+  else
+    find "${TARGET_PATH}" -mindepth 1 -delete
+    cp -a "${RESTORED_ROOT}/." "${TARGET_PATH}/"
+  fi
 fi
 log "[OK] Files copied to ${TARGET_PATH}"
 

@@ -1,0 +1,11 @@
+[Unit]
+Description=Garage restic backup timer (daily 01:20)
+
+[Timer]
+OnCalendar=*-*-* 01:20:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=garage-restic-backup.service
+
+[Install]
+WantedBy=timers.target

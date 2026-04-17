@@ -16,16 +16,16 @@
 apt-get install restic  # ou binaire unique
 
 # 4 repositories (un par app)
-restic --repo rclone:gdrive_capsule:memos-s3/      backup /root/apps/memos/data
-restic --repo rclone:gdrive_capsule:vikunja-bak/   backup /root/apps/vikunja/data
-restic --repo rclone:gdrive_capsule:moodboard-bak/ backup /root/apps/moodboard/data
-restic --repo rclone:gdrive_capsule:twenty-bak/    backup /root/apps/twenty/data
+restic --repo rclone:gdrive_capsule:memos/      backup /root/apps/memos/data
+restic --repo rclone:gdrive_capsule:vikunja/    backup /root/apps/vikunja/data
+restic --repo rclone:gdrive_capsule:moodboard/  backup /root/apps/moodboard/data
+restic --repo rclone:gdrive_capsule:twenty/     backup /root/apps/twenty/data
 
 # Voir l'historique
-restic --repo rclone:gdrive_capsule:twenty-bak/ snapshots
+restic --repo rclone:gdrive_capsule:twenty/ snapshots
 
 # Restore une version
-restic --repo rclone:gdrive_capsule:twenty-bak/ restore latest --target /tmp/restore-twenty/
+restic --repo rclone:gdrive_capsule:twenty/ restore latest --target /tmp/restore-twenty/
 ```
 
 ## Les gains concrets
@@ -37,6 +37,15 @@ restic --repo rclone:gdrive_capsule:twenty-bak/ restore latest --target /tmp/res
 - **Restore sélectif** : on peut restaurer un fichier précis, pas besoin de tout dezipper
 - **Prune automatique** : `restic forget --keep-daily 7 --prune` dans un cron
 
+## Exploitation cible (restic-only)
+
+- Repos canoniques: `memos`, `vikunja`, `moodboard`, `twenty`
+- Timers actifs: `*-restic-backup.timer` + `restic-prune.timer`
+- Timers legacy: désactivés
+- Restore recommandé:
+  - apps S3 dépendantes (`memos`, `moodboard`, `twenty`) => restore stack-aware (Garage first)
+  - `vikunja` => restore app-only
+
 ## Les points d'attention
 
 | Concern | Solution |
@@ -46,6 +55,13 @@ restic --repo rclone:gdrive_capsule:twenty-bak/ restore latest --target /tmp/res
 | Encryption des secrets restic | `RESTIC_PASSWORD` dans SOPS |
 | Restore sans arrêter le service | `systemctl stop <app>.service` avant restore |
 | Pas de fichier "latest" lisible | Les snapshots sont dans le repo, pas en fichier plain |
+
+## Nettoyage legacy (.bak) — règle
+
+Ne supprimer `*-bak` qu'après:
+1. snapshots canoniques vérifiés,
+2. restore E2E validé,
+3. manifeste de purge conservé.
 
 ## Ce que je te recommande
 

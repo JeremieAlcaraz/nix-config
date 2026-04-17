@@ -1,0 +1,10 @@
+Epic: epic-poppy-restic-single-mode-stabilization
+Current status: in_progress
+Last sync: 2026-04-17T06:56:52Z
+Token usage: total=unknown input=unknown (+ unknown cached) output=unknown (reasoning unknown)
+Resume command: codex resume epic-poppy-restic-single-mode-stabilization
+Resume id stable for epic: epic-poppy-restic-single-mode-stabilization
+Previous resume ids: -
+What changed: T09 finalisée: runbook/docs restic-only mis à jour, procédure restore-stack clarifiée, plan cleanup legacy .bak documenté.
+Blockers: Aucun blocage technique. Décision opérateur requise pour la date d'exécution du cleanup legacy .bak sur Drive.
+Next 3 actions: 1) Exécuter cleanup contrôlé legacy Drive (.bak), 2) Vérifier snapshots canoniques post-cleanup, 3) Faire guide opérateur pas-à-pas de test restore memos.

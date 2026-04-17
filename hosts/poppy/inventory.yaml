@@ -1,5 +1,5 @@
 host: poppy
-updated_at: "2026-04-14"
+updated_at: "2026-04-16"
 role: "Proxmox Backup Server"
 os:
   distro: "Debian GNU/Linux 13 (trixie)"
@@ -70,8 +70,10 @@ apps:
       backup_scheduler:
         type: "systemd-timer"
         timer_unit: "vikunja-backup.timer"
-        schedule: "daily 04:30"
+        service_unit: "vikunja-backup.service"
+        schedule: "BROKEN (unit not found as of 2026-04-16)"
       backup_destination: "gdrive_capsule:vikunja"
+      backup_status: "degraded"
     moodboard:
       path: "/root/apps/moodboard"
       compose_file: "/root/apps/moodboard/compose.yml"
@@ -86,8 +88,9 @@ apps:
         - "/root/apps/moodboard/scripts/backup-moodboard.sh"
       backup_scheduler:
         type: "systemd-timer"
-        timer_unit: "moodboard-backup.timer"
-        schedule: "daily 05:00"
+        timer_unit: "backup-moodboard.timer"
+        service_unit: "backup-moodboard.service"
+        schedule: "daily 03:00"
       backup_destination: "gdrive_capsule:moodboard"
     twenty:
       path: "/root/apps/twenty"
@@ -120,11 +123,73 @@ apps:
         - "S3 sync via rclone garage_backup remote"
         - "Latest dump overwrites dump-twenty.sql.gz on Drive (single file)"
         - "S3 objects synced to twenty/s3-objects/"
+restic:
+  env_file: "/root/.config/restic/env"
+  prune_scheduler:
+    timer_unit: "restic-prune.timer"
+    service_unit: "restic-prune.service"
+    schedule: "daily 03:30"
+  repositories:
+    - app: "memos"
+      repo: "rclone:gdrive_capsule:memos"
+      latest_snapshot: "2026-04-16 21:03:01"
+      snapshot_id: "44db99c5"
+    - app: "vikunja"
+      repo: "rclone:gdrive_capsule:vikunja"
+      latest_snapshot: "2026-04-16 21:03:50"
+      snapshot_id: "ed600a1d"
+    - app: "moodboard"
+      repo: "rclone:gdrive_capsule:moodboard"
+      latest_snapshot: "2026-04-16 21:04:42"
+      snapshot_id: "b99588ab"
+    - app: "twenty"
+      repo: "rclone:gdrive_capsule:twenty"
+      latest_snapshot: "2026-04-16 21:02:22"
+      snapshot_id: "f588f6f7"
+  backup_schedulers:
+    - app: "memos"
+      timer_unit: "memos-restic-backup.timer"
+      schedule: "daily 02:00"
+    - app: "vikunja"
+      timer_unit: "vikunja-restic-backup.timer"
+      schedule: "daily 02:20"
+    - app: "moodboard"
+      timer_unit: "moodboard-restic-backup.timer"
+      schedule: "daily 02:40"
+    - app: "twenty"
+      timer_unit: "twenty-restic-backup.timer"
+      schedule: "daily 01:40"
+  notes:
+    - "Canonical repositories initialized and seeded on 2026-04-16."
+    - "Per-app restic timers deployed and active as of 2026-04-16."
+
+legacy_backup_timers:
+  disabled:
+    - "memos-backup.timer"
+    - "memos-s3-backup.timer"
+    - "backup-moodboard.timer"
+    - "twenty-backup.timer"
+  absent_or_broken:
+    - "vikunja-backup.timer"
+
+drive_layout_audit_2026_04_16:
+  canonical_goal: "gdrive_capsule:<app> (memos|vikunja|moodboard|twenty), restic-only"
+  observed_duplicates:
+    - "memos + memos-bak"
+    - "vikunja + vikunja-bak"
+    - "moodboard + moodboard-bak"
+    - "twenty + twenty-bak"
+
 backup_scripts_detected:
   - "/root/sync-capsule.sh"
   - "/root/apps/memos/scripts/backup.sh"
   - "/root/apps/memos/scripts/upload-backups.sh"
+  - "/root/apps/memos/scripts/backup-s3.sh"
   - "/root/apps/vikunja/scripts/backup.sh"
   - "/root/apps/vikunja/scripts/upload-backups.sh"
   - "/root/apps/moodboard/scripts/backup-moodboard.sh"
   - "/root/apps/twenty/scripts/backup.sh"
+  - "/root/apps/restic/memos-restic-backup.sh"
+  - "/root/apps/restic/vikunja-restic-backup.sh"
+  - "/root/apps/restic/moodboard-restic-backup.sh"
+  - "/root/apps/restic/twenty-restic-backup.sh"

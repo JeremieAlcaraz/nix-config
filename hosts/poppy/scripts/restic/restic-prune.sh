@@ -6,10 +6,11 @@ export RESTIC_PASSWORD
 RESTIC_PASSWORD="$(grep '^RESTIC_PASSWORD=' /root/.config/restic/env | tr -d "'" | cut -d= -f2)"
 
 REPOS=(
-  "rclone:gdrive_capsule:twenty-bak"
-  "rclone:gdrive_capsule:memos-bak"
-  "rclone:gdrive_capsule:vikunja-bak"
-  "rclone:gdrive_capsule:moodboard-bak"
+  "rclone:gdrive_capsule:garage"
+  "rclone:gdrive_capsule:twenty"
+  "rclone:gdrive_capsule:memos"
+  "rclone:gdrive_capsule:vikunja"
+  "rclone:gdrive_capsule:moodboard"
 )
 KEEP_DAYS=7
 LOG="/var/log/restic-prune.log"

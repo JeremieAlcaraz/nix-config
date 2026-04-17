@@ -71,16 +71,10 @@ bash /root/apps/garage/memos-storage-init.sh --password "<PASS>"
 Le script `memos-storage-init.sh` est deploye par `just poppy-apply`.
 Il est idempotent (verification du storage type avant action).
 
-### Backup S3 memos (rclone -> Drive)
+### Backup S3 memos (historique)
 
-Automatique via `memos-s3-backup.timer` (quotidien 06:00).
-
-Manuel:
-```bash
-bash /root/apps/memos/scripts/backup-s3.sh
-```
-Sync le bucket Garage `memos` vers `gdrive_capsule:memos/s3-objects/`.
-S3 credentials lues depuis `/root/apps/memos/.env.s3` (deploye par `just poppy-apply`).
+Ce flux legacy (`memos-s3-backup.timer`) est désormais désactivé en mode restic-only.
+Les objets S3 doivent être restaurés via le flux stack-aware (garage-first).
 
 ### Status Garage
 
@@ -205,15 +199,9 @@ podman ps --format "{{.Names}} ({{.Status}})" | grep twenty
 Twenty utilise Garage S3 comme backend storage (bucket `twenty`).
 Les credentials sont dans SOPS (`apps.twenty.*`).
 
-### Backup quotidien (03h00)
-Automatique via `twenty-backup.timer` (systemd).
-- Dump PostgreSQL (2.2 MB compressé) -> `gdrive_capsule:twenty/dump-twenty.sql.gz`
-- Sync S3 bucket `twenty` -> `gdrive_capsule:twenty/s3-objects/`
-
-Manuel:
-```bash
-bash /root/apps/twenty/scripts/backup.sh
-```
+### Backup quotidien
+Le flux legacy `twenty-backup.timer` est désactivé en mode restic-only.
+Le backup Twenty est désormais assuré par `twenty-restic-backup.timer`.
 
 ### Logs
 ```bash
@@ -227,8 +215,74 @@ systemctl status twenty-backup.timer
 ```
 
 ### Restoration
-Voir `hosts/poppy/justfile` (commande `just restore`).
+Voir `hosts/poppy/justfile`:
+- `just restore` (app-only, usage expert)
+- `just restore-stack app=<memos|moodboard|twenty|vikunja>` (recommande)
 
+Guide court incident: `hosts/poppy/URGENT_RESTORE.md`
+Guide break-glass (secrets + recovery): `hosts/poppy/BREAK_GLASS.md`
+
+Regle d'or:
+- apps S3-dependantes (`memos`, `moodboard`, `twenty`) => restaurer Garage d'abord.
+- `vikunja` => restore app-only.
+
+Checklist post-restore:
+```bash
+systemctl is-active garage.service memos.service moodboard.service twenty.service vikunja.service
+RESTIC_PASSWORD="$(grep ^RESTIC_PASSWORD= /root/.config/restic/env | tr -d "'" | cut -d= -f2)"; export RESTIC_PASSWORD
+for repo in memos vikunja moodboard twenty; do
+  echo "=== $repo ==="
+  restic snapshots --repo "rclone:gdrive_capsule:$repo" --compact | tail -n 4
+done
+```
+
+
+## Migration restic-only (audit T01 — 2026-04-16)
+
+Constat audite:
+- timers legacy actifs: `memos-backup.timer`, `memos-s3-backup.timer`, `backup-moodboard.timer`, `twenty-backup.timer`.
+- timer casse: `vikunja-backup.timer` (`unit not found`).
+- restic: repos `*-bak` existants et lisibles, mais pas de timers backup restic par app.
+- Drive: coexistence `app` + `app-bak` pour les 4 apps.
+
+Strategie validee (ordre):
+1. Reconfigurer restic vers les repos canoniques `gdrive_capsule:memos|vikunja|moodboard|twenty`.
+2. Activer des timers backup restic par app (et garder `restic-prune.timer`).
+3. Desactiver les timers/services legacy applicatifs.
+4. Valider par tests E2E restore: Twenty puis Vikunja.
+
+Etat courant (2026-04-17):
+- Timers restic actifs: `garage-restic-backup.timer`, `memos-restic-backup.timer`, `vikunja-restic-backup.timer`, `moodboard-restic-backup.timer`, `twenty-restic-backup.timer`, `restic-prune.timer`.
+- Timers legacy desactives: `memos-backup.timer`, `memos-s3-backup.timer`, `backup-moodboard.timer`, `twenty-backup.timer`.
+- `vikunja-backup.timer` legacy: absent/casse (not-found).
+- Tests restore E2E valides: Twenty + Vikunja.
+
+Plan cleanup legacy Drive (.bak) — apres validation finale:
+```bash
+# 1) Inventaire (read-only)
+for p in memos memos-bak vikunja vikunja-bak moodboard moodboard-bak twenty twenty-bak; do
+  echo "=== $p ==="
+  rclone lsf "gdrive_capsule:${p}" --max-depth 1 | head -n 20
+done
+
+# 2) Safety tag avant suppression (copie manifeste)
+TS=$(date +%Y%m%d-%H%M%S)
+mkdir -p /root/cleanup-manifests
+for p in memos-bak vikunja-bak moodboard-bak twenty-bak; do
+  rclone lsf -R "gdrive_capsule:${p}" > "/root/cleanup-manifests/${p}-${TS}.txt"
+done
+
+# 3) Suppression controlee (uniquement legacy, jamais canonical)
+# rclone purge "gdrive_capsule:memos-bak"
+# rclone purge "gdrive_capsule:vikunja-bak"
+# rclone purge "gdrive_capsule:moodboard-bak"
+# rclone purge "gdrive_capsule:twenty-bak"
+
+# 4) Verification post-cleanup
+for p in memos vikunja moodboard twenty; do
+  restic snapshots --repo "rclone:gdrive_capsule:${p}" --compact | tail -n 4
+done
+```
 
 ## Rollback bootstrap
 

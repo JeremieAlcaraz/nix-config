@@ -57,6 +57,23 @@ RESTIC_PRUNE="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-prune.sh"
 RESTIC_PRUNE_SVC="${REPO_ROOT}/hosts/poppy/systemd/restic-prune.service"
 RESTIC_PRUNE_TMR="${REPO_ROOT}/hosts/poppy/systemd/restic-prune.timer"
 RESTIC_RESTORE="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-restore.sh"
+RESTIC_RESTORE_STACK="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-restore-stack.sh"
+RESTIC_MEMOS_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/restic/memos-restic-backup.sh"
+RESTIC_VIKUNJA_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/restic/vikunja-restic-backup.sh"
+RESTIC_MOODBOARD_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/restic/moodboard-restic-backup.sh"
+RESTIC_TWENTY_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/restic/twenty-restic-backup.sh"
+RESTIC_GARAGE_BACKUP="${REPO_ROOT}/hosts/poppy/scripts/restic/garage-restic-backup.sh"
+RESTIC_SMOKE_ALL="${REPO_ROOT}/hosts/poppy/scripts/restic/restic-smoke-restore-all.sh"
+MEMOS_RESTIC_BACKUP_SVC="${REPO_ROOT}/hosts/poppy/systemd/memos-restic-backup.service"
+MEMOS_RESTIC_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/memos-restic-backup.timer"
+VIKUNJA_RESTIC_BACKUP_SVC="${REPO_ROOT}/hosts/poppy/systemd/vikunja-restic-backup.service"
+VIKUNJA_RESTIC_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/vikunja-restic-backup.timer"
+MOODBOARD_RESTIC_BACKUP_SVC="${REPO_ROOT}/hosts/poppy/systemd/moodboard-restic-backup.service"
+MOODBOARD_RESTIC_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/moodboard-restic-backup.timer"
+TWENTY_RESTIC_BACKUP_SVC="${REPO_ROOT}/hosts/poppy/systemd/twenty-restic-backup.service"
+TWENTY_RESTIC_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/twenty-restic-backup.timer"
+GARAGE_RESTIC_BACKUP_SVC="${REPO_ROOT}/hosts/poppy/systemd/garage-restic-backup.service"
+GARAGE_RESTIC_BACKUP_TMR="${REPO_ROOT}/hosts/poppy/systemd/garage-restic-backup.timer"
 JUSTFILE_POPPYP="${REPO_ROOT}/hosts/poppy/justfile"
 
 # ── Garage bootstrap ──────────────────────────────────────
@@ -86,7 +103,9 @@ for f in \
   "${TWENTY_BACKUP}" "${TWENTY_BACKUP_SVC}" "${TWENTY_BACKUP_TMR}" \
   "${RESTIC_ENV_TPL}" "${RESTIC_INIT}" \
   "${RESTIC_PRUNE}" "${RESTIC_PRUNE_SVC}" "${RESTIC_PRUNE_TMR}" \
-  "${RESTIC_RESTORE}" "${JUSTFILE_POPPYP}" \
+  "${RESTIC_RESTORE}" "${RESTIC_RESTORE_STACK}" "${RESTIC_MEMOS_BACKUP}" "${RESTIC_VIKUNJA_BACKUP}" "${RESTIC_MOODBOARD_BACKUP}" "${RESTIC_TWENTY_BACKUP}" "${RESTIC_GARAGE_BACKUP}" "${RESTIC_SMOKE_ALL}" \
+  "${MEMOS_RESTIC_BACKUP_SVC}" "${MEMOS_RESTIC_BACKUP_TMR}" "${VIKUNJA_RESTIC_BACKUP_SVC}" "${VIKUNJA_RESTIC_BACKUP_TMR}" \
+  "${MOODBOARD_RESTIC_BACKUP_SVC}" "${MOODBOARD_RESTIC_BACKUP_TMR}" "${TWENTY_RESTIC_BACKUP_SVC}" "${TWENTY_RESTIC_BACKUP_TMR}" "${GARAGE_RESTIC_BACKUP_SVC}" "${GARAGE_RESTIC_BACKUP_TMR}" "${JUSTFILE_POPPYP}" \
   "${MEMOS_ENV_S3_TPL}" "${AGENTS_MD}"; do
   [[ -f "${f}" ]] || { echo "[ERROR] missing file ${f}" >&2; exit 1; }
 done
@@ -290,6 +309,23 @@ scp -q "${RESTIC_PRUNE}" "${SSH_HOST}:${REMOTE_STAGE}/restic-prune.sh"
 scp -q "${RESTIC_PRUNE_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/restic-prune.service"
 scp -q "${RESTIC_PRUNE_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/restic-prune.timer"
 scp -q "${RESTIC_RESTORE}" "${SSH_HOST}:${REMOTE_STAGE}/restic-restore.sh"
+scp -q "${RESTIC_RESTORE_STACK}" "${SSH_HOST}:${REMOTE_STAGE}/restic-restore-stack.sh"
+scp -q "${RESTIC_MEMOS_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/memos-restic-backup.sh"
+scp -q "${RESTIC_VIKUNJA_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja-restic-backup.sh"
+scp -q "${RESTIC_MOODBOARD_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-restic-backup.sh"
+scp -q "${RESTIC_TWENTY_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-restic-backup.sh"
+scp -q "${RESTIC_GARAGE_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/garage-restic-backup.sh"
+scp -q "${RESTIC_SMOKE_ALL}" "${SSH_HOST}:${REMOTE_STAGE}/restic-smoke-restore-all.sh"
+scp -q "${MEMOS_RESTIC_BACKUP_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/memos-restic-backup.service"
+scp -q "${MEMOS_RESTIC_BACKUP_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/memos-restic-backup.timer"
+scp -q "${VIKUNJA_RESTIC_BACKUP_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja-restic-backup.service"
+scp -q "${VIKUNJA_RESTIC_BACKUP_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/vikunja-restic-backup.timer"
+scp -q "${MOODBOARD_RESTIC_BACKUP_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-restic-backup.service"
+scp -q "${MOODBOARD_RESTIC_BACKUP_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/moodboard-restic-backup.timer"
+scp -q "${TWENTY_RESTIC_BACKUP_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-restic-backup.service"
+scp -q "${TWENTY_RESTIC_BACKUP_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-restic-backup.timer"
+scp -q "${GARAGE_RESTIC_BACKUP_SVC}" "${SSH_HOST}:${REMOTE_STAGE}/garage-restic-backup.service"
+scp -q "${GARAGE_RESTIC_BACKUP_TMR}" "${SSH_HOST}:${REMOTE_STAGE}/garage-restic-backup.timer"
 
 # Twenty backup
 scp -q "${TWENTY_BACKUP}" "${SSH_HOST}:${REMOTE_STAGE}/twenty-backup.sh"

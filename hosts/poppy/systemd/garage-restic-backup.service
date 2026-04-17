@@ -1,0 +1,11 @@
+[Unit]
+Description=Garage backup via restic (canonical repo)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=HOME=/root
+ExecStart=/bin/bash /root/apps/restic/garage-restic-backup.sh
+StandardOutput=journal
+StandardError=journal

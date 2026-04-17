@@ -1,0 +1,11 @@
+[Unit]
+Description=Vikunja restic backup timer (daily 02:20)
+
+[Timer]
+OnCalendar=*-*-* 02:20:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=vikunja-restic-backup.service
+
+[Install]
+WantedBy=timers.target
